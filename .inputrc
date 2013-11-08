@@ -1,0 +1,11 @@
+set editing-mode vi
+# Map the Ctrl-up and Ctrl-down keys to search history
+# Map the Ctrl-left and Ctrl-right to move by words
+"\e[1;5A" history-search-backward
+"\e[1;5B" history-search-forward
+"\e[5A" history-search-backward
+"\e[5B" history-search-forward
+"\e[1;5C" forward-word
+"\e[1;5D" backward-word
+"\e[5C" forward-word
+"\e[5D" backward-word
