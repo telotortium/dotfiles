@@ -236,3 +236,6 @@ takeover() {
     # attach to the target session
     tmux attach -t "$session"
 }
+
+# Update dotfiles from Git upstream and install any changes
+alias dotfiles-update='make -C ~/.dotfiles update'
