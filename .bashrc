@@ -6,10 +6,15 @@
 [ -z "$PS1" ] && return
 
 # TMUX
-if which tmux 2>&1 >/dev/null; then
+if hash tmux 2>/dev/null; then
     # If not inside a tmux session, and if no session is started, start
-    # a new session
-    test -z "$TMUX" && (tmux attach || tmux new-session)
+    # a new session -- but not if we're attached to the console.
+    if test -z "$TMUX"; then
+       case "$TERM" in
+       cons*|linux*) ;;
+       *)            (tmux attach || tmux new-session) ;;
+       esac
+    fi
 fi
 
 # Set umask to exclude group and other write permissions
