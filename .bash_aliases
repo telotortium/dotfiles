@@ -72,39 +72,36 @@ alias j="jobs_expvars -l"
 
 # If vi is really vim, try to make it fairly lean
 # (although I don't want compatible mode at present).
-if test "$(ls -i "$(readlink -f "$(which vi)")" | cut -d' ' -f1)" = \
+if hash vi 2>/dev/null && hash vim 2>/dev/null \
+    && test "$(ls -i "$(readlink -f "$(which vi)")" | cut -d' ' -f1)" = \
     "$(ls -i "$(readlink -f "$(which vim)")" | cut -d' ' -f1)"; then
     alias vi="vim -Xu NONE +'set bg=dark'"
     alias view="vim -RXu NONE +'set bg=dark'"
 fi
-if [ -f /etc/fedora-release ]; then
-    vim=vimx
+
+# Try to use a Vim with X compiled in (on Fedora/RedHat that is installed at
+# `vimx` instead of the non-X-enabled `vim`), but disable X forwarding with
+# Vim by default if we're connecting remotely, since it slows down Vim startup.
+if [ -f /etc/fedora-release ] && hash vimx; then
+    _vim=vimx
 else
-    vim=vim
+    _vim=vim
 fi
-# Disable X forwarding with Vim by default if we're connecting remotely
-vim_withX ()
-{
-    "$vim" "$@"
-}
-vim_noX ()
-{
-    "$vim" -X "$@"
-}
 if test -n "$SSH_CONNECTION"; then
-    alias vim="vim_noX"
-    alias vimx="vim_withX"
+    alias vim="$_vim -X"
+    alias vimx="$_vim"
 else
-    alias vim="vim_withX"
-    alias vimx="vim_withX"
+    alias vim="$_vim"
+    alias vimx="$_vim"
 fi
+unset _vim
 
 # Easy access to editor
 alias edit="$VISUAL"
 
 # Fix crontab with gvim
-if echo $VISUAL | grep -q gvim; then
-    alias crontab="VISUAL=$VISUAL\ --nofork crontab -i "
+if printf "%s" "$VISUAL" | grep -q gvim; then
+    alias crontab="VISUAL=\"$VISUAL --nofork\" crontab -i "
 else
     alias crontab="crontab -i "
 fi

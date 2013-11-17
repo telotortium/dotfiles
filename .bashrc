@@ -163,8 +163,8 @@ xterm*|rxvt*|screen)
     ;;
 esac
 
-# Replace the edit-and-execute-command bindings, which use VISUAL and EDITOR, with
-# a custom function after
+# Replace the edit-and-execute-command bindings, which use VISUAL and EDITOR,
+# with a custom function after
 # <http://gnu-bash.2382.n7.nabble.com/edit-and-execute-command-is-appropriately-named-weird-td3617.html> (retrieved 2013-01-14).
 __bind_edit_in_editor()
 {

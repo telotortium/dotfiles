@@ -4,27 +4,35 @@
 # see /usr/share/doc/bash/examples/startup-files for examples.
 # the files are located in the bash-doc package.
 
-# the default umask is set in /etc/profile
-#umask 022
-
 # path_prepend|path_append current_value to_add
 # Add directories to a path environment variable without leaving empty
 # elements, which are equivalent to the current directory.
 path_prepend () {
-    echo "$2$(test -n "$1" && echo :"$1")"
+    echo "${2}$(test -n "$1" && echo :"$1")"
 }
 path_append () {
-    echo "$(test -n "$1" && echo "$1":)$2"
+    echo "$(test -n "$1" && echo "$1":)${2}"
 }
 
 # User specific environment and startup programs
 export PATH="$(path_prepend "$PATH" \
     $HOME/bin:$HOME/winbin:$HOME/local/bin:$HOME/.cabal/bin)"
 
-if hash gvim 2> /dev/null; then
+# Is the command found on path? `command -v` is supposedly more portable than
+# `which`.
+command_on_path () {
+    cmd="$1"
+    (
+        unalias "$cmd" >/dev/null 2>&1 || true
+        command -v "$cmd" >/dev/null 2>&1
+    )
+}
+
+# Default editor
+if command_on_path gvim; then
     export EDITOR=gvim
     export ALTERNATE_EDITOR=vim
-elif hash vim 2> /dev/null; then
+elif command_on_path vim; then
     export EDITOR=vim
     export ALTERNATE_EDITOR=vi
 else
@@ -38,7 +46,11 @@ export XMODIFIERS="@im=ibus"
 # Set MATLAB to use the starting directory specified by `userpath'.
 export MATLAB_USE_USERPATH=1
 
-export FCEDIT="vim -Xu NONE"
+if command_on_path vim; then
+    export FCEDIT="vim -Xu NONE"
+else
+    export FCEDIT="vi"
+fi
 export PAGER=less
 export ACK_PAGER_COLOR="less -R"
 export LESS=X
