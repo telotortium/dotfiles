@@ -130,7 +130,7 @@ f ()
 alias d="dirs"
 
 # Add directories to the stack when changing directory
-function cd ()
+cd ()
 {
     if [ ! -n "$1" ]; then
         pushd $HOME > /dev/null
@@ -145,37 +145,38 @@ alias chdir="cd"    # Alternate or DOS name
 alias cd.="cd ."    # Sloppy typing alias
 alias cd..="cd .."  # Ditto
 
-function disowner ()
+disowner ()
 {
     "$*" &> /dev/null & disown
 }
 
 # Colored manpages. If man doesn't work, use help instead (for shell builtins)
 man () {
-    TERMINFO=~/.terminfo/ LESS=XC TERM=mostlike PAGER=less "$(which man)" $@ || (help $@ &> /dev/null && help $@ | less)
+    TERMINFO=~/.terminfo/ LESS=XC TERM=mostlike PAGER=less command man "$@" \
+        || (help "$@" &>/dev/null && help "$@" | less)
 }
 alias perldoc="TERMINFO=~/.terminfo/ LESS=XC TERM=mostlike PAGER=less perldoc"
 
 
 # Safetly/convenience aliases for cp, mv, rm
-function cp () {
+cp () {
     if [ $# -eq 1 ]; then
-        "$(which cp)" -i "$1" .
+        command cp -i "$1" .
     else
-        "$(which cp)" -i "$@"
+        command cp -i "$@"
     fi
 }
-function mv () {
+mv () {
     if [ $# -eq 1 ]; then
-        "$(which mv)" -i "$1" .
+        command mv -i "$1" .
     else
-        "$(which mv)" -i "$@"
+        command mv -i "$@"
     fi
 }
 alias rm="rm -I"
 
 # Use POSIX-extended regexes in find
-function refind () {
+refind () {
     # If first argument is an option, then proceed as normal;
     # else, the first argument is a directory and needs to be placed in the
     # appropriate spot in the command.
