@@ -72,8 +72,8 @@ alias j="jobs_expvars -l"
 
 # If vi is really vim, try to make it fairly lean
 # (although I don't want compatible mode at present).
-if test $(ls -i $(readlink -f $(which vi)) | cut -d' ' -f1) = \
-    $(ls -i $(readlink -f $(which vim)) | cut -d' ' -f1); then
+if test "$(ls -i "$(readlink -f "$(which vi)")" | cut -d' ' -f1)" = \
+    "$(ls -i "$(readlink -f "$(which vim)")" | cut -d' ' -f1)"; then
     alias vi="vim -Xu NONE +'set bg=dark'"
     alias view="vim -RXu NONE +'set bg=dark'"
 fi
@@ -155,7 +155,7 @@ function disowner ()
 
 # Colored manpages. If man doesn't work, use help instead (for shell builtins)
 man () {
-    TERMINFO=~/.terminfo/ LESS=XC TERM=mostlike PAGER=less `which man` $@ || (help $@ &> /dev/null && help $@ | less)
+    TERMINFO=~/.terminfo/ LESS=XC TERM=mostlike PAGER=less "$(which man)" $@ || (help $@ &> /dev/null && help $@ | less)
 }
 alias perldoc="TERMINFO=~/.terminfo/ LESS=XC TERM=mostlike PAGER=less perldoc"
 
@@ -163,16 +163,16 @@ alias perldoc="TERMINFO=~/.terminfo/ LESS=XC TERM=mostlike PAGER=less perldoc"
 # Safetly/convenience aliases for cp, mv, rm
 function cp () {
     if [ $# -eq 1 ]; then
-        `which cp` -i "$1" .
+        "$(which cp)" -i "$1" .
     else
-        `which cp` -i "$@"
+        "$(which cp)" -i "$@"
     fi
 }
 function mv () {
     if [ $# -eq 1 ]; then
-        `which mv` -i "$1" .
+        "$(which mv)" -i "$1" .
     else
-        `which mv` -i "$@"
+        "$(which mv)" -i "$@"
     fi
 }
 alias rm="rm -I"
@@ -203,7 +203,7 @@ alias po="popd"
 alias screen="/usr/bin/screen"
 alias byobu="byobu -S byobu"
 alias perl="perl -w"
-which ack-grep &>/dev/null && alias ack=ack-grep
+hash ack-grep 2>/dev/null && alias ack=ack-grep
 
 # Wake-on-LAN
 laplace_wakeonlan () {

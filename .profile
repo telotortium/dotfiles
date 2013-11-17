@@ -21,10 +21,10 @@ path_append () {
 export PATH="$(path_prepend "$PATH" \
     $HOME/bin:$HOME/winbin:$HOME/local/bin:$HOME/.cabal/bin)"
 
-if which gvim &> /dev/null; then
+if hash gvim 2> /dev/null; then
     export EDITOR=gvim
     export ALTERNATE_EDITOR=vim
-elif which vim &> /dev/null; then
+elif hash vim 2> /dev/null; then
     export EDITOR=vim
     export ALTERNATE_EDITOR=vi
 else
