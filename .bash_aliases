@@ -200,7 +200,6 @@ alias pu="pushd"
 alias po="popd"
 alias screen="/usr/bin/screen"
 alias byobu="byobu -S byobu"
-alias perl="perl -w"
 hash ack-grep 2>/dev/null && alias ack=ack-grep
 
 # Wake-on-LAN
