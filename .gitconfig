@@ -21,4 +21,4 @@
 [color "diff"]
         whitespace = red reverse
 [push]
-	default = matching
+	default = simple
