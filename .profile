@@ -68,8 +68,10 @@ unset d python_version
 # Go path setup
 export GOPATH="$(path_prepend "$GOPATH" "$HOME/Documents/code/go")"
 
-# Perl local::lib
-eval "$(perl -I$HOME/local/perl5 -Mlocal::lib)"
+# Perl local::lib - don't try to load it if it isn't installed
+if perl -Mlocal::lib -e1 2>/dev/null && [ -d "$HOME/local/perl5" ]; then
+    eval "$(perl -I"$HOME/local/perl5" -Mlocal::lib)"
+fi
 
 unset path_prepend
 unset path_append
