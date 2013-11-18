@@ -21,7 +21,7 @@ fi
 umask 022
 
 # Get proper SSH agent
-. "$HOME/bin/find-ssh-agent"
+[ -f "$HOME/bin/find-ssh-agent" ] && . "$HOME/bin/find-ssh-agent"
 
 # don't put duplicate lines or lines beginning with spaces in the history
 export HISTCONTROL=ignoreboth
@@ -57,7 +57,7 @@ fi
 # Handle screen pecularities
 if [ -n "$STY" ]; then
     # byobu likes to set SSH_AUTH_SOCK for some reason. Bad!
-    . "$HOME/bin/find-ssh-agent"
+    [ -f "$HOME/bin/find-ssh-agent" ] && . "$HOME/bin/find-ssh-agent"
 fi
 case "$TERM" in
 putty*)
