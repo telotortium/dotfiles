@@ -239,3 +239,7 @@ takeover() {
 
 # Update dotfiles from Git upstream and install any changes
 alias dotfiles-update='make -C ~/.dotfiles update'
+
+# I like the Perl version of rename on Linux
+hash prename 2>/dev/null && alias rename=prename
+hash perl-rename 2>/dev/null && alias rename=perl-rename
