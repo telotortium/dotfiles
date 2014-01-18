@@ -151,11 +151,21 @@ disowner ()
 }
 
 # Colored manpages. If man doesn't work, use help instead (for shell builtins)
+if infocmp mostlike &>/dev/null; then
+    __MOSTLIKE_TERM_CONFIG="TERMINFO=~/.terminfo/ TERM=mostlike"
+else
+    __MOSTLIKE_TERM_CONFIG=""
+fi
+# Use `eval` in order to interpolate `$__MOSTLIKE_TERM_CONFIG` when defining
+# the function, instead of when it's run.
+eval "
 man () {
-    TERMINFO=~/.terminfo/ LESS=XC TERM=mostlike PAGER=less command man "$@" \
-        || (help "$@" &>/dev/null && help "$@" | less)
+    LESS=XC PAGER=less $__MOSTLIKE_TERM_CONFIG command man \"\$@\" \
+        || (help \"\$@\" &>/dev/null && help \"\$@\" | less)
 }
-alias perldoc="TERMINFO=~/.terminfo/ LESS=XC TERM=mostlike PAGER=less perldoc"
+"
+alias perldoc="$__MOSTLIKE_TERM_CONFIG LESS=XC PAGER=less perldoc"
+unset __MOSTLIKE_TERM_CONFIG
 
 
 # Safetly/convenience aliases for cp, mv, rm
