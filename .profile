@@ -89,3 +89,7 @@ fi
 
 unset path_prepend
 unset path_append
+
+if [ -f "$HOME/.profile.local" ]; then
+    . "$HOME/.profile.local"
+fi
