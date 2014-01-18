@@ -29,8 +29,10 @@ command_on_path () {
 }
 
 # Default editor
+# Make sure that `gvim` doesn't fork, since a lot of programs that use
+# `$EDITOR` wait for it to exit before proceeding.
 if command_on_path gvim; then
-    export EDITOR=gvim
+    export EDITOR="gvim --nofork"
     export ALTERNATE_EDITOR=vim
 elif command_on_path vim; then
     export EDITOR=vim
