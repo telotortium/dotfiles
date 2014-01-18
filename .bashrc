@@ -199,3 +199,8 @@ if [ -f /etc/bash_completion ]; then
     . /etc/bash_completion
 fi
 
+
+# LOCAL SETTINGS
+if [ -f ~/.bashrc.local ]; then
+    . ~/.bashrc.local
+fi
