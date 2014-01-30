@@ -1,0 +1,8 @@
+#!/bin/bash
+if tmux has-session -t "$1" 2>/dev/null; then
+   tmux list-panes -s -t "$1" -F '#{pane_pid}' \
+       | xargs kill -PWR   # See __tmux-on-reattach
+   tmux attach-session -t "$1"
+else
+   tmux new-session -s "$1"
+fi

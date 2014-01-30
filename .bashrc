@@ -5,20 +5,11 @@
 # If not running interactively, don't do anything
 [ -z "$PS1" ] && return
 
-# TMUX
-if hash tmux 2>/dev/null; then
-    # If not inside a tmux session, and if no session is started, start
-    # a new session -- but not if we're attached to the console.
-    if test -z "$TMUX"; then
-       case "$TERM" in
-       cons*|linux*) ;;
-       *)            (tmux attach || tmux new-session) ;;
-       esac
-    fi
-fi
-
 # Set umask to exclude group and other write permissions
 umask 022
+
+# Set up tmux attach actions
+[ -f "$HOME/.bash_tmux_reattach" ] && . "$HOME/.bash_tmux_reattach"
 
 # Get proper SSH agent
 [ -f "$HOME/bin/find-ssh-agent" ] && . "$HOME/bin/find-ssh-agent"
