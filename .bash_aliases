@@ -72,12 +72,20 @@ alias j="jobs_expvars -l"
 
 # If vi is really vim, try to make it fairly lean
 # (although I don't want compatible mode at present).
+__abs_path () {
+    perl -e '
+    use Cwd "abs_path";
+    for $path (@ARGV) {
+        print abs_path($path) . "\n";
+    }' "$@"
+}
 if hash vi 2>/dev/null && hash vim 2>/dev/null \
-    && test "$(ls -i "$(readlink -f "$(which vi)")" | cut -d' ' -f1)" = \
-    "$(ls -i "$(readlink -f "$(which vim)")" | cut -d' ' -f1)"; then
+    && test "$(ls -i "$(__abs_path "$(which vi)")" | cut -d' ' -f1)" = \
+    "$(ls -i "$(__abs_path "$(which vim)")" | cut -d' ' -f1)"; then
     alias vi="vim -Xu NONE +'set bg=dark'"
     alias view="vim -RXu NONE +'set bg=dark'"
 fi
+unset __abs_path
 
 # Try to use a Vim with X compiled in (on Fedora/RedHat that is installed at
 # `vimx` instead of the non-X-enabled `vim`), but disable X forwarding with
