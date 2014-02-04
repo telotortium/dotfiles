@@ -5,7 +5,7 @@ hash tmux 2>/dev/null || return 0
 
 # If not inside a tmux session, and if no session is started, start
 # a new session -- but not if we're attached to the console.
-if test -z "$TMUX"; then
+if test -z "$TMUX" && test -n "$SSH_CONNECTION"; then
    case "$TERM" in
    cons*|linux*)
        ;;
