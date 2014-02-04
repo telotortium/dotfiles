@@ -7,3 +7,6 @@
 [submodule ".emacs.d"]
 	path = .emacs.d
 	url = git@github.com:telotortium/emacs.d
+[submodule ".urxvt/ext/urxvt-perls"]
+	path = .urxvt/ext/urxvt-perls
+	url = https://github.com/muennich/urxvt-perls

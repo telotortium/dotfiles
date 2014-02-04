@@ -174,6 +174,11 @@ __bind_edit_in_editor()
 bind -m vi -x '"v":__bind_edit_in_editor'
 bind -m emacs -x '"\C-x\C-e":__bind_edit_in_editor'
 
+# Merge home directory correctly into xrdb
+if [ -n "$DISPLAY" ] && hash xrdb; then
+    echo "URxvt.perl-lib: $HOME/.urxvt/ext/urxvt-perls/" | xrdb -merge
+fi
+
 # Alias definitions.
 # You may want to put all your additions into a separate file like
 # ~/.bash_aliases, instead of adding them here directly.

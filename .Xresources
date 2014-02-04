@@ -34,6 +34,18 @@ Rxvt.color14: #a4e2e2
 Rxvt.color7:  #d3d7cf
 Rxvt.color15: #eeeeec
 
+! perl extensions --------------------------------------------------
+!URxvt.perl-lib: <set in .bashrc to get correct $HOME value>
+URxvt.perl-ext-common: default,url-select,clipboard
+
+URxvt.keysym.M-u: perl:url-select:select_next
+URxvt.url-select.underline: true
+
+URxvt.keysym.M-c: perl:clipboard:copy
+URxvt.keysym.M-v: perl:clipboard:paste
+URxvt.keysym.M-C-v: perl:clipboard:paste_escaped
+
+
 ! ----------------------------------------------------------------------
 ! XTerm.vt100 config
 ! Terminal fonts
