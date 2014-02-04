@@ -91,9 +91,9 @@ unset __abs_path
 # `vimx` instead of the non-X-enabled `vim`), but disable X forwarding with
 # Vim by default if we're connecting remotely, since it slows down Vim startup.
 if [ -f /etc/fedora-release ] && hash vimx; then
-    _vim=vimx
+    _vim="command vimx"
 else
-    _vim=vim
+    _vim="command vim"
 fi
 if test -n "$SSH_CONNECTION"; then
     alias vim="$_vim -X"
