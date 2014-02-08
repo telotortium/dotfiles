@@ -258,3 +258,6 @@ alias dotfiles-update='make -C ~/.dotfiles update'
 # I like the Perl version of rename on Linux
 hash prename 2>/dev/null && alias rename=prename
 hash perl-rename 2>/dev/null && alias rename=perl-rename
+
+# Git diff has pretty colors
+alias diff="git diff --no-index --"
