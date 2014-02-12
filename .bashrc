@@ -165,11 +165,11 @@ bash_prompt_setup() {
     }
 
     if [ $EUID = 0 ]; then
-        my_prompt_command ${BR} ${RS} ${BR} ${RS} ${BR} ${RS} ${BR}${UL} ${RS} \
+        _my_prompt_command ${BR} ${RS} ${BR} ${RS} ${BR} ${RS} ${BR}${UL} ${RS} \
             ${R} "" ${RS} \
             ${R} ${RS}
     else
-        my_prompt_command ${BB} ${RS} ${BB} ${RS} ${BB} ${RS} ${BC}${UL} ${RS} \
+        _my_prompt_command ${BB} ${RS} ${BB} ${RS} ${BB} ${RS} ${BC}${UL} ${RS} \
             ${C} "" ${RS} \
             ${R} ${RS}
     fi
