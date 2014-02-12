@@ -80,16 +80,6 @@ bash_prompt_setup() {
     local C="\[$(tput setaf 6)\]"    # cyan
     local W="\[$(tput setaf 7)\]"    # white
 
-    # bright colors
-    local BR="\[\033[0;91m\]"
-    local BR="\[\033[0;91m\]"
-    local BG="\[\033[0;92m\]"
-    local BY="\[\033[0;93m\]"
-    local BB="\[\033[0;94m\]"
-    local BM="\[\033[0;95m\]"
-    local BC="\[\033[0;96m\]"
-    local BW="\[\033[0;97m\]"
-
     # background colors
     local BGK="\[$(tput setab 0)\]"
     local BGR="\[$(tput setab 1)\]"
@@ -100,15 +90,51 @@ bash_prompt_setup() {
     local BGC="\[$(tput setab 6)\]"
     local BGW="\[$(tput setab 7)\]"
 
-    # bright background colors
-    local BBGR="\[\033[0;101m\]"
-    local BBGR="\[\033[0;101m\]"
-    local BBGG="\[\033[0;102m\]"
-    local BBGY="\[\033[0;103m\]"
-    local BBGB="\[\033[0;104m\]"
-    local BBGM="\[\033[0;105m\]"
-    local BBGC="\[\033[0;106m\]"
-    local BBGW="\[\033[0;107m\]"
+    case $TERM in
+    xterm*|rxvt*|screen*|putty*)
+        # bright colors
+        local BK="\[\033[0;90m\]"
+        local BR="\[\033[0;91m\]"
+        local BG="\[\033[0;92m\]"
+        local BY="\[\033[0;93m\]"
+        local BB="\[\033[0;94m\]"
+        local BM="\[\033[0;95m\]"
+        local BC="\[\033[0;96m\]"
+        local BW="\[\033[0;97m\]"
+
+        # bright background colors
+        local BBGK="\[\033[0;100m\]"
+        local BBGR="\[\033[0;101m\]"
+        local BBGG="\[\033[0;102m\]"
+        local BBGY="\[\033[0;103m\]"
+        local BBGB="\[\033[0;104m\]"
+        local BBGM="\[\033[0;105m\]"
+        local BBGC="\[\033[0;106m\]"
+        local BBGW="\[\033[0;107m\]"
+        ;;
+
+    # Simulate bright colors with normal if bright colors are not supported
+    *)
+        local BK="${K}"
+        local BR="${R}"
+        local BG="${G}"
+        local BY="${Y}"
+        local BB="${B}"
+        local BM="${M}"
+        local BC="${C}"
+        local BW="${W}"
+
+        local BBGK="${BGK}"
+        local BBGR="${BGR}"
+        local BBGG="${BGG}"
+        local BBGY="${BGY}"
+        local BBGB="${BGB}"
+        local BBGM="${BGM}"
+        local BBGC="${BGC}"
+        local BBGW="${BGW}"
+        ;;
+
+    esac
 
     local BD="\[$(tput bold)\]" # bold
     local UL="\[$(tput smul)\]" # underline
@@ -116,30 +142,38 @@ bash_prompt_setup() {
     # reset terminal to normal text
     local RS="\[$(tput sgr0)\]"
 
-    case $TERM in
-    xterm*|rxvt*|screen*|putty*)
-        if [ $EUID = 0 ]; then
-            PS1="${BR}[${RS}\\u${BR}@${RS}\\h${BR}]${RS} ${BR}${UL}\\w${RS}\\n${R}\\D{%F %k:%M:%S} \\! \$${RS} "
-            PS2="${R}…${RS} "
-        else
-            PS1="${BB}[${RS}\\u${BB}@${RS}\\h${BB}]${RS} ${BC}${UL}\\w${RS}\\n${C}\\D{%F %k:%M:%S} \\! \$${RS} "
-            PS2="${R}…${RS} "
-        fi
-        ;;
-    dumb)
+    ##################
+    # Prompts themselves
+
+    if [ "$TERM" = "dumb" ]; then
         PS1='\u@\h:\w\$ '
         PS2='… '
-        ;;
-    *)
-        if [ $EUID = 0 ]; then
-            PS1="${R}[${RS}\\u${R}@${RS}\\h${R}]${RS} ${BD}${R}\\w${RS}\\n${R}\\D{%F %k:%M:%S} \\! \$${RS} "
-            PS2="${R}…${RS} "
-        else
-            PS1="${B}[${RS}\\u${B}@${RS}\\h${B}]${RS} ${BD}${C}\\w${RS}\\n${C}\\D{%F %k:%M:%S} \\! \$${RS} "
-            PS2="${R}…${RS} "
-        fi
-        ;;
-    esac
+        return 0
+    fi
+
+    _my_prompt_command() {
+        local exit_status_cmd='$(test $? -eq 0 && printf %s "'${G}'" || printf %s "'${BR}'")'
+        PS1="${1}[${2}\\u${3}@${4}\\h${5}]${6} ${7}\\w${8}"$'\n'
+        # Second line of prompt - start with `:` and end with `;` to allow
+        # copying commands straight from the shell and re-executing them
+        # without having to edit them. The `$`/`#` prompt is preceded by
+        # a backslash to prevent any interpretation by the shell - this
+        # requires 3 backslashes before `$` in `PS1`, since Bash interprets
+        # backslashes as escapes when evaluating `PS1`.
+        PS1="${PS1}${9}: ${10}\\D{%F %k:%M:%S} \! ${exit_status_cmd}"'\\\$'";${11} "
+        PS2="${12}…${13} "
+    }
+
+    if [ $EUID = 0 ]; then
+        _my_prompt_command ${BR} ${RS} ${BR} ${RS} ${BR} ${RS} ${BR}${UL} ${RS} \
+            ${R} "" ${RS} \
+            ${R} ${RS}
+    else
+        _my_prompt_command ${BB} ${RS} ${BB} ${RS} ${BB} ${RS} ${BC}${UL} ${RS} \
+            ${C} "" ${RS} \
+            ${R} ${RS}
+    fi
+    unset _my_prompt_command
 }
 
 bash_prompt_setup
