@@ -152,6 +152,7 @@ bash_prompt_setup() {
     fi
 
     my_prompt_command() {
+        local exit_status_cmd='$(test $? -eq 0 && printf %s "'${G}'" || printf %s "'${BR}'")'
         PS1="${1}[${2}\\u${3}@${4}\\h${5}]${6} ${7}\\w${8}"$'\n'
         # Second line of prompt - start with `:` and end with `;` to allow
         # copying commands straight from the shell and re-executing them
@@ -159,7 +160,7 @@ bash_prompt_setup() {
         # a backslash to prevent any interpretation by the shell - this
         # requires 3 backslashes before `$` in `PS1`, since Bash interprets
         # backslashes as escapes when evaluating `PS1`.
-        PS1="${PS1}${9}: ${10}\\D{%F %k:%M:%S} \! "'\\\$'";${11} "
+        PS1="${PS1}${9}: ${10}\\D{%F %k:%M:%S} \! ${exit_status_cmd}"'\\\$'";${11} "
         PS2="${12}…${13} "
     }
 
