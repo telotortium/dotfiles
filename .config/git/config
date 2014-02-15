@@ -1,7 +1,7 @@
 [alias]
-          lg = log --graph --pretty=format:'%Cred%h%Creset %C(yellow)%an%d%Creset %s %Cgreen(%cr)%Creset' --date=relative
-	news = log -p HEAD@{1}..HEAD@{0}
-	newslg = log HEAD@{1}..HEAD@{0} --graph --pretty=format:'%Cred%h%Creset %C(yellow)%an%d%Creset %s %Cgreen(%cr)%Creset' --date=relative
+        lg = log --graph --pretty=format:'%Cred%h%Creset %C(yellow)%an%d%Creset %s %Cgreen(%cr)%Creset' --date=relative
+        news = log -p HEAD@{1}..HEAD@{0}
+        newslg = log HEAD@{1}..HEAD@{0} --graph --pretty=format:'%Cred%h%Creset %C(yellow)%an%d%Creset %s %Cgreen(%cr)%Creset' --date=relative
 [user]
         name = Robert Irelan
         email = rirelan@gmail.com
@@ -21,4 +21,4 @@
 [color "diff"]
         whitespace = red reverse
 [push]
-	default = simple
+        default = simple
