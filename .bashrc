@@ -145,15 +145,38 @@ bash_prompt_setup() {
     ##################
     # Prompts themselves
 
+    local __pwd_escaped='$(__pwd=${PWD#$HOME};
+        if [ "$__pwd" = "$PWD" ]; then
+            __pwd=$(printf "%q" "${__pwd}");
+        else
+            __pwd=${__pwd%/};
+            if [ -n "$__pwd" ]; then
+                __pwd=${__pwd#/};
+                __pwd=$(printf "~/%q" "${__pwd}");
+            else
+                __pwd="~";
+            fi;
+        fi;
+        printf "%s" "${__pwd}";)'
+
+    PROMPT_COMMAND='__PROMPT_EXIT_STATUS=$?'
+
     if [ "$TERM" = "dumb" ]; then
-        PS1='\u@\h:\w\$ '
+        PS1='\u@\h:'"${__pwd_escaped}"'\$ '
         PS2='… '
         return 0
     fi
 
+    # If this is an xterm set the title to user@host:dir
+    case "$TERM" in
+    xterm*|rxvt*|screen*|putty*)
+        PROMPT_COMMAND="${PROMPT_COMMAND}"'; printf "\033]0;%s: %s\007" "${USER}@${HOSTNAME}" "'"${__pwd_escaped}"'"'
+        ;;
+    esac
+
     _my_prompt_command() {
-        local exit_status_cmd='$(test $? -eq 0 && printf %s "'${G}'" || printf %s "'${BR}'")'
-        PS1="${1}[${2}\\u${3}@${4}\\h${5}]${6} ${7}\\w${8}"$'\n'
+        local exit_status_cmd='$(test $__PROMPT_EXIT_STATUS -eq 0 && printf %s "'${G}'" || printf %s "'${BR}'")'
+        PS1="${1}[${2}\\u${3}@${4}\\h${5}]${6} ${7}${__pwd_escaped}${8}"$'\n'
         # Second line of prompt - start with `:` and end with `;` to allow
         # copying commands straight from the shell and re-executing them
         # without having to edit them. The `$`/`#` prompt is preceded by
@@ -178,15 +201,6 @@ bash_prompt_setup() {
 
 bash_prompt_setup
 unset bash_prompt_setup
-
-# If this is an xterm set the title to user@host:dir
-case "$TERM" in
-xterm*|rxvt*|screen)
-    PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME}: ${PWD/$HOME/~}\007"'
-    ;;
-*)
-    ;;
-esac
 
 # Replace the edit-and-execute-command bindings, which use VISUAL and EDITOR,
 # with a custom function after
