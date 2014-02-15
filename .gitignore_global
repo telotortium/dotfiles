@@ -51,6 +51,7 @@ local.properties
 # PDT-specific
 .buildpath
 *~
+.*~
 \#*\#
 /.emacs.desktop
 /.emacs.desktop.lock
