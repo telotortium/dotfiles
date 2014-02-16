@@ -12,7 +12,6 @@
 [core]
         pager = less -R
         editor = vim -X --nofork
-        excludesfile = ~/.gitignore_global
         autocrlf = input
 [man]
         viewer = mostman
