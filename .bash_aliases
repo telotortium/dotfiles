@@ -223,6 +223,7 @@ alias po="popd"
 alias screen="/usr/bin/screen"
 alias byobu="byobu -S byobu"
 hash ack-grep 2>/dev/null && alias ack=ack-grep
+hash xdg-open 2>/dev/null && alias open="xdg-open"
 
 # Wake-on-LAN
 laplace_wakeonlan () {
