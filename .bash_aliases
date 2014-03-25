@@ -107,13 +107,6 @@ unset _vim
 # Easy access to editor
 alias edit="$VISUAL"
 
-# Fix crontab with gvim
-if printf "%s" "$VISUAL" | grep -q gvim; then
-    alias crontab="VISUAL=\"$VISUAL --nofork\" crontab -i "
-else
-    alias crontab="crontab -i "
-fi
-
 # Functions to make use of the directory stack easier
 # Go backwards in stack
 b ()
