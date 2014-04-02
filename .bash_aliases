@@ -118,12 +118,18 @@ ec () {
 # Connect to Vim server to edit file if present, else start server.
 vc () {
     local VIM_SERVERNAME=${VIM_SERVERNAME:-VIM}
-    cmd="command vim --servername $(printf '%q' ${VIM_SERVERNAME}) --remote-tab"
+    local remote_cmd="--remote-tab"
+    local args=""
     while [ -n "$1" ]; do
-        cmd="$cmd $(printf ' %q' "$1")"
+        if [[ $1 =~ --?no(|[-_])tab ]]; then
+            remote_cmd="--remote"
+        else
+            args="$args $(printf ' %q' "$1")"
+        fi
         shift
     done
-    eval "$cmd"  # Will fork if server exists, otherwise don't want to
+    local cmd="command vim --servername $(printf '%q' ${VIM_SERVERNAME}) ${remote_cmd}"
+    eval "$cmd $args"  # Will fork if server exists, otherwise don't want to
 }
 
 # Start dummy X server in background -- particularly for Vim, whose server mode
