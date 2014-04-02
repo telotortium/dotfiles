@@ -115,6 +115,17 @@ ec () {
     eval "$cmd &"
 }
 
+# Same but with Vim
+vc () {
+    local VIM_SERVERNAME=${VIM_SERVERNAME:-VIM}
+    cmd="vim --servername $(printf '%q' ${VIM_SERVERNAME}) --remote-tab"
+    while [ -n "$1" ]; do
+        cmd="$cmd $(printf ' %q' "$1")"
+        shift
+    done
+    eval "$cmd"  # Will fork if server exists, otherwise don't want to
+}
+
 # Easy access to editor
 alias edit="$VISUAL"
 
