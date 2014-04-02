@@ -107,7 +107,7 @@ unset _vim
 # Run emacsclient in the background. Run the command using `eval` so that the
 # "$@" variable is expanded in the output of `jobs`.
 ec () {
-    cmd="emacsclient"
+    cmd="command emacsclient"
     while [ -n "$1" ]; do
         cmd="$cmd $(printf ' %q' "$1")"
         shift
