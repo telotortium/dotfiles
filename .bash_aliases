@@ -115,16 +115,44 @@ ec () {
     eval "$cmd &"
 }
 
-# Same but with Vim
+# Connect to Vim server to edit file if present, else start server.
 vc () {
     local VIM_SERVERNAME=${VIM_SERVERNAME:-VIM}
-    cmd="vim --servername $(printf '%q' ${VIM_SERVERNAME}) --remote-tab"
+    cmd="command vim --servername $(printf '%q' ${VIM_SERVERNAME}) --remote-tab"
     while [ -n "$1" ]; do
         cmd="$cmd $(printf ' %q' "$1")"
         shift
     done
     eval "$cmd"  # Will fork if server exists, otherwise don't want to
 }
+
+# Start dummy X server in background -- particularly for Vim, whose server mode
+# requires an X server to run but doesn't require windowing.
+launch_dummy_X () {
+    DUMMY_X_DISPLAY="$1"
+    test -n "$1" || return 1
+    if ! [[ -S /tmp/.X11-unix/"${DUMMY_X_DISPLAY#*:}" ]]; then
+        ( cd /; startx -- /usr/bin/Xvfb "${DUMMY_X_DISPLAY:-:50}" \
+            -screen 0 1024x768x24 >/dev/null 2>&1 & disown )
+    fi
+}
+
+# Override vc if connecting via SSH so that Vim connects by default to a Vim
+# server running on a dummy X display $DUMMY_X_DISPLAY (the original behavior
+# can be obtained using the `vcr` command.
+if [[ -z "$DISPLAY" ]] || [[ -n "$SSH_CONNECTION" ]]; then
+    eval "__original_$(declare -f vc)"
+    vc () {
+        local DUMMY_X_DISPLAY=${DUMMY_X_DISPLAY:-:50}
+        if ! launch_dummy_X "${DUMMY_X_DISPLAY}"; then
+            echo "Launching dummy X on display ${DUMMY_X_DISPLAY} failed" >&2
+        fi
+        DISPLAY=${DUMMY_X_DISPLAY} __original_vc "$@"
+    }
+    vcr () {
+        __original_vc "$@"
+    }
+fi
 
 # Easy access to editor
 alias edit="$VISUAL"
