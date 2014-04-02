@@ -137,8 +137,15 @@ vc () {
 launch_dummy_X () {
     DUMMY_X_DISPLAY="$1"
     test -n "$1" || return 1
-    if ! [[ -S /tmp/.X11-unix/"${DUMMY_X_DISPLAY#*:}" ]]; then
-        ( cd /; startx -- /usr/bin/Xvfb "${DUMMY_X_DISPLAY:-:50}" \
+    # Command in startx must be an absolute path to an executable
+    if [[ -x /opt/X11/bin/Xvfb ]]; then
+        XVFB=${XVFB:-/opt/X11/bin/Xvfb}
+    else
+        XVFB=${XVFB:-/usr/bin/Xvfb}
+    fi
+    # Only spawn if server isn't running
+    if ! [[ -S /tmp/.X11-unix/"X${DUMMY_X_DISPLAY#*:}" ]]; then
+        ( cd /; command startx -- "$XVFB" "${DUMMY_X_DISPLAY:-:50}" \
             -screen 0 1024x768x24 >/dev/null 2>&1 & disown )
     fi
 }
