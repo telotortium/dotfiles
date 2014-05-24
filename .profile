@@ -87,6 +87,10 @@ if perl -Mlocal::lib -e1 2>/dev/null && [ -d "$HOME/local/perl5" ]; then
     eval "$(perl -I"$HOME/local/perl5" -Mlocal::lib)"
 fi
 
+# Set mosh escape key to be like SSH (requires recent version - introduced in
+# github.com/keithw/mosh commit f960a8).
+export MOSH_ESCAPE_KEY='~'
+
 unset path_prepend
 unset path_append
 
