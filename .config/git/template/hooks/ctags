@@ -1,0 +1,7 @@
+#!/bin/sh
+GIT_DIR=$(git rev-parse --git-dir)
+mkdir ${GIT_DIR}/tags_lock 2>/dev/null || exit 0
+trap "rmdir ${GIT_DIR}/tags_lock; rm -f ${GIT_DIR}/tags.$$" EXIT
+
+ctags --tag-relative -R -f ${GIT_DIR}/tags.$$ --exclude=${GIT_DIR}
+mv ${GIT_DIR}/tags.$$ ${GIT_DIR}/tags

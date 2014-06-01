@@ -21,3 +21,5 @@
         whitespace = red reverse
 [push]
         default = simple
+[init]
+	templatedir = ~/.config/git/template
