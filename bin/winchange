@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# winchange - watch changes in terminal dimensions
+#
+# DESCRIPTION
+# ========
+# winchange lets you observe a terminal's dimensions while changing the size of
+# a terminal. It is especially useful when a terminal emulator won't tell you
+# the dimensions of a terminal while you're resizing it, or if you're using
+# a terminal multiplexer with split panes like tmux.
+#
+# Usage:
+#
+#     winchange
+#
+# Leave winchange running until you've resized the terminal to the desired size
+# and then Ctrl-C to kill it.
+printdims () {
+    stty -a | egrep -o "rows *[0-9]+.*columns *[0-9]+"
+    return 0
+}
+
+printdims
+while true; do
+    trap printdims SIGWINCH
+    # Portably sleep for fractional seconds (not all `sleep` binaries support
+    # fractional seconds) - see perldoc select.
+    perl -e 'select undef, undef, undef, 0.25'
+done
+
+

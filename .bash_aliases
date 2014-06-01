@@ -107,13 +107,65 @@ unset _vim
 # Run emacsclient in the background. Run the command using `eval` so that the
 # "$@" variable is expanded in the output of `jobs`.
 ec () {
-    cmd="emacsclient"
+    cmd="command emacsclient"
     while [ -n "$1" ]; do
         cmd="$cmd $(printf ' %q' "$1")"
         shift
     done
     eval "$cmd &"
 }
+
+# Connect to Vim server to edit file if present, else start server.
+vc () {
+    local VIM_SERVERNAME=${VIM_SERVERNAME:-VIM}
+    local remote_cmd="--remote-tab"
+    local args=""
+    while [ -n "$1" ]; do
+        if [[ $1 =~ --?no(|[-_])tab ]]; then
+            remote_cmd="--remote"
+        else
+            args="$args $(printf ' %q' "$1")"
+        fi
+        shift
+    done
+    local cmd="command vim --servername $(printf '%q' ${VIM_SERVERNAME}) ${remote_cmd}"
+    eval "$cmd $args"  # Will fork if server exists, otherwise don't want to
+}
+
+# Start dummy X server in background -- particularly for Vim, whose server mode
+# requires an X server to run but doesn't require windowing.
+launch_dummy_X () {
+    DUMMY_X_DISPLAY="$1"
+    test -n "$1" || return 1
+    # Command in startx must be an absolute path to an executable
+    if [[ -x /opt/X11/bin/Xvfb ]]; then
+        XVFB=${XVFB:-/opt/X11/bin/Xvfb}
+    else
+        XVFB=${XVFB:-/usr/bin/Xvfb}
+    fi
+    # Only spawn if server isn't running
+    if ! [[ -S /tmp/.X11-unix/"X${DUMMY_X_DISPLAY#*:}" ]]; then
+        ( cd /; command startx -- "$XVFB" "${DUMMY_X_DISPLAY:-:50}" \
+            -screen 0 1024x768x24 >/dev/null 2>&1 & disown )
+    fi
+}
+
+# Override vc if connecting via SSH so that Vim connects by default to a Vim
+# server running on a dummy X display $DUMMY_X_DISPLAY (the original behavior
+# can be obtained using the `vcr` command.
+if [[ -z "$DISPLAY" ]] || [[ -n "$SSH_CONNECTION" ]]; then
+    eval "__original_$(declare -f vc)"
+    vc () {
+        local DUMMY_X_DISPLAY=${DUMMY_X_DISPLAY:-:50}
+        if ! launch_dummy_X "${DUMMY_X_DISPLAY}"; then
+            echo "Launching dummy X on display ${DUMMY_X_DISPLAY} failed" >&2
+        fi
+        DISPLAY=${DUMMY_X_DISPLAY} __original_vc "$@"
+    }
+    vcr () {
+        __original_vc "$@"
+    }
+fi
 
 # Easy access to editor
 alias edit="$VISUAL"
