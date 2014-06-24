@@ -49,7 +49,7 @@ export XMODIFIERS="@im=ibus"
 export MATLAB_USE_USERPATH=1
 
 if command_on_path vim; then
-    export FCEDIT="vim -Xu NONE"
+    export FCEDIT="vim -Xu NONE +'set nocp'"
 else
     export FCEDIT="vi"
 fi

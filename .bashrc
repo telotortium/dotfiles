@@ -215,7 +215,8 @@ __bind_edit_in_editor()
         tput bold
         printf "%s\n" "$READLINE_LINE" | tee "$TMPF"
         tput sgr0
-        vim -eXu NONE --cmd 'set t_ti= t_te=' $TMPF && READLINE_LINE=$(< $TMPF)
+        vim -eXu NONE --cmd 'set nocp t_ti= t_te=' $TMPF \
+            && READLINE_LINE=$(< $TMPF)
         rm -f $TMPF
         READLINE_POINT=$p # or p or ${#READLINE_LINE} or ...
 }

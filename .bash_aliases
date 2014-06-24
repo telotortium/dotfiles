@@ -82,8 +82,8 @@ __abs_path () {
 if hash vi 2>/dev/null && hash vim 2>/dev/null \
     && test "$(ls -i "$(__abs_path "$(which vi)")" | cut -d' ' -f1)" = \
     "$(ls -i "$(__abs_path "$(which vim)")" | cut -d' ' -f1)"; then
-    alias vi="vim -Xu NONE +'set bg=dark'"
-    alias view="vim -RXu NONE +'set bg=dark'"
+    alias vi="vim -Xu NONE +'set nocp bg=dark'"
+    alias view="vim -RXu NONE +'set nocp bg=dark'"
 fi
 unset __abs_path
 
