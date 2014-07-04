@@ -213,9 +213,9 @@ __bind_edit_in_editor()
         tput bold
         printf "%s\n" "$READLINE_LINE" | tee "$TMPF"
         tput sgr0
-        vim -eXu NONE -c 'syntax on' -c 'filetype plugin indent on' \
-            -c 'let g:is_posix=1' -c 'set nocp t_ti= t_te= filetype=sh' $TMPF \
-            && READLINE_LINE=$(< $TMPF)
+        # ${FCEDIT} args must be double-quoted because it uses `eval`
+        ${FCEDIT} -E -c "'set t_ti= t_te='" "$(printf '%q' "$TMPF")" \
+            && READLINE_LINE=$(< "$TMPF")
         rm -f $TMPF
         READLINE_POINT=$p # or p or ${#READLINE_LINE} or ...
 }

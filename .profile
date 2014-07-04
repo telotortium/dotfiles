@@ -49,7 +49,9 @@ export XMODIFIERS="@im=ibus"
 export MATLAB_USE_USERPATH=1
 
 if command_on_path vim; then
-    export FCEDIT="vim -Xu NONE +'set nocp'"
+    export FCEDIT="eval vim -Xu NONE -c 'syntax on'  \
+        -c 'filetype plugin indent on' -c 'let g:is_posix=1' \
+        -c 'set nocp filetype=sh'"
 else
     export FCEDIT="vi"
 fi
