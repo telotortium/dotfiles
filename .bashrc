@@ -11,8 +11,8 @@ umask 022
 # Set up tmux attach actions
 [ -f "$HOME/.bash_tmux_reattach" ] && . "$HOME/.bash_tmux_reattach"
 
-# Get proper SSH agent
-[ -f "$HOME/bin/find-ssh-agent" ] && . "$HOME/bin/find-ssh-agent"
+# Import ssh-agent settings
+[ -f "$(command -v find-ssh-agent)" ] && . find-ssh-agent
 
 # From http://unix.stackexchange.com/a/48113
 export HISTCONTROL=ignoredups:erasedups  # no duplicate entries

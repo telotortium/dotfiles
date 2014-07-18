@@ -64,7 +64,7 @@ export HISTIGNORE="&:ls:ls:mutt:[bf]g:exit:exec:exec *"
 export TEXMFHOME=$HOME/.texmf
 
 # Import ssh-agent settings
-[ -f "$HOME/bin/find-ssh-agent" ] && . "$HOME/bin/find-ssh-agent"
+[ -f "$(command -v find-ssh-agent)" ] && . find-ssh-agent
 
 # Python initialization
 export PYTHONSTARTUP=$HOME/.pythonstartup
