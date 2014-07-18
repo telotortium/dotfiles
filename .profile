@@ -16,7 +16,7 @@ path_append () {
 
 # User specific environment and startup programs
 export PATH="$(path_prepend "$PATH" \
-    $HOME/bin:$HOME/winbin:$HOME/local/bin:$HOME/.cabal/bin)"
+    $HOME/bin:$HOME/winbin:$HOME/.local/bin:$HOME/.cabal/bin)"
 
 # Is the command found on path? `command -v` is supposedly more portable than
 # `which`.
