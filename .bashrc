@@ -28,7 +28,10 @@ shopt -s checkwinsize
 
 # If set, the pattern "**" used in a pathname expansion context will
 # match all files and zero or more directories and subdirectories.
-#shopt -s globstar
+shopt -s globstar
+
+# Enable extended glob patterns
+shopt -s extglob
 
 # make less more friendly for non-text input files, see lesspipe(1)
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
@@ -89,7 +92,12 @@ bash_prompt_setup() {
     local BGW="\[$(tput setab 7)\]"
 
     case $TERM in
-    xterm*|rxvt*|screen*|putty*)
+    # Assume these terminals support at least 16 colors, since TERM is often
+    # set to these even if the terminal supports more colors.
+    xterm|rxvt|screen|putty)
+        ;&
+    # Explicitly enable for all terminals with >8 colors
+    *-[0-9]+([0-9])color?(-*))
         # bright colors
         local BK="\[\033[0;90m\]"
         local BR="\[\033[0;91m\]"
@@ -167,7 +175,7 @@ bash_prompt_setup() {
 
     # If this is an xterm set the title to user@host:dir
     case "$TERM" in
-    xterm*|rxvt*|screen*|putty*)
+    xterm*|rxvt*|screen*|putty*|*-256color)
         PROMPT_COMMAND="${PROMPT_COMMAND}"'; printf "\033]0;%s: %s\007" "${USER}@${HOSTNAME}" "'"${__pwd_escaped}"'"'
         ;;
     esac
