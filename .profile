@@ -16,7 +16,7 @@ path_append () {
 
 # User specific environment and startup programs
 export PATH="$(path_prepend "$PATH" \
-    $HOME/bin:$HOME/winbin:$HOME/local/bin:$HOME/.cabal/bin)"
+    $HOME/bin:$HOME/winbin:$HOME/.local/bin:$HOME/.cabal/bin)"
 
 # Is the command found on path? `command -v` is supposedly more portable than
 # `which`.
@@ -65,7 +65,7 @@ export HISTIGNORE="&:ls:ls:mutt:[bf]g:exit:exec:exec *"
 export TEXMFHOME=$HOME/.texmf
 
 # Import ssh-agent settings
-[ -f "$HOME/bin/find-ssh-agent" ] && . "$HOME/bin/find-ssh-agent"
+[ -f "$(command -v find-ssh-agent)" ] && . find-ssh-agent
 
 # Python initialization
 export PYTHONSTARTUP=$HOME/.pythonstartup

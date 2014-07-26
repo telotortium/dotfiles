@@ -7,8 +7,15 @@ alias ll='ls -l'
 alias dir='ls --format=vertical -F'
 alias vdir='ls --format=long -F'
 # enable color support of ls and also add handy aliases
-if [ "$TERM" != "dumb" ]; then
-    eval "`dircolors -b`"
+case "$TERM" in
+# No color support
+dumb)
+    ;;
+# Assume color support for other terminals
+*)
+    # Assume that non-dumb terminals support colors
+    eval "$(dircolors -b <(dircolors --print-database \
+        | awk "BEGIN { print \"TERM \" \"${TERM}\"; } { print; }"))"
 
     # Colored paged listing of files
     lspage ()
@@ -27,7 +34,8 @@ if [ "$TERM" != "dumb" ]; then
     alias egrep="egrep --color=auto"
     alias fgrep="fgrep --color=auto"
     alias pcregrep="pcregrep --color=auto"
-fi
+    ;;
+esac
 
 # `jobs` command that expands variables (from
 # http://stackoverflow.com/questions/9827428/how-to-expand-variables-in-bash-jobs-list
