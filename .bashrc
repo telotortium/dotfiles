@@ -231,7 +231,7 @@ bind -m vi -x '"v":__bind_edit_in_editor'
 bind -m emacs -x '"\C-x\C-e":__bind_edit_in_editor'
 
 # Merge home directory correctly into xrdb
-if [ -n "$DISPLAY" ] && hash xrdb; then
+if [ -n "$DISPLAY" ] && [ -z "$SSH_CONNECTION" ] && hash xrdb; then
     echo "URxvt.perl-lib: $HOME/.urxvt/ext/urxvt-perls/" | xrdb -merge
 fi
 
