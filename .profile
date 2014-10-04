@@ -82,7 +82,22 @@ case "$python_version" in
 esac
 unset d python_version
 
-# Go path setup
+# Go initialization
+__ncpu () {
+    if command_on_path nproc; then
+        nproc
+        return
+    fi
+    case $(uname) in
+    Darwin)
+        sysctl -n hw.ncpu ;;
+    # Fallback: 1 core
+    *)
+        echo 1 ;;
+    esac
+}
+export GOMAXPROCS=$(__ncpu)
+unset __ncpu
 export GOPATH="$(path_prepend "$GOPATH" "$HOME/Documents/code/go")"
 
 # Perl local::lib - don't try to load it if it isn't installed
