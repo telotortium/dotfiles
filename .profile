@@ -109,9 +109,9 @@ fi
 # github.com/keithw/mosh commit f960a8).
 export MOSH_ESCAPE_KEY='~'
 
-unset path_prepend
-unset path_append
-
 if [ -f "$HOME/.profile.local" ]; then
     . "$HOME/.profile.local"
 fi
+
+unset path_prepend
+unset path_append
