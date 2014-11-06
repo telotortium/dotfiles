@@ -1,0 +1,14 @@
+#!/bin/sh
+# Add org file changes to the repository
+ORG_REPOS=${ORG_REPOS?"no repos defined"}
+GIT=${GIT:-git}
+
+for repo in $ORG_REPOS
+do
+    cd ~/Documents/org/$repo
+    # Remove deleted files
+    $GIT ls-files --deleted -z | xargs -0 $GIT rm -q >/dev/null 2>&1
+    # Add new files
+    $GIT add . >/dev/null 2>&1
+    $GIT commit -q -m "$(date)"
+done
