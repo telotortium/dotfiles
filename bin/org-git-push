@@ -1,0 +1,13 @@
+#!/bin/sh
+# Push org file repositories
+ORG_REPOS=${ORG_REPOS?"no repos defined"}
+GIT=${GIT:-git}
+
+for repo in $ORG_REPOS
+do
+    cd "$HOME/Documents/org/$repo"
+    oldbranch=$( "$GIT" rev-parse --abbrev-ref HEAD )
+    "$GIT" checkout -q master
+    "$GIT" push -q
+    "$GIT" checkout -q "$oldbranch"
+done
