@@ -1,13 +1,28 @@
-#!/bin/sh
+#!/usr/bin/env perl
 # Push org file repositories
-ORG_REPOS=${ORG_REPOS?"no repos defined"}
-GIT=${GIT:-git}
+use 5.012;
+use strict;
+use warnings;
 
-for repo in $ORG_REPOS
-do
-    cd "$HOME/Documents/org/$repo"
-    oldbranch=$( "$GIT" rev-parse --abbrev-ref HEAD )
-    "$GIT" checkout -q master
-    "$GIT" push -q
-    "$GIT" checkout -q "$oldbranch"
-done
+my @org_repos = split /\s+/, $ENV{'ORG_REPOS'} // die "No repos defined";
+my $git = $ENV{GIT} // 'git';
+$git = shellescape($git);
+
+for my $repo (@org_repos) {
+    chdir "$ENV{HOME}/Documents/org/$repo";
+    my $oldbranch = `$git rev-parse --abbrev-ref HEAD`;
+    chomp $oldbranch;
+    $oldbranch = shellescape($oldbranch);
+    system("$git stash save -q");
+    system("$git checkout -q master");
+    system("$git pull -q");
+    system("$git push -q");
+    system("$git checkout -q $oldbranch");
+    length `$git stash list` and system("$git stash apply -q");
+}
+
+sub shellescape {
+    my $arg = shift;
+    $arg =~ s/'/'\\''/g;
+    return "'" . $arg . "'";
+}
