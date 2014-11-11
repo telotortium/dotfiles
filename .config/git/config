@@ -13,6 +13,8 @@
         pager = less -R
         editor = vim -X --nofork
         autocrlf = input
+[diff "org"]
+        xfuncname = "^(\\*+ [a-zA-Z0-9]+.+)$"
 [man]
         viewer = mostman
 [man "mostman"]
