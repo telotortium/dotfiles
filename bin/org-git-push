@@ -16,7 +16,9 @@ for my $repo (@org_repos) {
     system("$git stash save -q");
     system("$git checkout -q master");
     system("$git pull -q");
-    system("$git push -q");
+    # Filter stderr to remove spurious messages
+    system(qq{GIT=$git bash -c '\$GIT push -q }
+        . qq{2> >( sed "/Resolving deltas/d" )'});
     system("$git checkout -q $oldbranch");
     length `$git stash list` and system("$git stash apply -q");
 }
