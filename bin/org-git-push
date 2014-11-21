@@ -1,30 +1,50 @@
-#!/usr/bin/env perl
-# Push org file repositories
-use 5.012;
-use strict;
-use warnings;
+#!/usr/bin/env python
 
-my @org_repos = split /\s+/, $ENV{'ORG_REPOS'} // die "No repos defined";
-my $git = $ENV{GIT} // 'git';
-$git = shellescape($git);
+"""Sync Org git repos with upstream.
 
-for my $repo (@org_repos) {
-    chdir "$ENV{HOME}/Documents/org/$repo";
-    my $oldbranch = `$git rev-parse --abbrev-ref HEAD`;
-    chomp $oldbranch;
-    $oldbranch = shellescape($oldbranch);
-    system("$git stash save -q");
-    system("$git checkout -q master");
-    system("$git pull -q");
-    # Filter stderr to remove spurious messages
-    system(qq{GIT=$git bash -c '\$GIT push -q }
-        . qq{2> >( sed "/Resolving deltas/d" )'});
-    system("$git checkout -q $oldbranch");
-    length `$git stash list` and system("$git stash apply -q");
-}
+Assumes that each directory in `~/Documents/org` listed in the environment variable
+`ORG_REPOS` is a Git repo containing org-mode files.
 
-sub shellescape {
-    my $arg = shift;
-    $arg =~ s/'/'\\''/g;
-    return "'" . $arg . "'";
-}
+Set the environment variable `GIT` to use a custom `git` executable (uses the
+one on the path by default).
+"""
+
+import os
+import pipes
+import re
+import subprocess as sp
+import sys
+
+org_repos = os.environ.get('ORG_REPOS', '').split()
+if not org_repos:
+    sys.exit("No repos defined");
+git = os.environ.get('GIT', 'git')
+
+exit = 0
+for repo in org_repos:
+    try:
+        os.chdir(os.path.join(os.environ['HOME'], 'Documents', 'org', repo))
+        oldbranch = sp.check_output(
+                [git] + 'rev-parse --abbrev-ref HEAD'.split()
+                ).strip()
+
+        sp.check_call([git] + 'stash save -q'.split())
+        ls = sp.check_output([git] + 'stash list'.split())
+        try:
+            stash = re.match('(.*?):', ls.splitlines()[0]).group(1)
+        except (IndexError, AttributeError):
+            stash = ''
+
+        sp.check_call([git] + 'checkout master -q'.split())
+        sp.check_call([git] + 'pull -q'.split())
+        sp.check_call(r"""GIT={} bash -c '$GIT push -q 2> \
+                        >( sed "/Resolving deltas/d" )'""".format(pipes.quote(git)),
+                      shell=True)
+        sp.check_call([git] + 'checkout -q'.split() + [oldbranch])
+        if stash:
+            sp.check_call([git] + 'stash pop -q'.split() + [stash])
+    except sp.CalledProcessError as e:
+        print >>sys.stderr, e
+        exit = 1
+        continue
+sys.exit(exit)
