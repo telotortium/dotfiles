@@ -67,16 +67,17 @@ tmux_save_old_env () {
     __tmux_show_environment_filter > "$__tmux_old_env"
 }
 
-# Use SIGPWR, which is otherwise unused, as a signal to send to shells
-# on reattchment.
-__tmux_on_reattach () {
-    tmux_save_old_env
-    tmux_reload_env
-    cat 1>&2 <<EOF
-tmux env reloaded - use \`tmux_load_old_env\` for previous env
-EOF
-}
-trap __tmux_on_reattach PWR
+# FIXME: SIGPWR causes a segfault on Ubuntu Trusty.
+# # Use SIGPWR, which is otherwise unused, as a signal to send to shells
+# # on reattchment.
+# __tmux_on_reattach () {
+#     tmux_save_old_env
+#     tmux_reload_env
+#     cat 1>&2 <<EOF
+# tmux env reloaded - use \`tmux_load_old_env\` for previous env
+# EOF
+# }
+# trap __tmux_on_reattach PWR
 
 __tmux_old_env="$__tmux_old_env_tmp"
 unset __tmux_old_env_tmp
