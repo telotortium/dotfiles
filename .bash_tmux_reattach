@@ -67,7 +67,7 @@ tmux_save_old_env () {
     __tmux_show_environment_filter > "$__tmux_old_env"
 }
 
-# FIXME: SIGPWR causes a segfault on Ubuntu Trusty.
+# FIXME: SIGPWR causes a segfault in Bash on Ubuntu Trusty.
 # # Use SIGPWR, which is otherwise unused, as a signal to send to shells
 # # on reattchment.
 # __tmux_on_reattach () {
