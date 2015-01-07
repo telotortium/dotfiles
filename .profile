@@ -41,6 +41,10 @@ else
     export EDITOR=vi
 fi
 
+# Set the COLORFGBG environment to force Vim to assume a dark terminal
+# background.
+export COLORFGBG=${COLORFGBG:-"7;0"}
+
 # Input method
 export GTK_IM_MODULE=ibus
 export QT_IM_MODULE=ibus
