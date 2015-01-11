@@ -41,6 +41,10 @@ else
     export EDITOR=vi
 fi
 
+# Set the COLORFGBG environment to force Vim to assume a dark terminal
+# background.
+export COLORFGBG=${COLORFGBG:-"7;0"}
+
 # Input method
 export GTK_IM_MODULE=ibus
 export QT_IM_MODULE=ibus
@@ -52,7 +56,7 @@ if command_on_path vim; then
     export FCEDIT="eval vim -Xu NONE \
         -c 'syntax on'  -c 'filetype plugin indent on' \
         -c 'let g:is_posix=1' -c 'set nocp filetype=sh' \
-        -c 'noremap ; :'  -c 'noremap : ;'"
+        "
 else
     export FCEDIT="vi"
 fi
