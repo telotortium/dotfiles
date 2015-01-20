@@ -115,12 +115,12 @@ unset _vim
 # Run emacsclient in the background. Run the command using `eval` so that the
 # "$@" variable is expanded in the output of `jobs`.
 ec () {
-    cmd="command emacsclient"
+    cmd="command emacsclient -n"
     while [ -n "$1" ]; do
         cmd="$cmd $(printf ' %q' "$1")"
         shift
     done
-    eval "$cmd &"
+    eval "$cmd"
 }
 
 # Connect to Vim server to edit file if present, else start server.
