@@ -16,7 +16,7 @@ path_append () {
 
 # User specific environment and startup programs
 export PATH="$(path_prepend "$PATH" \
-    $HOME/bin:$HOME/winbin:$HOME/.local/bin:$HOME/.cabal/bin)"
+    "$HOME/bin:$HOME/winbin:$HOME/.local/bin:$HOME/.cabal/bin")"
 
 # Is the command found on path? `command -v` is supposedly more portable than
 # `which`.
@@ -111,6 +111,9 @@ fi
 
 # Set mosh escape key to be like SSH (requires recent version - introduced in
 # github.com/keithw/mosh commit f960a8).
+#
+# Not expanding tilde is intentional --
+# shellcheck disable=SC2088
 export MOSH_ESCAPE_KEY='~'
 
 if [ -f "$HOME/.profile.local" ]; then
