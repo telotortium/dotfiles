@@ -100,7 +100,7 @@ __ncpu () {
     fi
     case $(uname) in
     Darwin)
-        sysctl -n hw.ncpu ;;
+        /usr/sbin/sysctl -n hw.ncpu ;;
     # Fallback: 1 core
     *)
         echo 1 ;;
