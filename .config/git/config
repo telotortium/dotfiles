@@ -24,6 +24,6 @@
 [push]
         default = simple
 [init]
-	templatedir = ~/.config/git/template
+        templatedir = ~/.config/git/template
 [rerere]
-	enabled = true
+        enabled = true
