@@ -13,6 +13,8 @@
         pager = less -R
         editor = vim -X --nofork
         autocrlf = input
+[diff]
+        submodule = log
 [diff "org"]
         xfuncname = "^(\\*+ [a-zA-Z0-9]+.+)$"
 [man]
@@ -27,3 +29,5 @@
         templatedir = ~/.config/git/template
 [rerere]
         enabled = true
+[status]
+        submoduleSummary = true
