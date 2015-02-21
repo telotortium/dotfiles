@@ -18,8 +18,9 @@ dumb)
         | awk "BEGIN { print \"TERM \" \"${TERM}\"; } { print; }"))"
 
     # Colored paged listing of files
-    lspage ()
-    {
+    lspage () {
+        # Essentially an alias -- use of `ls` is intentional.
+        # shellcheck disable=SC2012
         ls --color=always "$@" | less -r
     }
 
@@ -87,6 +88,8 @@ __abs_path () {
         print abs_path($path) . "\n";
     }' "$@"
 }
+# `ls -i` to list inode numbers.
+# shellcheck disable=SC2012
 if hash vi 2>/dev/null && hash vim 2>/dev/null \
     && test "$(ls -i "$(__abs_path "$(which vi)")" | cut -d' ' -f1)" = \
     "$(ls -i "$(__abs_path "$(which vim)")" | cut -d' ' -f1)"; then
@@ -103,6 +106,8 @@ if [ -f /etc/fedora-release ] && hash vimx; then
 else
     _vim="command vim"
 fi
+# Expand variables when defined, not when used.
+# shellcheck disable=SC2139
 if test -n "$SSH_CONNECTION"; then
     alias vim="$_vim -X"
     alias vimx="$_vim"
@@ -115,12 +120,12 @@ unset _vim
 # Run emacsclient in the background. Run the command using `eval` so that the
 # "$@" variable is expanded in the output of `jobs`.
 ec () {
-    cmd="command emacsclient"
+    cmd="command emacsclient -n"
     while [ -n "$1" ]; do
         cmd="$cmd $(printf ' %q' "$1")"
         shift
     done
-    eval "$cmd &"
+    eval "$cmd"
 }
 
 # Connect to Vim server to edit file if present, else start server.
@@ -136,7 +141,7 @@ vc () {
         fi
         shift
     done
-    local cmd="command vim --servername $(printf '%q' ${VIM_SERVERNAME}) ${remote_cmd}"
+    local cmd="command vim --servername $(printf '%q' "${VIM_SERVERNAME}") ${remote_cmd}"
     eval "$cmd $args"  # Will fork if server exists, otherwise don't want to
 }
 
@@ -153,7 +158,7 @@ launch_dummy_X () {
     fi
     # Only spawn if server isn't running
     if ! [[ -S /tmp/.X11-unix/"X${DUMMY_X_DISPLAY#*:}" ]]; then
-        ( cd /; command startx -- "$XVFB" "${DUMMY_X_DISPLAY:-:50}" \
+        ( cd /; "$XVFB" "${DUMMY_X_DISPLAY:-:50}" \
             -screen 0 1024x768x24 >/dev/null 2>&1 & disown )
     fi
 }
@@ -176,7 +181,7 @@ if [[ -z "$DISPLAY" ]] || [[ -n "$SSH_CONNECTION" ]]; then
 fi
 
 # Easy access to editor
-alias edit="$VISUAL"
+alias edit="\$VISUAL"  # Escape `$` to not expand until used.
 
 # Functions to make use of the directory stack easier
 # Go backwards in stack
@@ -195,7 +200,7 @@ f ()
     if [ ! -n "$1" ]; then
         pushd -0
     else
-        pushd -`dc -e "$1 1 - p"`
+        pushd -"$(( "$1" - 1 ))"
     fi
 }
 
@@ -205,7 +210,7 @@ alias d="dirs"
 cd ()
 {
     if [ ! -n "$1" ]; then
-        pushd $HOME > /dev/null
+        pushd "$HOME" > /dev/null
     elif [ "$1" = '-' ]; then
         pushd > /dev/null
     else
@@ -223,6 +228,7 @@ disowner ()
 }
 
 # Colored manpages. If man doesn't work, use help instead (for shell builtins)
+__MANPAGER_CONFIG="LESS=XC MANPAGER=less"
 if infocmp mostlike &>/dev/null; then
     __MOSTLIKE_TERM_CONFIG="TERMINFO=~/.terminfo/ TERM=mostlike"
 else
@@ -232,11 +238,14 @@ fi
 # the function, instead of when it's run.
 eval "
 man () {
-    LESS=XC PAGER=less $__MOSTLIKE_TERM_CONFIG command man \"\$@\" \
+    $__MANPAGER_CONFIG $__MOSTLIKE_TERM_CONFIG command man \"\$@\" \
         || (help \"\$@\" &>/dev/null && help \"\$@\" | less)
 }
 "
-alias perldoc="$__MOSTLIKE_TERM_CONFIG LESS=XC PAGER=less perldoc"
+# Expand `__MOSTLIKE_TERM_CONFIG` when defined, not when used.
+# shellcheck disable=SC2139
+alias perldoc="$__MANPAGER_CONFIG $__MOSTLIKE_TERM_CONFIG perldoc"
+unset __MANPAGER_CONFIG
 unset __MOSTLIKE_TERM_CONFIG
 
 

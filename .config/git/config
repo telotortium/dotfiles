@@ -13,15 +13,23 @@
         pager = less -R
         editor = vim -X --nofork
         autocrlf = input
+[diff]
+        submodule = log
 [diff "org"]
         xfuncname = "^(\\*+ [a-zA-Z0-9]+.+)$"
 [man]
         viewer = mostman
 [man "mostman"]
-        cmd = TERMINFO=~/.terminfo/ LESS=XC TERM=mostlike PAGER=less man
+        cmd = eval "$(TERMINFO=~/.terminfo/ infocmp mostlike >/dev/null 2>&1 && echo TERMINFO=~/.terminfo/ TERM=mostlike) LESS=XC MANPAGER=less man"
 [color "diff"]
         whitespace = red reverse
+[pull]
+        rebase = preserve
 [push]
         default = simple
 [init]
-	templatedir = ~/.config/git/template
+        templatedir = ~/.config/git/template
+[rerere]
+        enabled = true
+[status]
+        submoduleSummary = true
