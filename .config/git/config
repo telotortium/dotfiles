@@ -23,6 +23,8 @@
         cmd = TERMINFO=~/.terminfo/ LESS=XC TERM=mostlike PAGER=less man
 [color "diff"]
         whitespace = red reverse
+[pull]
+        rebase = preserve
 [push]
         default = simple
 [init]
