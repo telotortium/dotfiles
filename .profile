@@ -69,7 +69,7 @@ fi
 export PAGER=less
 export ACK_PAGER_COLOR="less -R"
 export LESS="XR"
-export VISUAL=$EDITOR
+export VISUAL="$EDITOR"
 export HISTIGNORE="&:ls:ls:mutt:[bf]g:exit:exec:exec *"
 
 export TEXMFHOME=$HOME/.texmf
