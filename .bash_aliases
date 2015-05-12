@@ -158,7 +158,7 @@ launch_dummy_X () {
     fi
     # Only spawn if server isn't running
     if ! [[ -S /tmp/.X11-unix/"X${DUMMY_X_DISPLAY#*:}" ]]; then
-        ( cd /; command startx -- "$XVFB" "${DUMMY_X_DISPLAY:-:50}" \
+        ( cd /; "$XVFB" "${DUMMY_X_DISPLAY:-:50}" \
             -screen 0 1024x768x24 >/dev/null 2>&1 & disown )
     fi
 }
