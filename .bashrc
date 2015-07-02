@@ -205,10 +205,6 @@ bash_prompt_setup() {
 bash_prompt_setup
 unset bash_prompt_setup
 
-# Save and reload the history after each command finishes
-shopt -s histappend                      # append to history, don't overwrite
-export PROMPT_COMMAND="history -a; $PROMPT_COMMAND"
-
 # Replace the edit-and-execute-command bindings, which use VISUAL and EDITOR,
 # with a custom function after
 # <http://gnu-bash.2382.n7.nabble.com/edit-and-execute-command-is-appropriately-named-weird-td3617.html> (retrieved 2013-01-14).
@@ -257,3 +253,7 @@ fi
 if [ -f ~/.bashrc.local ]; then
     . ~/.bashrc.local
 fi
+
+# Save and reload the history after each command finishes
+shopt -s histappend                      # append to history, don't overwrite
+export PROMPT_COMMAND="history -a; $PROMPT_COMMAND"
