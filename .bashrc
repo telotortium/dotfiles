@@ -11,16 +11,13 @@ umask 022
 # Set up tmux attach actions
 [ -f "$HOME/.bash_tmux_reattach" ] && . "$HOME/.bash_tmux_reattach"
 
-# Import ssh-agent settings
-[ -f "$(command -v find-ssh-agent)" ] && . find-ssh-agent
+# # Import ssh-agent settings
+# [ -f "$(command -v find-ssh-agent)" ] && . find-ssh-agent
 
 # From http://unix.stackexchange.com/a/48113
 export HISTCONTROL=ignoredups:erasedups  # no duplicate entries
 export HISTSIZE=100000                   # big big history
 export HISTFILESIZE=100000               # big big history
-shopt -s histappend                      # append to history, don't overwrite
-# Save and reload the history after each command finishes
-export PROMPT_COMMAND="history -a; history -c; history -r; $PROMPT_COMMAND"
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
@@ -95,7 +92,7 @@ bash_prompt_setup() {
     # Assume these terminals support at least 16 colors, since TERM is often
     # set to these even if the terminal supports more colors.
     xterm|rxvt|screen|putty)
-        ;&
+        ;;&
     # Explicitly enable for all terminals with >8 colors
     *-[0-9]+([0-9])color?(-*))
         # bright colors
@@ -207,6 +204,10 @@ bash_prompt_setup() {
 
 bash_prompt_setup
 unset bash_prompt_setup
+
+# Save and reload the history after each command finishes
+shopt -s histappend                      # append to history, don't overwrite
+export PROMPT_COMMAND="history -a; $PROMPT_COMMAND"
 
 # Replace the edit-and-execute-command bindings, which use VISUAL and EDITOR,
 # with a custom function after
