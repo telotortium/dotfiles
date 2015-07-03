@@ -228,7 +228,7 @@ disowner ()
 }
 
 # Colored manpages. If man doesn't work, use help instead (for shell builtins)
-__MANPAGER_CONFIG="LESS=XC MANPAGER=less"
+__MANPAGER_CONFIG="LESS=XCR MANPAGER=less"
 if infocmp mostlike &>/dev/null; then
     __MOSTLIKE_TERM_CONFIG="TERMINFO=~/.terminfo/ TERM=mostlike"
 else
