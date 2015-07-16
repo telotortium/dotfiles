@@ -228,7 +228,7 @@ disowner ()
 }
 
 # Colored manpages. If man doesn't work, use help instead (for shell builtins)
-__MANPAGER_CONFIG="LESS=XCR MANPAGER=less"
+__MANPAGER_CONFIG="LESS=XCRI MANPAGER=less"
 if infocmp mostlike &>/dev/null; then
     __MOSTLIKE_TERM_CONFIG="TERMINFO=~/.terminfo/ TERM=mostlike"
 else
@@ -292,6 +292,7 @@ alias po="popd"
 alias screen="/usr/bin/screen"
 alias byobu="byobu -S byobu"
 command_on_path ack-grep 2>/dev/null && alias ack=ack-grep
+command_on_path ag 2>/dev/null && alias ag='ag --pager=less'
 command_on_path xdg-open 2>/dev/null && alias open="xdg-open"
 
 # Wake-on-LAN

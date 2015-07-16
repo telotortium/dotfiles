@@ -54,7 +54,7 @@ else
 fi
 export PAGER=less
 export ACK_PAGER_COLOR="less -R"
-export LESS="XR"
+export LESS="XRI"
 export VISUAL="$EDITOR"
 export HISTIGNORE="&:ls:ls:mutt:[bf]g:exit:exec:exec *"
 
