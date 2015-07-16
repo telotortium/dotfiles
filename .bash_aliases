@@ -90,7 +90,7 @@ __abs_path () {
 }
 # `ls -i` to list inode numbers.
 # shellcheck disable=SC2012
-if hash vi 2>/dev/null && hash vim 2>/dev/null \
+if command_on_path vi 2>/dev/null && command_on_path vim 2>/dev/null \
     && test "$(ls -i "$(__abs_path "$(which vi)")" | cut -d' ' -f1)" = \
     "$(ls -i "$(__abs_path "$(which vim)")" | cut -d' ' -f1)"; then
     alias vi="vim -Xu NONE +'set nocp bg=dark'"
@@ -101,7 +101,7 @@ unset __abs_path
 # Try to use a Vim with X compiled in (on Fedora/RedHat that is installed at
 # `vimx` instead of the non-X-enabled `vim`), but disable X forwarding with
 # Vim by default if we're connecting remotely, since it slows down Vim startup.
-if [ -f /etc/fedora-release ] && hash vimx; then
+if [ -f /etc/fedora-release ] && command_on_path vimx; then
     _vim="command vimx"
 else
     _vim="command vim"
@@ -291,8 +291,8 @@ alias pu="pushd"
 alias po="popd"
 alias screen="/usr/bin/screen"
 alias byobu="byobu -S byobu"
-hash ack-grep 2>/dev/null && alias ack=ack-grep
-hash xdg-open 2>/dev/null && alias open="xdg-open"
+command_on_path ack-grep 2>/dev/null && alias ack=ack-grep
+command_on_path xdg-open 2>/dev/null && alias open="xdg-open"
 
 # Wake-on-LAN
 laplace_wakeonlan () {
@@ -330,8 +330,8 @@ takeover() {
 alias dotfiles-update='make -C ~/.dotfiles update'
 
 # I like the Perl version of rename on Linux
-hash prename 2>/dev/null && alias rename=prename
-hash perl-rename 2>/dev/null && alias rename=perl-rename
+command_on_path prename 2>/dev/null && alias rename=prename
+command_on_path perl-rename 2>/dev/null && alias rename=perl-rename
 
 # Git diff has pretty colors
 alias diff="git diff --no-index --"

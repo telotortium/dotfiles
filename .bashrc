@@ -5,6 +5,9 @@
 # If not running interactively, don't do anything
 [ -z "$PS1" ] && return
 
+
+[ -f "$HOME/.common.sh" ] && . "$HOME/.common.sh"
+
 # Set umask to exclude group and other write permissions
 umask 022
 
@@ -228,7 +231,7 @@ bind -m vi -x '"v":__bind_edit_in_editor'
 bind -m emacs -x '"\C-x\C-e":__bind_edit_in_editor'
 
 # Merge home directory correctly into xrdb
-if [ -n "$DISPLAY" ] && [ -z "$SSH_CONNECTION" ] && hash xrdb; then
+if [ -n "$DISPLAY" ] && [ -z "$SSH_CONNECTION" ] && command_on_path xrdb; then
     echo "URxvt.perl-lib: $HOME/.urxvt/ext/urxvt-perls/" | xrdb -merge
 fi
 
