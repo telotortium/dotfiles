@@ -42,6 +42,8 @@ if [ -z "$debian_chroot" ] && [ -r /etc/debian_chroot ]; then
 fi
 
 # Terminal setup
+# Disable flow control
+stty stop undef
 # If in GNOME Terminal, set the appropriate TERM
 if [ "$COLORTERM" = "gnome-terminal" ]; then
     export TERM="gnome-256color"
