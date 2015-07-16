@@ -333,5 +333,6 @@ alias dotfiles-update='make -C ~/.dotfiles update'
 command_on_path prename 2>/dev/null && alias rename=prename
 command_on_path perl-rename 2>/dev/null && alias rename=perl-rename
 
-# Git diff has pretty colors
-alias diff="git diff --no-index --"
+# Always use unified diff, and use colors if possible
+alias diff='diff -u'
+command_on_path colordiff 2>/dev/null && alias diff='colordiff -u'
