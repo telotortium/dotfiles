@@ -236,11 +236,12 @@ fi
 # Use `eval` in order to interpolate `$__MOSTLIKE_TERM_CONFIG` when defining
 # the function, instead of when it's run.
 eval "
-man () {
+__man_impl () {
     $__MOSTLIKE_TERM_CONFIG command man \"\$@\" \
         || (help \"\$@\" &>/dev/null && help \"\$@\" | less)
 }
 "
+alias man=__man_impl
 # Expand `__MOSTLIKE_TERM_CONFIG` when defined, not when used.
 # shellcheck disable=SC2139
 alias perldoc="$__MOSTLIKE_TERM_CONFIG perldoc"
@@ -248,20 +249,22 @@ unset __MOSTLIKE_TERM_CONFIG
 
 
 # Safetly/convenience aliases for cp, mv, rm
-cp () {
+__cp () {
     if [ $# -eq 1 ]; then
         command cp -i "$1" .
     else
         command cp -i "$@"
     fi
 }
-mv () {
+alias cp=__cp_impl
+__mv () {
     if [ $# -eq 1 ]; then
         command mv -i "$1" .
     else
         command mv -i "$@"
     fi
 }
+alias mv=__mv_impl
 alias rm="rm -I"
 
 # Use POSIX-extended regexes in find
