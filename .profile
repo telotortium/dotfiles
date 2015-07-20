@@ -52,7 +52,7 @@ if command_on_path vim; then
 else
     export FCEDIT="vi"
 fi
-export PAGER=less
+export PAGER=less MANPAGER="$PAGER"
 export LESS="XRI"
 export VISUAL="$EDITOR"
 export HISTIGNORE="&:ls:ls:mutt:[bf]g:exit:exec:exec *"
