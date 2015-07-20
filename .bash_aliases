@@ -228,7 +228,6 @@ disowner ()
 }
 
 # Colored manpages. If man doesn't work, use help instead (for shell builtins)
-__MANPAGER_CONFIG="LESS=XCRI MANPAGER=less"
 if infocmp mostlike &>/dev/null; then
     __MOSTLIKE_TERM_CONFIG="TERMINFO=~/.terminfo/ TERM=mostlike"
 else
@@ -238,14 +237,13 @@ fi
 # the function, instead of when it's run.
 eval "
 man () {
-    $__MANPAGER_CONFIG $__MOSTLIKE_TERM_CONFIG command man \"\$@\" \
+    $__MOSTLIKE_TERM_CONFIG command man \"\$@\" \
         || (help \"\$@\" &>/dev/null && help \"\$@\" | less)
 }
 "
 # Expand `__MOSTLIKE_TERM_CONFIG` when defined, not when used.
 # shellcheck disable=SC2139
-alias perldoc="$__MANPAGER_CONFIG $__MOSTLIKE_TERM_CONFIG perldoc"
-unset __MANPAGER_CONFIG
+alias perldoc="$__MOSTLIKE_TERM_CONFIG perldoc"
 unset __MOSTLIKE_TERM_CONFIG
 
 

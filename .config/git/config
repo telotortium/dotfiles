@@ -20,7 +20,7 @@
 [man]
         viewer = mostman
 [man "mostman"]
-        cmd = eval "$(TERMINFO=~/.terminfo/ infocmp mostlike >/dev/null 2>&1 && echo TERMINFO=~/.terminfo/ TERM=mostlike) LESS=XCRI MANPAGER=less man"
+        cmd = eval "$(TERMINFO=~/.terminfo/ infocmp mostlike >/dev/null 2>&1 && echo TERMINFO=~/.terminfo/ TERM=mostlike) man"
 [color "diff"]
         whitespace = red reverse
 [pull]
