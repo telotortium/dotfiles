@@ -52,10 +52,14 @@ if command_on_path vim; then
 else
     export FCEDIT="vi"
 fi
-export PAGER=less MANPAGER="$PAGER"
-export LESS="XRI"
 export VISUAL="$EDITOR"
 export HISTIGNORE="&:ls:ls:mutt:[bf]g:exit:exec:exec *"
+
+export PAGER=less MANPAGER="$PAGER"
+export LESS="XRI"
+# Page scroll is often slow on the Linux console with higher resolution unless
+# the -C option is passed.
+[ "$TERM" = "linux" ] && export LESS="${LESS}C"
 
 export TEXMFHOME=$HOME/.texmf
 
