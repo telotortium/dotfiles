@@ -33,3 +33,5 @@
         enabled = true
 [status]
         submoduleSummary = true
+[multidiff]
+        tool = meld-multidiff

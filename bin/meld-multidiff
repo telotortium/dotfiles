@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Use Meld in multidiff mode from git-multidiff.
+
+declare -a args
+while test -n "$1"; do
+    args+=( --diff "$1" "$2" )
+    shift; shift
+done
+exec meld "${args[@]}"
