@@ -249,7 +249,7 @@ unset __MOSTLIKE_TERM_CONFIG
 
 
 # Safetly/convenience aliases for cp, mv, rm
-__cp () {
+__cp_impl () {
     if [ $# -eq 1 ]; then
         command cp -i "$1" .
     else
@@ -257,7 +257,7 @@ __cp () {
     fi
 }
 alias cp=__cp_impl
-__mv () {
+__mv_impl () {
     if [ $# -eq 1 ]; then
         command mv -i "$1" .
     else
