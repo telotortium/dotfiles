@@ -265,7 +265,11 @@ __mv_impl () {
     fi
 }
 alias mv=__mv_impl
-alias rm="rm -I"
+# Alias to `rm -I` for GNU coreutils rm.
+alias rm="rm -i"
+if rm --version &>/dev/null; then
+    alias rm="rm -I"
+fi
 
 # Use POSIX-extended regexes in find
 refind () {
