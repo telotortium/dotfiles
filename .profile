@@ -55,7 +55,8 @@ fi
 export VISUAL="$EDITOR"
 export HISTIGNORE="&:ls:ls:mutt:[bf]g:exit:exec:exec *"
 
-export PAGER=less MANPAGER="$PAGER"
+export PAGER=less
+export MANPAGER="$PAGER"
 export LESS="XRI"
 # Page scroll is often slow on the Linux console with higher resolution unless
 # the -C option is passed.
