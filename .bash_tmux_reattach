@@ -22,7 +22,7 @@ test -z "$__tmux_old_env" || return 0
 # Save old environment before loading new environment variables from tmux
 # session every time the session is reattached.
 
-__tmux_old_env_tmp=$(mktemp --tmpdir \
+__tmux_old_env_tmp=$(mktemp -t \
     tmux_old_env.$(tmux display -p '#S').$$.XXXXXXXX)
 
 # Reload environment from tmux session
