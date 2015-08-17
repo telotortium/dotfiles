@@ -16,6 +16,11 @@ path_append () {
     echo "$(test -n "$1" && echo "$1":)${2}"
 }
 
+# Evaluate system PATH on OS X
+if [ -x /usr/libexec/path_helper ]; then
+    eval `/usr/libexec/path_helper -s`
+fi
+
 # User specific environment and startup programs
 export PATH="$(path_prepend "$PATH" \
     "$HOME/bin:$HOME/winbin:$HOME/.local/bin:$HOME/.cabal/bin")"
