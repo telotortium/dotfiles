@@ -1,35 +1,43 @@
 #!/bin/bash
 # Basic ls aliases
 unalias ls &> /dev/null
-alias l='ls -CF'
-alias la='ls -lA'
-alias ll='ls -l'
-alias dir='ls --format=vertical -F'
-alias vdir='ls --format=long -F'
-# enable color support of ls and also add handy aliases
 case "$TERM" in
 # No color support
 dumb)
     ;;
 # Assume color support for other terminals
 *)
-    # Assume that non-dumb terminals support colors
-    eval "$(dircolors -b <(dircolors --print-database \
-        | awk "BEGIN { print \"TERM \" \"${TERM}\"; } { print; }"))"
+    LS_COLOR_FLAG=""
+    if { ls --version | grep 'GNU coreutils'; } &>/dev/null; then
+        LS_COLOR_FLAG="--color=auto"
+        # Assume that non-dumb terminals support colors
+        eval "$(dircolors -b <(dircolors --print-database \
+            | awk "BEGIN { print \"TERM \" \"${TERM}\"; } { print; }"))"
+    elif [ $(uname -s) = 'Darwin' ]; then
+        LS_COLOR_FLAG="-G"
+    fi
 
     # Colored paged listing of files
     lspage () {
-        # Essentially an alias -- use of `ls` is intentional.
-        # shellcheck disable=SC2012
-        ls --color=always "$@" | less -r
+        # Essentially an alias -- use of `ls` is intentional for shellcheck.
+        if { ls --version | grep 'GNU coreutils'; } &>/dev/null; then
+            # shellcheck disable=SC2012
+            command ls --color=always "$@" | less -r
+        elif [ $(uname -s) = 'Darwin' ]; then
+            # shellcheck disable=SC2012
+            CLICOLOR=1 CLICOLOR_FORCE=1 command ls "$@" | less -r
+        else
+            # shellcheck disable=SC2012
+            command ls "$@" | less -r
+        fi
     }
 
-    alias ls='ls --color=auto'
-    alias l='ls -CF --color=auto'
-    alias la='ls -lA --color=auto'
-    alias ll='ls -l --color=auto'
-    alias dir='ls --color=auto --format=vertical -F'
-    alias vdir='ls --color=auto --format=long -F'
+    alias ls="ls ${LS_COLOR_FLAG}"
+    alias l="ls -CF ${LS_COLOR_FLAG}"
+    alias la="ls -lA ${LS_COLOR_FLAG}"
+    alias ll="ls -l ${LS_COLOR_FLAG}"
+    alias dir="ls ${LS_COLOR_FLAG} --format=vertical -F"
+    alias vdir="ls ${LS_COLOR_FLAG} --format=long -F"
     # Set grep to use color automatically
     alias grep="grep --color=auto"
     alias egrep="egrep --color=auto"
