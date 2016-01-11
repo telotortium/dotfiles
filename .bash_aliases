@@ -99,7 +99,7 @@ __abs_path () {
 }
 # `ls -i` to list inode numbers.
 # shellcheck disable=SC2012
-if command_on_path vi 2>/dev/null && command_on_path vim 2>/dev/null \
+if command_on_path vi && command_on_path vim \
     && test "$(ls -i "$(__abs_path "$(which vi)")" | cut -d' ' -f1)" = \
     "$(ls -i "$(__abs_path "$(which vim)")" | cut -d' ' -f1)"; then
     alias vi="vim -Xu NONE +'set nocp bg=dark'"
@@ -305,9 +305,9 @@ alias pu="pushd"
 alias po="popd"
 alias screen="/usr/bin/screen"
 alias byobu="byobu -S byobu"
-command_on_path ack-grep 2>/dev/null && alias ack=ack-grep
-command_on_path ag 2>/dev/null && alias ag='ag --pager=less'
-command_on_path xdg-open 2>/dev/null && alias open="xdg-open"
+command_on_path ack-grep && alias ack=ack-grep
+command_on_path ag && alias ag='ag --pager=less'
+command_on_path xdg-open && alias open="xdg-open"
 
 # Wake-on-LAN
 laplace_wakeonlan () {
@@ -345,9 +345,9 @@ takeover() {
 alias dotfiles-update='make -C ~/.dotfiles update'
 
 # I like the Perl version of rename on Linux
-command_on_path prename 2>/dev/null && alias rename=prename
-command_on_path perl-rename 2>/dev/null && alias rename=perl-rename
+command_on_path prename && alias rename=prename
+command_on_path perl-rename && alias rename=perl-rename
 
 # Always use unified diff, and use colors if possible
 alias diff='diff -u'
-command_on_path colordiff 2>/dev/null && alias diff='colordiff -u'
+command_on_path colordiff && alias diff='colordiff -u'
