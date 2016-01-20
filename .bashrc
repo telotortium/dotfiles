@@ -262,3 +262,5 @@ fi
 # Save and reload the history after each command finishes
 shopt -s histappend                      # append to history, don't overwrite
 export PROMPT_COMMAND="history -a; $PROMPT_COMMAND"
+
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash
