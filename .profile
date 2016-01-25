@@ -103,7 +103,7 @@ __ncpu () {
 }
 export GOMAXPROCS=$(__ncpu)
 unset __ncpu
-export GOPATH="$(path_prepend "$GOPATH" "$HOME/Documents/code/go")"
+export GOPATH="$HOME/Documents/code/go"
 
 # Perl local::lib - don't try to load it if it isn't installed
 if perl -Mlocal::lib -e1 2>/dev/null && [ -d "$HOME/local/perl5" ]; then
