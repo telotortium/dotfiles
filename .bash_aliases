@@ -351,3 +351,6 @@ command_on_path perl-rename && alias rename=perl-rename
 # Always use unified diff, and use colors if possible
 alias diff='diff -u'
 command_on_path colordiff && alias diff='colordiff -u'
+
+# Manage dotfiles in $HOME as a Git repo with its $GIT_DIR placed elsewhere.
+alias config='git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'

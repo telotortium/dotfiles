@@ -1,6 +1,3 @@
-[submodule "seashell"]
-	path = seashell
-	url = git://github.com/staticshock/seashell
 [submodule ".vim"]
 	path = .vim
 	url = git@github.com:telotortium/vimrc.git
