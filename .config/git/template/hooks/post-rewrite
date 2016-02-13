@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/usr/bin/env bash
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/common.bash"
 case "$1" in
-  rebase) exec .git/hooks/post-merge ;;
+rebase) exec "${GIT_DIR}/hooks/post-merge" ;;
 esac
