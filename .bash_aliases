@@ -99,11 +99,15 @@ __abs_path () {
 }
 # `ls -i` to list inode numbers.
 # shellcheck disable=SC2012
-if command_on_path vi && command_on_path vim \
-    && test "$(ls -i "$(__abs_path "$(which vi)")" | cut -d' ' -f1)" = \
-    "$(ls -i "$(__abs_path "$(which vim)")" | cut -d' ' -f1)"; then
-    alias vi="vim -Xu NONE +'set nocp bg=dark'"
-    alias view="vim -RXu NONE +'set nocp bg=dark'"
+if command_on_path nvim; then
+    _vi_impl=nvim
+elif command_on_path vim; then
+    _vi_impl=vim
+    _X_flag="-X"
+fi
+if [ -n "${_vi_impl:=""}" ]; then
+    alias vi="${_vi_impl} ${_X_flag:=} -u NONE +'set nocp bg=dark'"
+    alias view="${_vi_impl} ${_X_flag:=} -Ru NONE +'set nocp bg=dark'"
 fi
 unset __abs_path
 
