@@ -38,3 +38,5 @@
         submoduleSummary = true
 [multidiff]
         tool = meld-multidiff
+[rebase]
+        autosquash = true
