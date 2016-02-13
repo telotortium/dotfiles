@@ -14,6 +14,20 @@ git clone --separate-git-dir="$HOME/.dotfiles"  \
 cp ~/dotfiles-tmp/.gitmodules ~
 rm -r ~/dotfiles-tmp/
 alias config='git --git-dir="$HOME/.dotfiles/" --work-tree="$HOME"'
+
+# Checkout dotfiles from repo after attempting to save the existing files.
+config stash save
+config tag dotfiles-before-initial-checkout stash@{0}
+existing_dotfiles () {
+    config status --porcelain \
+        | sed -ne '/^ / { s/^ *[^ ]* *\(.*\)$/\1/; p; }' \
+}
+existing_dotfiles | while read -r x; do config checkout HEAD -- "$x"; done
+
+# Don't show untracked files, in order to ignore programs that dump their
+# configuration in $HOME.
+config config --local status.showUntrackedFiles no
+
 config submodule update --init --recursive
 ```
 
