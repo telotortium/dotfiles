@@ -121,7 +121,7 @@ else
 fi
 # Expand variables when defined, not when used.
 # shellcheck disable=SC2139
-if test -n "$SSH_CONNECTION"; then
+if test -n "${SSH_CONNECTION:-}"; then
     alias vim="$_vim -X"
     alias vimx="$_vim"
 else
@@ -134,7 +134,7 @@ unset _vim
 # "$@" variable is expanded in the output of `jobs`.
 ec () {
     cmd="command emacsclient -n"
-    while [ -n "$1" ]; do
+    while [ -n "${1:-}" ]; do
         cmd="$cmd $(printf ' %q' "$1")"
         shift
     done
@@ -146,7 +146,7 @@ vc () {
     local VIM_SERVERNAME=${VIM_SERVERNAME:-VIM}
     local remote_cmd="--remote-tab"
     local args=""
-    while [ -n "$1" ]; do
+    while [ -n "${1:-}" ]; do
         if [[ $1 =~ --?no(|[-_])tab ]]; then
             remote_cmd="--remote"
         else
@@ -161,8 +161,8 @@ vc () {
 # Start dummy X server in background -- particularly for Vim, whose server mode
 # requires an X server to run but doesn't require windowing.
 launch_dummy_X () {
-    DUMMY_X_DISPLAY="$1"
-    test -n "$1" || return 1
+    DUMMY_X_DISPLAY="${1:-}"
+    test -n "${1:-}" || return 1
     # Command in startx must be an absolute path to an executable
     if [[ -x /opt/X11/bin/Xvfb ]]; then
         XVFB=${XVFB:-/opt/X11/bin/Xvfb}
@@ -179,7 +179,7 @@ launch_dummy_X () {
 # Override vc if connecting via SSH so that Vim connects by default to a Vim
 # server running on a dummy X display $DUMMY_X_DISPLAY (the original behavior
 # can be obtained using the `vcr` command.
-if [[ -z "$DISPLAY" ]] || [[ -n "$SSH_CONNECTION" ]]; then
+if [[ -z "${DISPLAY:-}" ]] || [[ -n "${SSH_CONNECTION:-}" ]]; then
     eval "__original_$(declare -f vc)"
     vc () {
         local DUMMY_X_DISPLAY=${DUMMY_X_DISPLAY:-:50}
@@ -200,7 +200,7 @@ alias edit="\$VISUAL"  # Escape `$` to not expand until used.
 # Go backwards in stack
 b ()
 {
-    if [ ! -n "$1" ]; then
+    if [ ! -n "${1:-}" ]; then
         pushd +1
     else
         pushd +"$1"
@@ -210,7 +210,7 @@ b ()
 # Go forwards in stack
 f ()
 {
-    if [ ! -n "$1" ]; then
+    if [ ! -n "${1:-}" ]; then
         pushd -0
     else
         pushd -"$(( "$1" - 1 ))"
@@ -222,9 +222,9 @@ alias d="dirs"
 # Add directories to the stack when changing directory
 cd ()
 {
-    if [ ! -n "$1" ]; then
+    if [ ! -n "${1:-}" ]; then
         pushd "$HOME" > /dev/null
-    elif [ "$1" = '-' ]; then
+    elif [ "${1:-}" = '-' ]; then
         pushd > /dev/null
     else
         pushd "$@" > /dev/null
@@ -336,7 +336,7 @@ takeover() {
     fi
 
     # switch any clients attached to the target session to the temp session
-    session="$1"
+    session="${1:-}"
     for client in $(tmux list-clients -t "$session" | cut -f 1 -d :); do
         tmux switch-client -c "$client" -t "$tmp"
     done

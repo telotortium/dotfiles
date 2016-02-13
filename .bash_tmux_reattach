@@ -16,7 +16,7 @@ if test -z "$TMUX" && test -n "$SSH_CONNECTION"; then
 fi
 
 # We've already executed everything below if this is set
-test -z "$__tmux_old_env" || return 0
+test -z "${__tmux_old_env:-}" || return 0
 
 ##########################################################################
 # Save old environment before loading new environment variables from tmux

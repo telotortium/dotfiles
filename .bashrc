@@ -3,7 +3,7 @@
 # for examples
 
 # If not running interactively, don't do anything
-[ -z "$PS1" ] && return
+[ -z "${PS1:-}" ] && return
 
 
 [ -f "$HOME/.common.sh" ] && . "$HOME/.common.sh"
@@ -37,7 +37,7 @@ shopt -s extglob
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
 # set variable identifying the chroot you work in (used in the prompt below)
-if [ -z "$debian_chroot" ] && [ -r /etc/debian_chroot ]; then
+if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
     debian_chroot=$(cat /etc/debian_chroot)
 fi
 
@@ -45,7 +45,7 @@ fi
 # Disable flow control
 stty stop undef
 # If in GNOME Terminal, set the appropriate TERM
-if [ "$COLORTERM" = "gnome-terminal" ]; then
+if [ "${COLORTERM:-}" = "gnome-terminal" ]; then
     export TERM="gnome-256color"
 fi
 # Handle screen pecularities
@@ -233,7 +233,7 @@ bind -m vi -x '"v":__bind_edit_in_editor'
 bind -m emacs -x '"\C-x\C-e":__bind_edit_in_editor'
 
 # Merge home directory correctly into xrdb
-if [ -n "$DISPLAY" ] && [ -z "$SSH_CONNECTION" ] && command_on_path xrdb; then
+if [ -n "${DISPLAY:-}" ] && [ -z "${SSH_CONNECTION:-}" ] && command_on_path xrdb; then
     echo "URxvt.perl-lib: $HOME/.urxvt/ext/urxvt-perls/" | xrdb -merge
 fi
 
