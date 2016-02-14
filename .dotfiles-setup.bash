@@ -11,13 +11,16 @@ main () {
     [ -e "${git_dir}" ] && mv "${git_dir}" "${git_dir_backup}"
     local repo="https://github.com/telotortium/dotfiles"
     local tmp_dir="$HOME/dotfiles-tmp"
-    local working_dir="$HOME"
+    local worktree="$HOME"
     git clone --separate-git-dir="${git_dir}"  "${repo}" "${tmp_dir}"
-    cp "${tmp_dir}/.gitmodules" "${working_dir}"
+    cp "${tmp_dir}/.gitmodules" "${worktree}"
     rm -rf "${tmp_dir}"
     config() {
-        git --git-dir="${git_dir}" --work-tree="${working_dir}" "$@"
+        git --git-dir="${git_dir}" --work-tree="${worktree}" "$@"
     }
+
+    # Set working tree
+    config config --local core.worktree "${worktree}"
 
     # Checkout dotfiles from repo after attempting to save the existing files.
     existing_dotfiles () {
