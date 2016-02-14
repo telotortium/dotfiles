@@ -1,7 +1,7 @@
 set -eu
 
 main () {
-    local git_dir="$HOME/.dotfiles"
+    local git_dir="$HOME/.dotfiles-git-dir"
     local git_dir_backup="${git_dir}-backup"
     if [ -e "${git_dir_backup}" ]; then
         echo "Backup directory ${git_dir_backup} exists -- " \
