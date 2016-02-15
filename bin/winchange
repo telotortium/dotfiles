@@ -16,7 +16,8 @@
 # Leave winchange running until you've resized the terminal to the desired size
 # and then Ctrl-C to kill it.
 printdims () {
-    stty -a | egrep -o "rows *[0-9]+.*columns *[0-9]+"
+    stty -a | \
+        egrep -o "(rows *[0-9]+.*columns *[0-9]+|[0-9]+ *rows.*[0-9]+ *columns)"
     return 0
 }
 
