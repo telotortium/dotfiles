@@ -16,7 +16,7 @@ main () {
     cp "${tmp_dir}/.gitmodules" "${worktree}"
     rm -rf "${tmp_dir}"
     config() {
-        git --git-dir="${git_dir}" --work-tree="${worktree}" "$@"
+        git --git-dir="${git_dir}" "$@"
     }
 
     # Set working tree
