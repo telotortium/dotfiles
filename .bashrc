@@ -167,7 +167,7 @@ bash_prompt_setup() {
         fi;
         printf "%s" "${__pwd}";)'
 
-    PROMPT_COMMAND='__PROMPT_EXIT_STATUS=$?'
+    unset PROMPT_COMMAND PS1 PS2
 
     if [ "$TERM" = "dumb" ]; then
         PS1='\u@\h:'"${__pwd_escaped}"'\$ '
@@ -178,7 +178,7 @@ bash_prompt_setup() {
     # If this is an xterm set the title to user@host:dir
     case "$TERM" in
     xterm*|rxvt*|screen*|putty*|*-256color)
-        PROMPT_COMMAND="${PROMPT_COMMAND}"'; printf "\033]0;%s: %s\007" "${USER}@${HOSTNAME}" "'"${__pwd_escaped}"'"'
+        PROMPT_COMMAND="${PROMPT_COMMAND:-:}"'; printf "\033]0;%s: %s\007" "${USER}@${HOSTNAME}" "'"${__pwd_escaped}"'"'
         ;;
     esac
 
@@ -261,6 +261,6 @@ fi
 
 # Save and reload the history after each command finishes
 shopt -s histappend                      # append to history, don't overwrite
-export PROMPT_COMMAND="history -a; $PROMPT_COMMAND"
+export PROMPT_COMMAND="__PROMPT_EXIT_STATUS=\$?; history -a; $PROMPT_COMMAND"
 
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
