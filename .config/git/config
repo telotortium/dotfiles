@@ -14,6 +14,7 @@
         pager = less -R
         editor = vim -X --nofork
         autocrlf = input
+        untrackedCache = true
 [diff]
         submodule = log
 [diff "org"]
