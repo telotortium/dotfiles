@@ -31,7 +31,7 @@
 [init]
         templatedir = ~/.config/git/template
 [rebase]
-	autoSquash = true
+        autoSquash = true
 [rerere]
         enabled = true
 [status]
