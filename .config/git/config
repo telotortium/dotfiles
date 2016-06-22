@@ -19,6 +19,8 @@
         submodule = log
 [diff "org"]
         xfuncname = "^(\\*+ [a-zA-Z0-9]+.+)$"
+[help]
+        autocorrect = 1
 [interactive]
         diffFilter = diff-highlight
 [man]
