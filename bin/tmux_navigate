@@ -1,0 +1,89 @@
+#!/usr/bin/env zsh
+# tmux keybinding to navigate vim windows (splits) alongside first-class tmux windows (panes).
+# by Kartik Agaram -- http://akkartik.name/about -- tmux_navigate@akkartik.com
+# Usage: tmux_navigate [hjkl]
+#        tmux_navigate skipvim [hjkl]
+#
+# Scenarios considered:
+# A1. User hits C-h
+#     tmux maps this to 'tmux_navigate h'
+#     current pane is running vim
+#     tmux_navigate sends C-h onward to vim
+#     vim focuses split to the left
+# A2. User hits C-h
+#     tmux maps this to 'tmux_navigate h'
+#     current pane is running vim
+#     tmux_navigate sends C-h onward to vim
+#     cursor is in left-most vim split
+#     vim calls 'tmux_navigate skipvim h'
+#     tmux_navigate(2) cycles to pane left
+#     pane isn't running vim
+# A3. User hits C-h
+#     tmux maps this to 'tmux_navigate h'
+#     current pane is running vim
+#     tmux_navigate sends C-h onward to vim
+#     cursor is in left-most vim split
+#     vim calls 'tmux_navigate skipvim h'
+#     tmux_navigate(2) cycles to pane left
+#     new pane is also running vim
+#     tmux_navigate(2) sends keys to vim to switch to *rightmost* split
+#
+# B1. User hits C-h
+#     tmux maps this to 'tmux_navigate h'
+#     current pane isn't running vim
+#     tmux_navigate cycles to pane left
+#     new pane isn't running vim
+# B2. User hits C-h
+#     tmux maps this to 'tmux_navigate h'
+#     current pane isn't running vim
+#     tmux_navigate cycles to pane left
+#     new pane is running vim
+#     vim calls 'tmux_navigate skipvim h'
+#     tmux_navigate(2) sends keys to vim to switch to *rightmost* split
+#
+# C1. Single pane not running vim - no change
+# C2. Single pane running vim with no splits - no change
+# C3. Single pane running vim with splits - cycle through splits
+#
+# D. Vim running outside tmux - cycle through splits.
+#
+# Other directions hjkl work symmetrically.
+
+function in_vim() {
+  # Scenarios considered:
+  #   should match: vim Vim VIM vimdiff /usr/local/bin/vim
+  #   should not match: /Users/christoomey/.vim/thing /usr/local/bin/start-vim
+  # (Thanks https://github.com/christoomey/vim-tmux-navigator)
+  tmux display-message -p '#{pane_current_command}' |grep -iqE '(^|\/)vim(diff)?$'
+}
+
+function opposite() {
+  echo $1 | tr 'hjkl' 'lkjh'
+}
+
+function to_tmux() {
+  echo $1 |tr 'hjkl' 'LDUR'
+}
+
+if [[ $1 == 'skipvim' ]]
+then
+  skipvim=1
+  shift
+fi
+
+if [[ $skipvim != 1 ]] && in_vim
+then
+  tmux send-keys 'C-'$1
+else
+  tmux select-pane -$(to_tmux $1)
+  if in_vim
+  then
+    tmux send-keys '999:wincmd ' $(opposite $1) C-m
+  fi
+fi
+
+# Credits:
+#   https://gist.github.com/mislav/5189704
+#   http://www.codeography.com/2013/06/19/navigating-vim-and-tmux-splits
+#   https://github.com/christoomey/vim-tmux-navigator
+#   http://www.reddit.com/r/vim/comments/22ixkq/navigate_around_vim_and_tmux_panes_painlessly
