@@ -9,11 +9,18 @@ Set the environment variable `GIT` to use a custom `git` executable (uses the
 one on the path by default).
 """
 
+import optparse
 import os
 import pipes
 import re
+import shutil
 import subprocess as sp
 import sys
+import tempfile
+
+parser = optparse.OptionParser()
+parser.add_option('--noninteractive', action='store_true', dest='noninteractive')
+(options, args) = parser.parse_args()
 
 org_repos = os.environ.get('ORG_REPOS', '').split()
 if not org_repos:
@@ -22,27 +29,25 @@ git = os.environ.get('GIT', 'git')
 
 exit = 0
 for repo in org_repos:
+    maintree = os.path.join(os.environ['HOME'], 'Documents', 'org', repo)
     try:
-        os.chdir(os.path.join(os.environ['HOME'], 'Documents', 'org', repo))
-        oldbranch = sp.check_output(
-                [git] + 'rev-parse --abbrev-ref HEAD'.split()
-                ).strip()
-
-        sp.check_call([git] + 'stash save -q'.split())
-        ls = sp.check_output([git] + 'stash list'.split())
+        os.chdir(maintree)
         try:
-            stash = re.match('(.*?):', ls.splitlines()[0]).group(1)
-        except (IndexError, AttributeError):
-            stash = ''
-
-        sp.check_call([git] + 'checkout master -q'.split())
-        sp.check_call([git] + 'pull -q'.split())
+            sp.check_call(
+                r"""GIT={} bash -c '$GIT pull --rebase --autostash -q 2> \
+                >( sed "/Successfully rebased and updated refs\\/heads\\/master\\./d" 1>&2)'""".format(pipes.quote(git)),
+                shell=True)
+        except sp.CalledProcessError as e:
+            if options.noninteractive:
+                sp.call([git, "rebase", "--abort"])
+                sp.call([git, "merge", "--abort"])
+                exit = 1
+                continue
+            else:
+                raise
         sp.check_call(r"""GIT={} bash -c '$GIT push -q 2> \
-                        >( sed "/Resolving deltas/d" )'""".format(pipes.quote(git)),
+                        >( sed "/Resolving deltas/d" 1>&2 )'""".format(pipes.quote(git)),
                       shell=True)
-        sp.check_call([git] + 'checkout -q'.split() + [oldbranch])
-        if stash:
-            sp.check_call([git] + 'stash pop -q'.split() + [stash])
     except sp.CalledProcessError as e:
         print >>sys.stderr, e
         exit = 1
