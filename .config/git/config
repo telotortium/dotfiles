@@ -12,7 +12,6 @@
         ui = true
 [core]
         pager = less -R
-        editor = vim -X --nofork
         autocrlf = input
         untrackedCache = true
 [diff]
