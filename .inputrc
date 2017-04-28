@@ -1,5 +1,6 @@
 set editing-mode vi
 set completion-ignore-case on
+set enable-bracketed-paste on
 # Map the Ctrl-up and Ctrl-down keys to search history
 # Map the Ctrl-left and Ctrl-right to move by words
 "\e[1;5A" history-search-backward

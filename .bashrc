@@ -224,7 +224,9 @@ __bind_edit_in_editor()
         printf "%s\n" "$READLINE_LINE" | tee "$TMPF"
         tput sgr0
         # ${FCEDIT} args must be double-quoted because it uses `eval`
-        ${FCEDIT} -E -c "'set t_ti= t_te='" "$(printf '%q' "$TMPF")" \
+        ${FCEDIT} -E \
+            -c "'source ~/.vim/plugged/vim-bracketed-paste/plugin/bracketed-paste.vim'" \
+            "$(printf '%q' "$TMPF")" \
             && READLINE_LINE=$(< "$TMPF")
         rm -f $TMPF
         READLINE_POINT=$p # or p or ${#READLINE_LINE} or ...
