@@ -102,12 +102,14 @@ def generate_cloze(cloze_html):
 '''.format(DRILL_TAG, org)[1:]  # Slice to remove leading newline character
 
 
+NOTE_SEP_RE = re.compile(r'^==$', re.MULTILINE)
+
 def generate_flip(row):
     """Generate a org-mode item containing an org-drill flip card."""
     # The expanded clozes live in row[1]. row[0] is unused.
     front = html_to_org(row[0])
     back = html_to_org(row[1])
-    return r'''
+    org = r'''
 * Item               :{}:
   :PROPERTIES:
   :DRILL_CARD_TYPE: twosided
@@ -120,6 +122,8 @@ def generate_flip(row):
 {}
 '''.format(DRILL_TAG, front,
            back)[1:]  # Slice to remove leading newline character
+    return NOTE_SEP_RE.sub('** Note', org)
+
 
 
 def html_to_org(html):
