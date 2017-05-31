@@ -5,7 +5,9 @@ GIT=${GIT:-git}
 
 for repo in $ORG_REPOS
 do
-    cd "$HOME/Documents/org/$repo"
+    maintree="$HOME/Documents/org/$repo"
+    echo "$0: Processing $maintree" 1>&2
+    cd "$maintree"
     # Remove deleted files
     "$GIT" ls-files --deleted -z | xargs -0 "$GIT" rm -q >/dev/null 2>&1
     # Add new files

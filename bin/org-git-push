@@ -30,6 +30,7 @@ git = os.environ.get('GIT', 'git')
 exit = 0
 for repo in org_repos:
     maintree = os.path.join(os.environ['HOME'], 'Documents', 'org', repo)
+    print >>sys.stderr, "{}: Processing {}".format(sys.argv[0], maintree)
     try:
         os.chdir(maintree)
         try:
