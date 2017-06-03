@@ -20,7 +20,7 @@ umask 022
 # From http://unix.stackexchange.com/a/48113
 export HISTCONTROL=ignoredups:erasedups  # no duplicate entries
 export HISTSIZE=100000                   # big big history
-export HISTFILESIZE=100000               # big big history
+unset HISTFILESIZE                       # big big history
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
