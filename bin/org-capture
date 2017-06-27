@@ -1,6 +1,3 @@
 #!/bin/sh -e
 EMACSCLIENT=${EMACSCLIENT:-emacsclient}
-"$EMACSCLIENT" --eval '
-    (progn
-        (select-frame-set-input-focus (nth 0 (frame-list)))
-        (org-capture))'
+"$EMACSCLIENT" --create-frame --eval '(org-capture)'
