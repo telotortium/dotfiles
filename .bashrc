@@ -255,14 +255,39 @@ if [ -f /etc/bash_completion ]; then
     . /etc/bash_completion
 fi
 
-
-# LOCAL SETTINGS
-if [ -f ~/.bashrc.local ]; then
-    . ~/.bashrc.local
-fi
-
 # Save and reload the history after each command finishes
 shopt -s histappend                      # append to history, don't overwrite
 export PROMPT_COMMAND="__PROMPT_EXIT_STATUS=\$?; history -a; $PROMPT_COMMAND"
 
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
+
+# Modify __fzf_history__ to remove duplicate commands from the history fed into
+# `fzf`.
+__new_fzf_history__() (
+  (
+    history () {
+        builtin history |
+        awk '{
+            cmd = $0; sub(/^ *[0-9]+  /, "", cmd);
+            if (!seen[cmd]) { print $0; seen[cmd] = 1; }
+        }'
+    }
+    __orig_fzf_history__ "$@"
+  )
+)
+
+replace_fzf_history() {
+    local orig_def=$(declare -f __fzf_history__ \
+        | sed 's/__fzf_history__/__orig_fzf_history__/g')
+    eval "$orig_def"
+    local new_def=$(declare -f __new_fzf_history__ \
+        | sed 's/__new_fzf_history__/__fzf_history__/g')
+    eval "$new_def"
+}
+
+replace_fzf_history
+
+# LOCAL SETTINGS
+if [ -f ~/.bashrc.local ]; then
+    . ~/.bashrc.local
+fi
