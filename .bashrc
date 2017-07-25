@@ -258,6 +258,7 @@ fi
 # Save and reload the history after each command finishes
 shopt -s histappend                      # append to history, don't overwrite
 export PROMPT_COMMAND="__PROMPT_EXIT_STATUS=\$?; history -a; $PROMPT_COMMAND"
+trap 'history -a' EXIT
 
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
