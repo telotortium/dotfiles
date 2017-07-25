@@ -109,6 +109,9 @@ export PATH="$(path_prepend "$PATH" "$GOPATH/bin")"
 # Rust initialization
 export PATH="$(path_prepend "$PATH" "$HOME/.cargo/bin")"
 
+# Nix
+export PATH="$(path_prepend "$PATH" "$HOME/.nix-profile/bin")"
+
 # Perl local::lib - don't try to load it if it isn't installed
 if perl -Mlocal::lib -e1 2>/dev/null && [ -d "$HOME/local/perl5" ]; then
     eval "$(perl -I"$HOME/local/perl5" -Mlocal::lib)"
