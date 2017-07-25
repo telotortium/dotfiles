@@ -11,3 +11,10 @@ set enable-bracketed-paste on
 "\e[1;5D" backward-word
 "\e[5C" forward-word
 "\e[5D" backward-word
+
+set keymap vi-insert
+Control-o: "setsid "
+Control-l: clear-screen
+
+set keymap emacs-standard
+Control-o: "setsid "
