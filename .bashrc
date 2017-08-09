@@ -17,11 +17,6 @@ umask 022
 # # Import ssh-agent settings
 # [ -f "$(command -v find-ssh-agent)" ] && . find-ssh-agent
 
-# From http://unix.stackexchange.com/a/48113
-export HISTCONTROL=ignoredups:erasedups  # no duplicate entries
-export HISTSIZE=100000                   # big big history
-unset HISTFILESIZE                       # big big history
-
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
 shopt -s checkwinsize
@@ -254,6 +249,16 @@ fi
 if [ -f /etc/bash_completion ]; then
     . /etc/bash_completion
 fi
+
+# History control
+# no duplicate entries, and ignore entries starting with space
+HISTCONTROL=ignorespace:erasedups
+# Don't truncate history
+HISTSIZE=-1; unset HISTFILESIZE
+# Store multi-line command lines correctly
+shopt -s cmdhist lithist
+# Allow editing history lines on failure or from history expansion
+shopt -s histreedit histverify
 
 # Save and reload the history after each command finishes
 shopt -s histappend                      # append to history, don't overwrite
