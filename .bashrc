@@ -269,8 +269,7 @@ trap 'history -a' EXIT
 
 # Modify __fzf_history__ to remove duplicate commands from the history fed into
 # `fzf`.
-__new_fzf_history__() (
-  (
+__new_fzf_history__() {
     history () {
         builtin history |
         awk '{
@@ -279,8 +278,7 @@ __new_fzf_history__() (
         }'
     }
     __orig_fzf_history__ "$@"
-  )
-)
+}
 
 replace_fzf_history() {
     local orig_def=$(declare -f __fzf_history__ \
