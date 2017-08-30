@@ -266,6 +266,8 @@ fi
 HISTCONTROL=ignorespace:erasedups
 # Don't truncate history
 HISTSIZE=-1; unset HISTFILESIZE
+# Set HISTTIMEFORMAT
+HISTTIMEFORMAT="[%F %T %z]"
 # Store multi-line command lines correctly
 shopt -s cmdhist lithist
 # Allow editing history lines on failure or from history expansion
