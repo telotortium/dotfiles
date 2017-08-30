@@ -64,8 +64,7 @@ bash_prompt_setup() {
     # we're usually gonna SSH to a computer with the right TERM anyway,
     # and ANSI is a lowest-common-denominator TERM)
     if ! tput longname &> /dev/null; then
-        TPUT=/usr/bin/tput
-        tput() { TERM=ansi "$TPUT" "$@"; }
+        tput() { TERM=ansi command tput "$@"; }
     fi
 
     # normal colors
