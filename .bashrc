@@ -284,7 +284,19 @@ precmd_functions+=(precmd_history_append)
 # `fzf`.
 __new_fzf_history__() {
     history () {
-        builtin history |
+        if command_on_path tac; then
+            local tac=(tac)
+        else
+            # BSDs (including MacOS) have `tail -r` as a tac equivalent
+            # (https://unix.stackexchange.com/a/114043).
+            local tac=(tail -r)
+        fi
+        # Reverse history so that awk keeps only the most recently executed
+        # invocation of each command. This ensures that the most recent
+        # command matching the query is the one selected by default --
+        # usually the most recent match is also my most frequently-run match,
+        # and also the one I care about the most.
+        builtin history | "${tac[@]}" |
         awk '{
             cmd = $0; sub(/^ *[0-9]+  /, "", cmd);
             if (!seen[cmd]) { print $0; seen[cmd] = 1; }
@@ -295,7 +307,14 @@ __new_fzf_history__() {
 
 replace_fzf_history() {
     local orig_def=$(declare -f __fzf_history__ \
-        | sed 's/__fzf_history__/__orig_fzf_history__/g')
+        $( : # Keep the original __fzf_history__ command under another name
+             # so we can call it later.
+          ) \
+        | sed 's/__fzf_history__/__orig_fzf_history__/g' \
+        $( : # Remove the `--tac` flag from FZF_DEFAULT_OPTS because we
+             # already call `tac` in __new_fzf_history__.
+          ) \
+        | sed 's/\(FZF_DEFAULT_OPTS=".*\) --tac /\1 /')
     eval "$orig_def"
     local new_def=$(declare -f __new_fzf_history__ \
         | sed 's/__new_fzf_history__/__fzf_history__/g')
