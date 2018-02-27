@@ -67,6 +67,10 @@ export LESS="XRI"
 # the -C option is passed.
 [ "$TERM" = "linux" ] && export LESS="${LESS}C"
 
+if command_on_path nvim; then
+    export MANPAGER="nvim -c 'set ft=man' -"
+fi
+
 export TEXMFHOME=$HOME/.texmf
 
 # Import ssh-agent settings
