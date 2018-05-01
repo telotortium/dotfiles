@@ -19,6 +19,7 @@
         untrackedCache = true
 [diff]
         submodule = log
+        colorMoved = default
 [diff "lisp"]
       xfuncname = "^(\\(.*)$"
 [diff "rstats"]
@@ -36,7 +37,6 @@
       textconv = exiftool
 [diff "pdf"]
       textconv = pdftotext-stdout
-
 [help]
         autocorrect = 1
 [interactive]
