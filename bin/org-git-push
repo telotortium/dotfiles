@@ -20,12 +20,21 @@ import tempfile
 
 parser = optparse.OptionParser()
 parser.add_option('--noninteractive', action='store_true', dest='noninteractive')
+parser.add_option('--verbose', action='store_true', dest='verbose')
 (options, args) = parser.parse_args()
 
 org_repos = os.environ.get('ORG_REPOS', '').split()
 if not org_repos:
     sys.exit("No repos defined");
 git = os.environ.get('GIT', 'git')
+
+def log_and_run_cmd(cmd, verbose=False, check=True):
+    if verbose:
+        print >>sys.stderr, "{}: Running cmd: {}".format(sys.argv[0], cmd)
+    if check:
+        sp.check_call(cmd, shell=True)
+    else:
+        sp.call(cmd, shell=True)
 
 exit = 0
 for repo in org_repos:
@@ -34,21 +43,26 @@ for repo in org_repos:
     try:
         os.chdir(maintree)
         try:
-            sp.check_call(
-                r"""GIT={} bash -c '$GIT pull --rebase --autostash -q 2> \
-                >( sed "/Successfully rebased and updated refs\\/heads\\/master\\./d" 1>&2)'""".format(pipes.quote(git)),
-                shell=True)
+            log_and_run_cmd(r"""GIT={} bash -c '$GIT pull {} --rebase --autostash 2> \
+                            >( sed "/Successfully rebased and updated refs\\/heads\\/master\\./d" 1>&2)'""".format(
+                                pipes.quote(git),
+                                '--verbose' if options.verbose else '--quiet'),
+                            verbose=options.verbose)
         except sp.CalledProcessError as e:
             if options.noninteractive:
-                sp.call([git, "rebase", "--abort"])
-                sp.call([git, "merge", "--abort"])
+                log_and_run_cmd("git rebase --abort",
+                                verbose=options.verbose, check=False)
+                log_and_run_cmd("git merge --abort",
+                                verbose=options.verbose, check=False)
                 exit = 1
                 continue
             else:
                 raise
-        sp.check_call(r"""GIT={} bash -c '$GIT push -q --force-with-lease 2> \
-                        >( sed "/Resolving deltas/d" 1>&2 )'""".format(pipes.quote(git)),
-                      shell=True)
+        log_and_run_cmd(r"""GIT={} bash -c '$GIT push {} --force-with-lease 2> \
+                        >( sed "/Resolving deltas/d" 1>&2 )'""".format(
+                            pipes.quote(git),
+                            '--verbose' if options.verbose else '--quiet'),
+                        verbose=options.verbose)
     except sp.CalledProcessError as e:
         print >>sys.stderr, e
         exit = 1
