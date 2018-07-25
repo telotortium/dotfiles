@@ -28,9 +28,6 @@ shopt -s globstar
 # Enable extended glob patterns
 shopt -s extglob
 
-# Fail glob if nothing matches
-shopt -s failglob
-
 # make less more friendly for non-text input files, see lesspipe(1)
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
