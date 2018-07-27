@@ -11,7 +11,7 @@ one on the path by default).
 
 import optparse
 import os
-import pipes
+from pipes import quote as q
 import re
 import shutil
 import subprocess as sp
@@ -22,6 +22,8 @@ parser = optparse.OptionParser()
 parser.add_option('--noninteractive', action='store_true', dest='noninteractive')
 parser.add_option('--verbose', action='store_true', dest='verbose')
 (options, args) = parser.parse_args()
+
+base_tag = 'org-git-push-base'
 
 org_repos = os.environ.get('ORG_REPOS', '').split()
 if not org_repos:
@@ -42,11 +44,20 @@ for repo in org_repos:
     print >>sys.stderr, "{}: Processing {}".format(sys.argv[0], maintree)
     try:
         os.chdir(maintree)
+        current_branch = sp.check_output("git symbolic-ref --short HEAD", shell=True).strip()
+        log_and_run_cmd(r"""GIT={} git fetch --all""".format(q(git)),
+                        verbose=options.verbose)
+        log_and_run_cmd(r"""GIT={} git tag --force {} {}""".format(
+            q(git), q(base_tag), q(current_branch)),
+                        verbose=options.verbose,
+        )
         try:
             log_and_run_cmd(r"""GIT={} bash -c '$GIT pull {} --rebase --autostash 2> \
-                            >( sed "/Successfully rebased and updated refs\\/heads\\/master\\./d" 1>&2)'""".format(
-                                pipes.quote(git),
-                                '--verbose' if options.verbose else '--quiet'),
+                            >( grep -vF "Successfully rebased and updated refs/heads/$0" 1>&2)' {}""".format(
+                                q(git),
+                                '--verbose' if options.verbose else '--quiet',
+                                q(current_branch),
+                            ),
                             verbose=options.verbose)
         except sp.CalledProcessError as e:
             if options.noninteractive:
@@ -58,10 +69,16 @@ for repo in org_repos:
                 continue
             else:
                 raise
-        log_and_run_cmd(r"""GIT={} bash -c '$GIT push {} --force-with-lease 2> \
-                        >( sed "/Resolving deltas/d" 1>&2 )'""".format(
-                            pipes.quote(git),
-                            '--verbose' if options.verbose else '--quiet'),
+        log_and_run_cmd(r"""GIT={git} bash -c '"$GIT" push {verbose} \
+                        --force-with-lease="$0:$1" 2> \
+                        >( grep -vF "Resolving deltas" 1>&2 )' {base} {current}""".format(
+                            git=q(git),
+                            verbose=('--verbose' if options.verbose else '--quiet'),
+                            base=q(base_tag), current=q(current_branch),
+                        ),
+                        verbose=options.verbose)
+        # Update current status of remote tracking branches after push
+        log_and_run_cmd(r"""GIT={} git fetch --all""".format(q(git)),
                         verbose=options.verbose)
     except sp.CalledProcessError as e:
         print >>sys.stderr, e
