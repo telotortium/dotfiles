@@ -128,6 +128,10 @@ fi
 # shellcheck disable=SC2088
 export MOSH_ESCAPE_KEY='~'
 
+# Emacs server - set default name of Emacs server (relies on server also running
+# over TCP rather than local socket).
+export EMACS_SERVER_FILE=server
+
 if [ -f "$HOME/.profile.local" ]; then
     . "$HOME/.profile.local"
 fi
