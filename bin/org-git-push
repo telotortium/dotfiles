@@ -43,6 +43,7 @@ for repo in org_repos:
     maintree = os.path.join(os.environ['HOME'], 'Documents', 'org', repo)
     print >>sys.stderr, "{}: Processing {}".format(sys.argv[0], maintree)
     try:
+        current_branch = None
         os.chdir(maintree)
         current_branch = sp.check_output("git symbolic-ref --short HEAD", shell=True).strip()
         log_and_run_cmd(r"""GIT={} git fetch --all""".format(q(git)),
@@ -84,4 +85,8 @@ for repo in org_repos:
         print >>sys.stderr, e
         exit = 1
         continue
+    finally:
+        if current_branch is not None:
+            log_and_run_cmd(r"""GIT={} git checkout {}""".format(
+                q(git), q(current_branch)), verbose=options.verbose, check=False)
 sys.exit(exit)
