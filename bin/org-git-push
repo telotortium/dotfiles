@@ -43,13 +43,13 @@ for repo in org_repos:
     maintree = os.path.join(os.environ['HOME'], 'Documents', 'org', repo)
     print >>sys.stderr, "{}: Processing {}".format(sys.argv[0], maintree)
     try:
-        current_branch = None
+        start_branch = None
         os.chdir(maintree)
-        current_branch = sp.check_output("git symbolic-ref --short HEAD", shell=True).strip()
+        start_branch = sp.check_output("git symbolic-ref --short HEAD", shell=True).strip()
         log_and_run_cmd(r"""GIT={} git fetch --all""".format(q(git)),
                         verbose=options.verbose)
         log_and_run_cmd(r"""GIT={} git tag --force {} {}""".format(
-            q(git), q(base_tag), q(current_branch)),
+            q(git), q(base_tag), q(start_branch)),
                         verbose=options.verbose,
         )
         try:
@@ -57,7 +57,7 @@ for repo in org_repos:
                             >( grep -vF "Successfully rebased and updated refs/heads/$0" 1>&2)' {}""".format(
                                 q(git),
                                 '--verbose' if options.verbose else '--quiet',
-                                q(current_branch),
+                                q(start_branch),
                             ),
                             verbose=options.verbose)
         except sp.CalledProcessError as e:
@@ -75,7 +75,7 @@ for repo in org_repos:
                         >( grep -vF "Resolving deltas" 1>&2 )' {base} {current}""".format(
                             git=q(git),
                             verbose=('--verbose' if options.verbose else '--quiet'),
-                            base=q(base_tag), current=q(current_branch),
+                            base=q(base_tag), current=q(start_branch),
                         ),
                         verbose=options.verbose)
         # Update current status of remote tracking branches after push
@@ -86,7 +86,15 @@ for repo in org_repos:
         exit = 1
         continue
     finally:
-        if current_branch is not None:
+        # If we're on a branch, it will return the branch name. Otherwise, this
+        # will return HEAD. This is good for our purposes, because we are
+        # trying to get back on `start_branch` regardless of whether we're on
+        # a branch now or not.
+        current_head = sp.check_output("git rev-parse --abbrev-ref HEAD", shell=True).strip()
+        # Don't switch if either we never obtained a current branch name or
+        # we're already on `start_branch` (the latter to avoid polluting the
+        # reflog).
+        if (start_branch is not None and current_head != start_branch):
             log_and_run_cmd(r"""GIT={} git checkout {}""".format(
-                q(git), q(current_branch)), verbose=options.verbose, check=False)
+                q(git), q(start_branch)), verbose=options.verbose, check=False)
 sys.exit(exit)
