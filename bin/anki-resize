@@ -1,11 +1,15 @@
 #!/bin/sh -e
 
+resize () {
+    convert "$1" -background white -resize '400x400>' "$2"
+}
+
 if [ $# -eq 1 ]; then
     tmp=$(mktemp)
-    ( pngpaste "$tmp" && convert "png:${tmp}" -resize '400x400>' "$1" )
+    ( pngpaste "$tmp" && resize "png:${tmp}" "$1" )
     rv=$?
     rm -f "$tmp"
     exit "$rv"
 else
-    exec convert "$1" -resize '400x400>' "$2"
+    resize "$1" "$2"
 fi
