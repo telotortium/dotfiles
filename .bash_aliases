@@ -358,3 +358,7 @@ command_on_path colordiff && alias diff='colordiff -u'
 
 # Manage dotfiles in $HOME as a Git repo with its $GIT_DIR placed elsewhere.
 alias config='git --git-dir="$HOME/.dotfiles-git-dir"'
+
+function cheat() {
+    curl https://cht.sh/$1
+}
