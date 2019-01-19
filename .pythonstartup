@@ -27,7 +27,9 @@ else:
 # Debugging capabilities
 import pdb
 
-# Since reload function is not builtin in Python 3, import it from imp
+# Since reload function is not builtin in Python 3, import it
 if sys.version_info[0] == 3:
-	from imp import reload
-
+    if sys.version_info[1] < 1:
+        from imp import reload
+    else:
+        from importlib import reload
