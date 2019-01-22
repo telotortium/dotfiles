@@ -30,6 +30,13 @@ if not org_repos:
     sys.exit("No repos defined");
 git = os.environ.get('GIT', 'git')
 
+ssh_git_args = [os.environ.get('GIT_SSH', 'ssh')]
+if options.verbose:
+    ssh_git_args.append('-vv')
+if options.noninteractive:
+    ssh_git_args.extend(['-o', 'BatchMode=yes'])
+os.putenv('GIT_SSH_COMMAND', ' '.join(q(x) for x in ssh_git_args))
+
 def log_and_run_cmd(cmd, verbose=False, check=True):
     if verbose:
         print >>sys.stderr, "{}: Running cmd: {}".format(sys.argv[0], cmd)
