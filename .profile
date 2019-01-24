@@ -68,7 +68,7 @@ export LESS="XRI"
 [ "$TERM" = "linux" ] && export LESS="${LESS}C"
 
 if command_on_path nvim; then
-    export MANPAGER="nvim -c 'set ft=man' -"
+    export MANPAGER="nvim -u NONE -c 'syntax on'  -c 'filetype plugin indent on' -c 'set nocp ft=man' -"
 fi
 
 export TEXMFHOME=$HOME/.texmf
