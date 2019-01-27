@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Merge changes in home-org from Dropbox into repo, and then upload repo
+# contents back to Dropbox for use by Orgzly.
+
+set -eu
+set -o pipefail
+
+org_repo=$HOME/Documents/org/home-org
+cd "$org_repo"
+
+dropbox_org=$HOME/Dropbox/home-org
+current_branch=$(git symbolic-ref --short HEAD)
+dropbox_git_base=$dropbox_org/.HEAD
+tmp_branch=dropbox-merge-$RANDOM
+
+git checkout -b "$tmp_branch" $(cat "$dropbox_git_base")
+rsync -r --progress --exclude=.HEAD ~/Dropbox/home-org/ .
+# Only commit if working directory dirty - see
+# https://unix.stackexchange.com/a/394674/21394
+if [ -n "$(git status --untracked-files=no --porcelain)" ]; then
+    git commit -a -m "Dropbox merge %(date)"
+fi
+git checkout "$current_branch"
+git merge "$tmp_branch"
+git branch -d "$tmp_branch"
+git ls-files -z \
+    | rsync --progress --delete -0 --files-from=/dev/stdin . "$dropbox_org"
+git rev-parse HEAD > "$dropbox_git_base"
