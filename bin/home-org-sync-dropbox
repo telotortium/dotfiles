@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Merge changes in home-org from Dropbox into repo, and then upload repo
 # contents back to Dropbox for use by Orgzly.
+#
+# Options:
+#   -l: Use rsync and a local directory instead of dbxcli
 
 set -eu
 set -o pipefail
