@@ -11,7 +11,8 @@ set -o pipefail
 org_repo=$HOME/Documents/org/home-org
 cd "$org_repo"
 
-local_mode () { [ "x${1:-}" = "x-l" ]; }
+local_mode_enabled="$([ "x${1:-}" = "x-l" ] && echo 1 || echo 0)"
+local_mode () { [ "$local_mode_enabled" -eq 1 ]; }
 
 dbxcli_list_files () {
     base_dir="$1"
@@ -68,7 +69,7 @@ git ls-files -z | {
     if local_mode; then
         rsync --progress --delete -0 --files-from=/dev/stdin \
             . "${dropbox_local_root}${dropbox_org}/"
-        git rev-parse HEAD > "$dropbox_git_base"
+        git rev-parse HEAD > "${dropbox_local_root}${dropbox_git_base}"
     else
         xargs -t -0 -n1 bash -c 'dbxcli put "$1" "$0/$1"' "$dropbox_org"
         dbxcli put <(git rev-parse HEAD) "$dropbox_git_base"
