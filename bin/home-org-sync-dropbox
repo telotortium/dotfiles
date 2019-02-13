@@ -11,8 +11,26 @@ set -o pipefail
 org_repo=$HOME/Documents/org/home-org
 cd "$org_repo"
 
-local_mode_enabled="$([ "x${1:-}" = "x-l" ] && echo 1 || echo 0)"
-local_mode () { [ "$local_mode_enabled" -eq 1 ]; }
+options=$(getopt -o lp -- "$@")
+eval set -- "$options"
+local_mode=0
+push_mode=0
+while true; do
+    case "$1" in
+    -l)
+        local_mode=1
+        ;;
+    -p)
+        push_mode=1
+        ;;
+    --)
+        shift
+        break
+        ;;
+    esac
+    shift
+done
+
 
 dbxcli_list_files () {
     base_dir="$1"
@@ -34,39 +52,45 @@ current_branch=$(git symbolic-ref --short HEAD)
 dropbox_git_base=$dropbox_org/.HEAD
 tmp_branch=dropbox-merge-$RANDOM
 
-git_base_commit=$(
-    if local_mode; then
-        cat "${dropbox_local_root}${dropbox_git_base}"
+get_and_merge () {
+    git_base_commit=$(
+        if [ "$local_mode" -eq 1 ]; then
+            cat "${dropbox_local_root}${dropbox_git_base}"
+        else
+            dbxcli get "$dropbox_git_base" ./.HEAD
+            cat ./.HEAD
+        fi
+    )
+    git checkout -b "$tmp_branch" "$git_base_commit"
+
+    if [ "$local_mode" -eq 1 ]; then
+        rsync -r --progress --exclude=.HEAD \
+            "${dropbox_local_root}${dropbox_org}/" .
     else
-        dbxcli get "$dropbox_git_base" ./.HEAD
-        cat ./.HEAD
+        dbxcli_list_files "$dropbox_org" | grep -v "^${dropbox_git_base}$" | \
+            tr '\n' '\0' | xargs -t -0 -n1 bash -c '
+                dbxcli get "$1" "$(echo "$1" | sed "s!^${0}!.!")"
+            ' "${dropbox_org}"
     fi
-)
-git checkout -b "$tmp_branch" "$git_base_commit"
 
-if local_mode; then
-    rsync -r --progress --exclude=.HEAD \
-        "${dropbox_local_root}${dropbox_org}/" .
-else
-    dbxcli_list_files "$dropbox_org" | grep -v "^${dropbox_git_base}$" | \
-        tr '\n' '\0' | xargs -t -0 -n1 bash -c '
-            dbxcli get "$1" "$(echo "$1" | sed "s!^${0}!.!")"
-        ' "${dropbox_org}"
-fi
+    # Only commit if working directory dirty - see
+    # https://unix.stackexchange.com/a/394674/21394
+    if [ -n "$(git status --untracked-files=no --porcelain)" ]; then
+        git commit -a -m "Dropbox merge $(date)"
+    fi
+    git checkout "$current_branch"
+    git merge -m "Merge branch '$tmp_branch'" "$tmp_branch"
+    git branch -d "$tmp_branch"
+}
 
-# Only commit if working directory dirty - see
-# https://unix.stackexchange.com/a/394674/21394
-if [ -n "$(git status --untracked-files=no --porcelain)" ]; then
-    git commit -a -m "Dropbox merge $(date)"
+if [ "$push_mode" -ne 1 ]; then
+    get_and_merge
 fi
-git checkout "$current_branch"
-git merge "$tmp_branch"
-git branch -d "$tmp_branch"
 
 # Upload files to Dropbox
 # TODO: delete files in Dropbox not in Git repo in dbxcli mode
 git ls-files -z | {
-    if local_mode; then
+    if [ "$local_mode" -eq 1 ]; then
         rsync --progress --delete -0 --files-from=/dev/stdin \
             . "${dropbox_local_root}${dropbox_org}/"
         git rev-parse HEAD > "${dropbox_local_root}${dropbox_git_base}"
