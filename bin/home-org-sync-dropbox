@@ -32,7 +32,26 @@ while true; do
 done
 
 
-local_mode () { [ "x${1:-}" = "x-l" ]; }
+options=$(getopt -o lp -- "$@")
+eval set -- "$options"
+local_mode=0
+push_mode=0
+while true; do
+    case "$1" in
+    -l)
+        local_mode=1
+        ;;
+    -p)
+        push_mode=1
+        ;;
+    --)
+        shift
+        break
+        ;;
+    esac
+    shift
+done
+
 
 dbxcli_list_files () {
     base_dir="$1"
@@ -56,7 +75,7 @@ tmp_branch=dropbox-merge-$RANDOM
 
 get_and_merge () {
     git_base_commit=$(
-        if local_mode; then
+        if [ "$local_mode" -eq 1 ]; then
             cat "${dropbox_local_root}${dropbox_git_base}"
         else
             dbxcli get "$dropbox_git_base" ./.HEAD
@@ -65,7 +84,7 @@ get_and_merge () {
     )
     git checkout -b "$tmp_branch" "$git_base_commit"
 
-    if local_mode; then
+    if [ "$local_mode" -eq 1 ]; then
         rsync -r --progress --exclude=.HEAD \
             "${dropbox_local_root}${dropbox_org}/" .
     else
@@ -92,10 +111,10 @@ fi
 # Upload files to Dropbox
 # TODO: delete files in Dropbox not in Git repo in dbxcli mode
 git ls-files -z | {
-    if local_mode; then
+    if [ "$local_mode" -eq 1 ]; then
         rsync --progress --delete -0 --files-from=/dev/stdin \
             . "${dropbox_local_root}${dropbox_org}/"
-        git rev-parse HEAD > "$dropbox_git_base"
+        git rev-parse HEAD > "${dropbox_local_root}${dropbox_git_base}"
     else
         xargs -t -0 -n1 bash -c 'dbxcli put "$1" "$0/$1"' "$dropbox_org"
         dbxcli put <(git rev-parse HEAD) "$dropbox_git_base"
