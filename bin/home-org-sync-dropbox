@@ -31,28 +31,6 @@ while true; do
     shift
 done
 
-
-options=$(getopt -o lp -- "$@")
-eval set -- "$options"
-local_mode=0
-push_mode=0
-while true; do
-    case "$1" in
-    -l)
-        local_mode=1
-        ;;
-    -p)
-        push_mode=1
-        ;;
-    --)
-        shift
-        break
-        ;;
-    esac
-    shift
-done
-
-
 dbxcli_list_files () {
     base_dir="$1"
     dbxcli ls -l "$1" | awk '
