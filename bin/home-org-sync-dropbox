@@ -31,45 +31,62 @@ while true; do
     shift
 done
 
-dbxcli_list_files () {
+dbxcli_list_revs_files () {
     base_dir="$1"
     dbxcli ls -l "$1" | awk '
         NR==1 { fname_pos = match($0, /Path/); next; }
         NR > 1 {
             # Skip if not a file
-            if ($1 == "-" ) { next; }
+            rev = $1;
+            if (rev == "-" ) { next; }
             fname = substr($0, fname_pos, length($0));
             sub(/ *$/, "", fname);
-            print fname;
+            print rev "\t" fname;
         }
-    '
+    ' | sort
 }
 
 dropbox_local_root=$HOME/Dropbox
 dropbox_org=/home-org
 current_branch=$(git symbolic-ref --short HEAD)
-dropbox_git_base=$dropbox_org/.HEAD
+dropbox_git_base=.HEAD
+dropbox_list=.dropbox-list
 tmp_branch=dropbox-merge-$RANDOM
+git_base_commit=$(
+    if [ "$local_mode" -eq 1 ]; then
+        cat "$dropbox_local_root$dropbox_org/$dropbox_git_base"
+    else
+        dbxcli get "$dropbox_org/$dropbox_git_base" \
+            "$dropbox_git_base"
+        cat "$dropbox_git_base"
+    fi
+)
 
 get_and_merge () {
-    git_base_commit=$(
-        if [ "$local_mode" -eq 1 ]; then
-            cat "${dropbox_local_root}${dropbox_git_base}"
-        else
-            dbxcli get "$dropbox_git_base" ./.HEAD
-            cat ./.HEAD
-        fi
-    )
     git checkout -b "$tmp_branch" "$git_base_commit"
 
     if [ "$local_mode" -eq 1 ]; then
         rsync -r --progress --exclude=.HEAD \
-            "${dropbox_local_root}${dropbox_org}/" .
+            "$dropbox_local_root$dropbox_org/" .
     else
-        dbxcli_list_files "$dropbox_org" | grep -v "^${dropbox_git_base}$" | \
-            tr '\n' '\0' | xargs -t -0 -n1 bash -c '
+        [ -e "$dropbox_list" ] || touch "$dropbox_list"
+        dbxcli_list_revs_files "$dropbox_org" | \
+            $( : "Get list of files changed or added remotely" ) \
+            comm -3 "$dropbox_list" - | awk '/^\t/ { print; }' | \
+            cut -d $'\t' -f3- | \
+            $( : "Remove several files we don't care about" ) \
+            awk '
+                /^$/ { next; }
+                {
+                    if ( $0 == "'"$dropbox_org/$dropbox_git_base"'" ||
+                         $0 == "'"$dropbox_org/$dropbox_list"'") {
+                        next;
+                    }
+                    print;
+            }' | tr '\n' '\0' | xargs -t -0 -n1 bash -c '
+                [ -z "$1" ] && exit 0
                 dbxcli get "$1" "$(echo "$1" | sed "s!^${0}!.!")"
-            ' "${dropbox_org}"
+            ' "$dropbox_org"
     fi
 
     # Only commit if working directory dirty - see
@@ -88,13 +105,18 @@ fi
 
 # Upload files to Dropbox
 # TODO: delete files in Dropbox not in Git repo in dbxcli mode
-git ls-files -z | {
+git diff -z --name-only "$git_base_commit" | {
     if [ "$local_mode" -eq 1 ]; then
         rsync --progress --delete -0 --files-from=/dev/stdin \
-            . "${dropbox_local_root}${dropbox_org}/"
-        git rev-parse HEAD > "${dropbox_local_root}${dropbox_git_base}"
+            . "$dropbox_local_root$dropbox_org/"
+        git rev-parse HEAD > \
+            "$dropbox_local_root$dropbox_org/$dropbox_git_base"
     else
-        xargs -t -0 -n1 bash -c 'dbxcli put "$1" "$0/$1"' "$dropbox_org"
-        dbxcli put <(git rev-parse HEAD) "$dropbox_git_base"
+        xargs -t -0 -n1 bash -c '
+            [ -z "$1" ] && exit 0
+            dbxcli put "$1" "$0/$1"
+        ' "$dropbox_org"
+        dbxcli put <(git rev-parse HEAD) "$dropbox_org/$dropbox_git_base"
     fi
+    dbxcli_list_revs_files "$dropbox_org" > "$dropbox_list"
 }
