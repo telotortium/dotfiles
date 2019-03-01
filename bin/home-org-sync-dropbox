@@ -114,7 +114,11 @@ git diff -z --name-only "$git_base_commit" | {
     else
         xargs -t -0 -n1 bash -c '
             [ -z "$1" ] && exit 0
-            dbxcli put "$1" "$0/$1"
+            if [ -e "$1" ]; then
+                dbxcli put "$1" "$0/$1"
+            else
+                dbxcli rm "$0/$1"
+            fi
         ' "$dropbox_org"
         dbxcli put <(git rev-parse HEAD) "$dropbox_org/$dropbox_git_base"
     fi
