@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -e
+org-git-sync
+org-git-push
+home-org-sync-dropbox
+cd ~/Documents/org/home-org
+git push
