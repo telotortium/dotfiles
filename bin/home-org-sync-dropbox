@@ -121,6 +121,6 @@ git diff -z --name-only "$git_base_commit" | {
             fi
         ' "$dropbox_org"
         dbxcli put <(git rev-parse HEAD) "$dropbox_org/$dropbox_git_base"
+        dbxcli_list_revs_files "$dropbox_org" > "$dropbox_list"
     fi
-    dbxcli_list_revs_files "$dropbox_org" > "$dropbox_list"
 }
