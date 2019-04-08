@@ -288,6 +288,10 @@ precmd_functions+=(precmd_history_append)
 
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
+# Multiline preview window for history search (see
+# https://github.com/junegunn/fzf/issues/577#issuecomment-473241837)
+export FZF_CTRL_R_OPTS="--preview 'echo {} |sed -e \"s/^ *\([0-9]*\) *//\" -e \"s/^\\(.\\{,\$COLUMNS\\}\\).*$/\\1/\"; echo {} |sed -e \"s/^ *[0-9]* *//\" -e \"s/^.\\{,\$COLUMNS\\}//g\" -e \"s/.\\{1,\$((COLUMNS-2))\\}/⏎ &\\n/g\"' --preview-window down:5 --bind ?:toggle-preview"
+
 # Modify __fzf_history__ to remove duplicate commands from the history fed into
 # `fzf`.
 __new_fzf_history__() {
