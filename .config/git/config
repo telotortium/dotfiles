@@ -52,7 +52,7 @@
         show = diff-highlight | less
         log = diff-highlight | less
 [pull]
-        rebase = preserve
+        rebase = merges
 [push]
         default = simple
 [init]
