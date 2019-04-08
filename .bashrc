@@ -304,10 +304,35 @@ __new_fzf_history__() {
         # command matching the query is the one selected by default --
         # usually the most recent match is also my most frequently-run match,
         # and also the one I care about the most.
-        builtin history | "${tac[@]}" |
-        awk '{
+        builtin history | gawk '
+        # ESCAPE NEWLINES: Replace all occurrences of `\` with `\\`, and then
+        # newline with `\n`. This merges multiline commands onto one line so
+        # that they can be deduplicated properly. This escaping will be
+        # reversed at the end.
+        BEGIN { histentry = 1; line = ""; }
+        {
+            if (match($0, "^ *" + histentry + "  ") != 0) {
+                histentry++;
+                if (NR != 1) { print line; }
+                gsub(/\\/, "\\\\");
+                line = $0;
+            } else {
+                gsub(/\\/, "\\\\");
+                line = line "\\n" $0;
+            }
+        }
+        END { print line; }' | "${tac[@]}" |
+        gawk '
+        # Deduplicate lines
+        {
             cmd = $0; sub(/^ *[0-9]+  /, "", cmd);
             if (!seen[cmd]) { print $0; seen[cmd] = 1; }
+        }' | gawk '
+        # Reverse ESCAPE NEWLINES from above.
+        {
+            $0 = gensub(/(\\\\)*\\n/, "\\1\n", "g");
+            gsub(/\\\\/, "\\");
+            print $0;
         }'
     }
     __orig_fzf_history__ "$@"
