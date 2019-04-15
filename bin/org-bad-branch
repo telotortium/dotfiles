@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+set -e -o pipefail
+
+rv=0
+now=$(date +%s)
+for repo in $ORG_REPOS; do
+    cd "$HOME/Documents/org/$repo"
+    if [ "$(git symbolic-ref --short HEAD)" != "master" ]; then
+       printf "~/Document/org/${repo} not on master\n" 1>&2
+       rv=1
+    fi
+    git branch | grep -E '^\* *(gac|dropbox)-merge-([0-9]+) *$' | \
+      sed 's/^\* *\([^ ]*\) *$/\1/' | while read branch; do
+      commit_time=$(git show -s --format=%ct "$branch")
+      if (( $now - $commit_time > 5 * 60 )); then
+        printf "~/Document/org/${repo}: temp branch ${branch} too old\n" 1>&2
+        rv=1
+      fi
+    done
+done
+exit $rv
