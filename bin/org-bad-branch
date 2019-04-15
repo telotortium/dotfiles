@@ -10,8 +10,9 @@ for repo in $ORG_REPOS; do
        printf "~/Document/org/${repo} not on master\n" 1>&2
        rv=1
     fi
-    git branch | grep -E '^\* *(gac|dropbox)-merge-([0-9]+) *$' | \
-      sed 's/^\* *\([^ ]*\) *$/\1/' | while read branch; do
+    git branch | \
+        { grep -E '^\* *(gac|dropbox)-merge-([0-9]+) *$' || exit 0; } | \
+        sed 's/^\* *\([^ ]*\) *$/\1/' | while read branch; do
       commit_time=$(git show -s --format=%ct "$branch")
       if (( $now - $commit_time > 5 * 60 )); then
         printf "~/Document/org/${repo}: temp branch ${branch} too old\n" 1>&2
