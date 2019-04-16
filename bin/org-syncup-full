@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+org-bad-branch
 org-git-sync
 org-git-push
 home-org-sync-dropbox
