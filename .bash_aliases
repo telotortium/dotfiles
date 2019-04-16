@@ -359,6 +359,22 @@ command_on_path colordiff && alias diff='colordiff -u'
 # Manage dotfiles in $HOME as a Git repo with its $GIT_DIR placed elsewhere.
 alias config='git --git-dir="$HOME/.dotfiles-git-dir"'
 
+# Update local configs
+git_bounce () {
+    (
+        set -e -o pipefail
+        git checkout master
+        git pull
+        git cherry-pick "$@"
+        git push --force-with-lease
+        git checkout -
+        git rebase master
+        git push --force-with-lease
+    )
+}
+# Declares `config_bounce`
+eval "$(declare -f git_bounce | sed -e 's/git/config/g')"
+
 function cheat() {
     curl https://cht.sh/$1
 }
