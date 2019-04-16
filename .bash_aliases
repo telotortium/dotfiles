@@ -365,7 +365,7 @@ git_bounce () {
         set -e -o pipefail
         git checkout master
         git pull
-        git cherry-pick "$@"
+        (( $# > 0 )) && git cherry-pick "$@"
         git push --force-with-lease
         git checkout -
         git rebase master
