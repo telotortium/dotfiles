@@ -1,7 +1,16 @@
 #!/usr/bin/env bash
 
+# Usage:
+#
+#   org-bad-branch [STALENESS]
+#
+# Checks if any of the repos in $ORG_REPOS is on a non-master branch or has a
+# temporary merge branch with a head commit more than STALENESS seconds old (0
+# seconds if not passed).
+
 set -e -o pipefail
 
+staleness=${1:-0}
 rv=0
 now=$(date +%s)
 for repo in $ORG_REPOS; do
@@ -14,7 +23,7 @@ for repo in $ORG_REPOS; do
         { grep -E '^\* *(gac|dropbox)-merge-([0-9]+) *$' || exit 0; } | \
         sed 's/^\* *\([^ ]*\) *$/\1/' | while read branch; do
       commit_time=$(git show -s --format=%ct "$branch")
-      if (( $now - $commit_time > 5 * 60 )); then
+      if (( $now - $commit_time > $staleness )); then
         printf "~/Document/org/${repo}: temp branch ${branch} too old\n" 1>&2
         rv=1
       fi
