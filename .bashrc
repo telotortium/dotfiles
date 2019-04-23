@@ -293,78 +293,64 @@ precmd_functions+=(precmd_history_append)
 export FZF_CTRL_R_OPTS="--preview 'echo {} |sed -e \"s/^ *\([0-9]*\) *//\" -e \"s/^\\(.\\{0,\$COLUMNS\\}\\).*$/\\1/\"; echo {} |sed -e \"s/^ *[0-9]* *//\" -e \"s/^.\\{0,\$COLUMNS\\}//g\" -e \"s/.\\{1,\$((COLUMNS-2))\\}/⏎ &\\n/g\"' --preview-window down:5 --bind ?:toggle-preview"
 
 # Modify __fzf_history__ to remove duplicate commands from the history fed into
-# `fzf`.
-__new_fzf_history__() {
-    history () {
-        if command_on_path tac; then
-            local tac=(tac)
-        else
-            # BSDs (including MacOS) have `tail -r` as a tac equivalent
-            # (https://unix.stackexchange.com/a/114043).
-            local tac=(tail -r)
-        fi
-        # Reverse history so that awk keeps only the most recently executed
-        # invocation of each command. This ensures that the most recent
-        # command matching the query is the one selected by default --
-        # usually the most recent match is also my most frequently-run match,
-        # and also the one I care about the most.
-        builtin history | awk '
-        # ESCAPE NEWLINES: Replace all occurrences of `\` with `\\`, and then
-        # newline with `\n`. This merges multiline commands onto one line so
-        # that they can be deduplicated properly. This escaping will be
-        # reversed at the end.
-        BEGIN { histentry = 1; line = ""; }
-        {
-            if (match($0, "^ *" + histentry + "  ") != 0) {
-                histentry++;
-                if (NR != 1) { print line; }
-                gsub(/\\/, "\\\\");
-                line = $0;
-            } else {
-                gsub(/\\/, "\\\\");
-                line = line "\\n" $0;
+# `fzf`. Keep up-to-date with __fzf_history in ~/.fzf/shell/key-bindings.bash
+__fzf_history__() (
+  local line
+  shopt -u nocaseglob nocasematch
+  line=$(
+    HISTTIMEFORMAT="" history | awk '
+    # Terminate history entries with ASCII NUL instead of newline. This
+    # requires parsing the output of `history` to determine which lines
+    # are continuations of multiline commands.
+    BEGIN {
+        cmd = "";   # Content of command currently being read from history
+        idx = 1;  # Index of next history item to be read from the input
+        # Format of lines containing the beginning of commands in history;
+        # commands continued from the previous line will not start with this.
+        # Matches everything before the command.
+        #
+        # Bash always outputs 2 spaces between the date and the command.
+        re = "^ *[0-9]+  ";  # Yes, two spaces at the end is guaranteed.
+    }
+    {
+        # Check that the current line starts with the correct format.
+        if (match($0, re) != 0) {
+            # Extract the index from the history line
+            prefix = substr($0, RSTART, RLENGTH)
+            match(prefix, "[0-9]+");
+            idx_read = substr(prefix, RSTART, RLENGTH);
+
+            # Compare index we are expecting to read to index read from line.
+            if (idx == idx_read) {
+                # Update next index to read from input.
+                idx++;
+                # Output currently-buffered command (not on the first line,
+                # because we have not read anything at that point).
+                if (NR != 1) { printf("%s\0", cmd); }
+                # Store current line (including index; fzf needs it to read the
+                # command from Bash history later in the pipeline).
+                cmd = $0;
+                next;
             }
         }
-        END { print line; }' | "${tac[@]}" |
-        awk '
-        # Deduplicate lines
-        {
-            cmd = $0; sub(/^ *[0-9]+  /, "", cmd);
-            if (!seen[cmd]) { print $0; seen[cmd] = 1; }
-        }' | awk '
-        # Reverse ESCAPE NEWLINES from above.
-        {
-            # Replace gensub to avoid needing gawk on macOS/BSD.
-            while (match($0, /(\\\\)?\\n/)) {
-                repl = RLENGTH == 4 ? "\\\n" : "\n";
-                postmatch = RSTART+RLENGTH;
-                $0 = substr($0, 1, RSTART-1) repl \
-                    substr($0, postmatch, length($0)-(postmatch-1));
-            }
-            gsub(/\\\\/, "\\");
-            print $0;
-        }'
+        # If either of the two conditions above is false, we are reading a
+        # continuation of the command from the previous line.
+        cmd = cmd "\n" $0;
     }
-    __orig_fzf_history__ "$@"
-}
-
-replace_fzf_history() {
-    local orig_def=$(declare -f __fzf_history__ \
-        $( : # Keep the original __fzf_history__ command under another name
-             # so we can call it later.
-          ) \
-        | sed 's/__fzf_history__/__orig_fzf_history__/g' \
-        $( : # Remove the `--tac` flag from FZF_DEFAULT_OPTS because we
-             # already call `tac` in __new_fzf_history__.
-          ) \
-        | sed 's/\(FZF_DEFAULT_OPTS=".*\) --tac /\1 /')
-    eval "$orig_def"
-    local new_def=$(declare -f __new_fzf_history__ \
-        | sed 's/__new_fzf_history__/__fzf_history__/g')
-    eval "$new_def"
-}
-
-replace_fzf_history
+    END { printf("%s\0", line); }' | tac | perl -0 -e '
+        # Deduplicate lines. See `perldoc -q duplicate`.
+        print grep {
+            $cmd = $_; $cmd =~ s/^ *[0-9]+  //; ! $seen{ $cmd }++;
+        } <>' | \
+    FZF_DEFAULT_OPTS="--read0 --height ${FZF_TMUX_HEIGHT:-40%} $FZF_DEFAULT_OPTS --sync -n2..,.. --tiebreak=index --bind=ctrl-r:toggle-sort $FZF_CTRL_R_OPTS +m" $(__fzfcmd) \
+    $( : "FZF_DEFAULT_OPTS: compared to upstream version, removed --tac due to tac above" ) | \
+    command grep '^ *[0-9]') &&
+    if [[ $- =~ H ]]; then
+      sed 's/^ *\([0-9]*\)\** .*/!\1/' <<< "$line"
+    else
+      sed 's/^ *\([0-9]*\)\** *//' <<< "$line"
+    fi
+)
 
 # LOCAL SETTINGS
 if [ -f ~/.bashrc.local ]; then
