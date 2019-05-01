@@ -15,6 +15,29 @@
                 },
                 "rules": [
                     {
+                        "description": "Disable Karabiner-Elements with Fn+Control+Option+Command+Z",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "z",
+                                    "modifiers": {
+                                        "mandatory": [
+                                            "left_control",
+                                            "left_command",
+                                            "left_option"
+                                        ]
+                                    }
+                                },
+                                "to": [
+                                    {
+                                        "shell_command": "osascript ~/Documents/karabiner-restart.scpt"
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
                         "description": "Change Caps Lock to Ctrl. (Send Caps Lock if pressed alone.)",
                         "manipulators": [
                             {

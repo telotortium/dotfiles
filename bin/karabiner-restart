@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# Script to restart Karabiner-Elements. See for context:
+# https://github.com/tekezo/Karabiner-Elements/issues/1645#issuecomment-487401678
+
+# As this script will be called from Hammerspoon where the UID
+# environment variable is not set, grab the UID ourselves here if need be.
+if [ -z "$UID" ]; then
+  UID=$(id -u)
+fi
+
+# In Hammerspoon, $PATH will be too minimal(/usr/bin:/bin:/usr/sbin:/sbin)
+# to find the `dry` executable.
+PATH=$PATH:$HOME/bin
+
+# For good measure, turn off key repeat:
+if command -v dry &> /dev/null; then
+  dry 300 > /dev/null
+fi
+
+launchctl bootout gui/"$UID" /Library/LaunchAgents/org.pqrs.karabiner.karabiner_console_user_server.plist
+launchctl disable gui/"$UID"/org.pqrs.karabiner.karabiner_console_user_server
+
+# Depends on /private/etc/sudoers.d/karabiner-sudoers:
+sudo launchctl unload /Library/LaunchDaemons/org.pqrs.karabiner.karabiner_observer.plist
+sudo launchctl unload /Library/LaunchDaemons/org.pqrs.karabiner.karabiner_grabber.plist
+
+echo "💀 Karabiner-Elements killed"
+
+sleep 5
+
+launchctl enable gui/"$UID"/org.pqrs.karabiner.karabiner_console_user_server
+sudo launchctl load /Library/LaunchDaemons/org.pqrs.karabiner.karabiner_observer.plist
+sudo launchctl load /Library/LaunchDaemons/org.pqrs.karabiner.karabiner_grabber.plist
+launchctl bootstrap gui/"$UID" /Library/LaunchAgents/org.pqrs.karabiner.karabiner_console_user_server.plist
+
+echo "Karabiner-Elements restarted"
