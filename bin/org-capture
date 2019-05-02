@@ -1,3 +1,6 @@
 #!/bin/sh -e
 EMACSCLIENT=${EMACSCLIENT:-emacsclient}
-"$EMACSCLIENT" --create-frame --eval '(org-capture)'
+exec env EMACS_ORG_PROTOCOL_CAPTURE_FRAME_CREATED=1 "$EMACSCLIENT" \
+    --create-frame \
+    --frame-parameters='((org-protocol-capture . t))' \
+    --eval '(org-capture)'

@@ -78,7 +78,7 @@
                                 },
                                 "to": [
                                     {
-                                        "shell_command": "'/Applications/MacPorts/Emacs.app/Contents/MacOS/bin/emacsclient' 'org-protocol://capture?template=t'"
+                                        "shell_command": "osascript ~/bin/org-capture.scpt"
                                     }
                                 ],
                                 "type": "basic"
