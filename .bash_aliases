@@ -363,9 +363,14 @@ alias config='git --git-dir="$HOME/.dotfiles-git-dir"'
 git_bounce () {
     (
         set -e -o pipefail
+        # Parse commit references *before* changing branches, so the
+        # cherry-pick onto master below selects the right references.
+        if (( $# > 0 )); then
+            local revs=( $(git rev-parse "$@") )
+        fi
         git checkout master
         git pull
-        (( $# > 0 )) && git cherry-pick "$@"
+        (( $# > 0 )) && git cherry-pick "${revs[@]}"
         git push --force-with-lease
         git checkout -
         git rebase master
