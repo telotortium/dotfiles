@@ -319,6 +319,8 @@ laplace_wakeonlan () {
         wakeonlan 00:15:F2:D2:1F:D2
 }
 
+# rlwrap
+alias bc="rlwrap bc"
 alias csi="rlwrap -pBlue -m -q'\"' csi"
 
 
