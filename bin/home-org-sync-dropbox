@@ -31,6 +31,13 @@ while true; do
     shift
 done
 
+echo
+echo '========================================'
+echo '       Sync Orgzly on device now        '
+echo '========================================'
+echo
+read -rsp $'Press any key to continue...\n' -n1 _key
+
 dbxcli_list_revs_files () {
     base_dir="$1"
     dbxcli ls -l "$1" | awk '
@@ -124,3 +131,9 @@ git diff -z --name-only "$git_base_commit" | {
         dbxcli_list_revs_files "$dropbox_org" > "$dropbox_list"
     fi
 }
+
+echo
+echo '========================================'
+echo '       Sync Orgzly on device now        '
+echo '========================================'
+echo
