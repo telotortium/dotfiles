@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+set -eu
+
+ext=${1##*.}
+if [ "$ext" = "json" ]; then
+    exec jsondiffpatch "${1}" "${2}"
+elif [ "$ext" = "pdf" ]; then
+    exec diff-pdf --view "${1}" "${2}"
+else
+    exec colordiff -u "${1}" "${2}"
+fi
