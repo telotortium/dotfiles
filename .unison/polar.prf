@@ -1,0 +1,8 @@
+root = /Users/rmirelan/.polar
+root = ssh://telotortium.com/.polar
+auto = true
+diff = /Users/rmirelan/bin/polar-diff
+dontchmod = true
+perms = 0
+
+ignore = BelowPath logs
