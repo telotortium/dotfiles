@@ -5,6 +5,7 @@ set -eu
 # XDG_RUNTIME_DIR needed for git-remote-keybase, used by home-org and
 # stanford-org repo.
 export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+"${HOME}/bin/org-bad-branch"
 "${HOME}/bin/org-git-sync"
 sleep $(perl -e "print int(rand(120))")
 eval "$(keychain --eval --quick --quiet --inherit any id_rsa)"
