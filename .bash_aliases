@@ -101,13 +101,14 @@ __abs_path () {
 # shellcheck disable=SC2012
 if command_on_path nvim; then
     _vi_impl=nvim
+    _X_flag=""
 elif command_on_path vim; then
     _vi_impl=vim
     _X_flag="-X"
 fi
 if [ -n "${_vi_impl:=""}" ]; then
-    alias vi="${_vi_impl} ${_X_flag:=} -u NONE +'set nocp bg=dark'"
-    alias view="${_vi_impl} ${_X_flag:=} -Ru NONE +'set nocp bg=dark'"
+    alias vi="${_vi_impl} ${_X_flag} -u NONE +'set nocp bg=dark'"
+    alias view="${_vi_impl} ${_X_flag} -Ru NONE +'set nocp bg=dark'"
 fi
 unset __abs_path
 
