@@ -3,6 +3,25 @@ set -e
 org-bad-branch
 org-git-sync
 org-git-push
-home-org-sync-dropbox
+
+echo
+echo '========================================'
+echo '       Sync Orgzly on device now        '
+echo '========================================'
+echo
+read -rsp $'Press any key to continue...\n' -n1 _key
+
+home-org-sync-dropbox -n
 cd ~/Documents/org/home-org
 git push
+
+google-org-sync-dropbox -n
+cd ~/Documents/org/google-org
+git push
+
+echo
+echo '========================================'
+echo '       Sync Orgzly on device now        '
+echo '========================================'
+echo
+read -rsp $'Press any key to continue...\n' -n1 _key

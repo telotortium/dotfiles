@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Merge changes in home-org from Dropbox into repo, and then upload repo
+# Merge changes in google-org from Dropbox into repo, and then upload repo
 # contents back to Dropbox for use by Orgzly.
 #
 # Options:
@@ -8,8 +8,8 @@
 set -eu
 set -o pipefail
 
-org_repo=$HOME/Documents/org/home-org
+org_repo=$HOME/Documents/org/google-org
 dropbox_local_root=$HOME/Dropbox
-dropbox_org=/home-org
+dropbox_org=/google-org
 
 source "$(dirname ${BASH_SOURCE[0]})/sync-dropbox.bash"
