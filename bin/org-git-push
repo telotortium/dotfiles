@@ -52,6 +52,8 @@ for repo in org_repos:
     try:
         start_branch = None
         os.chdir(maintree)
+        # TODO: Do rebase in order to squash `--fixup`:
+        # http://www.lowlevelmanager.com/2016/02/how-to-run-git-interactive-rebase-non.html
         start_branch = sp.check_output("git symbolic-ref --short HEAD", shell=True).strip()
         log_and_run_cmd(r"""GIT={} git fetch --all""".format(q(git)),
                         verbose=options.verbose)
