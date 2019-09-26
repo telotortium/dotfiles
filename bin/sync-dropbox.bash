@@ -88,7 +88,7 @@ get_and_merge () {
     git checkout -b "$tmp_branch" "$git_base_commit"
 
     if [ "$local_mode" -eq 1 ]; then
-        rsync -r --progress --exclude=.HEAD \
+        rsync -r --progress --exclude=.HEAD --exclude='*.org_archive' \
             "$dropbox_local_root$dropbox_org/" .
     else
         [ -e "$dropbox_list" ] || touch "$dropbox_list"
@@ -101,7 +101,8 @@ get_and_merge () {
                 /^$/ { next; }
                 {
                     if ( $0 == "'"$dropbox_org/$dropbox_git_base"'" ||
-                         $0 == "'"$dropbox_org/$dropbox_list"'") {
+                         $0 == "'"$dropbox_org/$dropbox_list"'" ||
+                         match($0, "\\.org_archive$") != 0) {
                         next;
                     }
                     print;
