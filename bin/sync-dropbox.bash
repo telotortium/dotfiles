@@ -140,7 +140,9 @@ git diff -z --name-only "$git_base_commit" | {
             if [ -e "$1" ]; then
                 dbxcli put "$1" "$0/$1"
             else
-                dbxcli rm "$0/$1"
+                # Ignore failure to remove files, which can happen if remote
+                # file no longer exists.
+                dbxcli rm -f "$0/$1" || true
             fi
         ' "$dropbox_org"
         dbxcli put <(git rev-parse HEAD) "$dropbox_org/$dropbox_git_base"
