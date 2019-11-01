@@ -101,8 +101,7 @@ get_and_merge () {
                 /^$/ { next; }
                 {
                     if ( $0 == "'"$dropbox_org/$dropbox_git_base"'" ||
-                         $0 == "'"$dropbox_org/$dropbox_list"'" ||
-                         match($0, "\\.org_archive$") != 0) {
+                         $0 == "'"$dropbox_org/$dropbox_list"'") {
                         next;
                     }
                     print;
@@ -128,7 +127,10 @@ fi
 
 # Upload files to Dropbox
 # TODO: delete files in Dropbox not in Git repo in dbxcli mode
-git diff -z --name-only "$git_base_commit" | {
+git diff -z --name-only "$git_base_commit" | { \
+    # Exclude files that shouldn't be uploaded to Dropbox.
+    grep -z -v -e 'gcal.*\.org' -e '\.org_archive$'
+  } | {
     if [ "$local_mode" -eq 1 ]; then
         rsync --progress --delete -0 --files-from=/dev/stdin \
             . "$dropbox_local_root$dropbox_org/"
