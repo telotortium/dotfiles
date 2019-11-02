@@ -129,7 +129,8 @@ fi
 # TODO: delete files in Dropbox not in Git repo in dbxcli mode
 git diff -z --name-only "$git_base_commit" | { \
     # Exclude files that shouldn't be uploaded to Dropbox.
-    grep -z -v -e 'gcal.*\.org' -e '\.org_archive$'
+    # Use Perl because MacOS grep doesn't support ASCII NUL-separated input.
+    perl -0 -ne 'print unless /gcal.*\.org/ || /\.org_archive$/'
   } | {
     if [ "$local_mode" -eq 1 ]; then
         rsync --progress --delete -0 --files-from=/dev/stdin \
