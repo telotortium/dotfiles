@@ -1,0 +1,45 @@
+#!/bin/bash
+# find-ssh-agent -- script to find valid SSH agents,
+# storing their configuration in a file for later use
+
+cache_ssh_agent () {
+    local ssh_agent_file
+    ssh_agent_file="$HOME/.ssh-agent-cache/$(hostname -f)"
+
+    # Make directories needed
+    mkdir -p "$(dirname "$ssh_agent_file")" || \
+        { printf "Can't make directory %q" "$ssh_agent_file"; exit 1; }
+
+    ssh-add -l >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        : > "$ssh_agent_file"
+        for var in SSH_AGENT_PID SSH_AUTH_SOCK; do
+            # Protect expression to be evaled in single quotes before
+            # evaluation.
+            # shellcheck disable=SC2016
+            if [ -z "$(eval 'echo ${'"$var"'+x}')" ]; then  # Test for unset var
+                printf "unset %s\n" "$var" >>"$ssh_agent_file"
+            else
+                printf "export %s=%q\n" "$var" "$(eval echo '$'$var)" \
+                    >>"$ssh_agent_file"
+            fi
+        done
+    fi
+}
+
+# Cache the SSH agent only if it's not forwarded (which is indicated by the
+# absence of the SSH_AGENT_PID variable in the environment).
+cache_local_ssh_agent () {
+    if [ -n "$SSH_AGENT_PID" ]; then
+        cache_ssh_agent
+    else
+        true
+    fi
+}
+
+load_cached_ssh_agent () {
+    local ssh_agent_file
+    ssh_agent_file="$HOME/.ssh-agent-cache/$(hostname -f)"
+
+    . "$ssh_agent_file"
+}
