@@ -3,7 +3,8 @@ set -e
 
 # Save all Org mode buffers. This will minimize the chance of conflicts between
 # the local version and remote version of the files.
-emacsclient --eval '(org-save-all-org-buffers)'
+EMACSCLIENT=${EMACSCLIENT:-emacsclient}
+"$EMACSCLIENT" --eval '(org-save-all-org-buffers)'
 
 org-bad-branch
 org-git-sync
@@ -49,6 +50,6 @@ read -rsp $'Press any key to continue...\n' -n1 _key
 # # Revert Org buffers to reload them from the file. Use `cl-letf` to disable
 # # `yes-or-no-p` prompt, and disable output, which seems to print
 # # `org-id-locations` for some reason, and so produces very long output.
-# emacsclient --eval '
+# "$EMACSCLIENT" --eval '
 # (cl-letf (((symbol-function (quote yes-or-no-p)) (lambda (&rest args) t)))
 #     (org-revert-all-org-buffers))' >/dev/null
