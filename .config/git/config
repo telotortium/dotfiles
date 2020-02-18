@@ -14,6 +14,8 @@
         email = rirelan@gmail.com
 [merge]
         tool = vimdiff
+[credential]
+        helper = cache
 [color]
         ui = true
 [core]
