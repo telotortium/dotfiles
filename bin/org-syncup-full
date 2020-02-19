@@ -4,7 +4,13 @@ set -e
 # Save all Org mode buffers. This will minimize the chance of conflicts between
 # the local version and remote version of the files.
 EMACSCLIENT=${EMACSCLIENT:-emacsclient}
-"$EMACSCLIENT" --eval '(org-save-all-org-buffers)'
+unset ALTERNATE_EDITOR  # Don't fall back to non-Emacs editor
+if ! "$EMACSCLIENT" --eval '(org-save-all-org-buffers)'; then
+    echo "Failed to connect to Emacs daemon. If Emacs isn't open, run" \
+        "\`emacs --daemon\` and try again. Otherwise, run M-x" \
+        "server-force-delete followed by M-x server-start and try again."
+    exit 1
+fi
 
 org-bad-branch
 org-git-sync
