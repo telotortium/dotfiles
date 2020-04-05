@@ -383,6 +383,12 @@ git_bounce () {
 # Declares `config_bounce`
 eval "$(declare -f git_bounce | sed -e 's/git/config/g')"
 
+function git_md_tmp_branches () {
+    git checkout master && \
+        git branch | grep -E '^ *(gac|dropbox)-merge-([0-9]+) *$' | \
+        while read branch; do git md "$branch"; done
+}
+
 function cheat() {
     curl https://cht.sh/$1
 }
