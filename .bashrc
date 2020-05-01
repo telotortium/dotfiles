@@ -292,66 +292,6 @@ precmd_functions+=(precmd_history_append)
 # https://github.com/junegunn/fzf/issues/577#issuecomment-473241837)
 export FZF_CTRL_R_OPTS="--preview 'echo {} |sed -e \"s/^ *\([0-9]*\) *//\" -e \"s/^\\(.\\{0,\$COLUMNS\\}\\).*$/\\1/\"; echo {} |sed -e \"s/^ *[0-9]* *//\" -e \"s/^.\\{0,\$COLUMNS\\}//g\" -e \"s/.\\{1,\$((COLUMNS-2))\\}/⏎ &\\n/g\"' --preview-window down:5 --bind ?:toggle-preview"
 
-# Modify __fzf_history__ to remove duplicate commands from the history fed into
-# `fzf`. Keep up-to-date with __fzf_history in ~/.fzf/shell/key-bindings.bash
-__fzf_history__() (
-  local line
-  shopt -u nocaseglob nocasematch
-  line=$(
-    HISTTIMEFORMAT="" history | awk '
-    # Terminate history entries with ASCII NUL instead of newline. This
-    # requires parsing the output of `history` to determine which lines
-    # are continuations of multiline commands.
-    BEGIN {
-        cmd = "";   # Content of command currently being read from history
-        idx = 1;  # Index of next history item to be read from the input
-        # Format of lines containing the beginning of commands in history;
-        # commands continued from the previous line will not start with this.
-        # Matches everything before the command.
-        #
-        # Bash always outputs 2 spaces between the date and the command.
-        re = "^ *[0-9]+  ";  # Yes, two spaces at the end is guaranteed.
-    }
-    {
-        # Check that the current line starts with the correct format.
-        if (match($0, re) != 0) {
-            # Extract the index from the history line
-            prefix = substr($0, RSTART, RLENGTH)
-            match(prefix, "[0-9]+");
-            idx_read = substr(prefix, RSTART, RLENGTH);
-
-            # Compare index we are expecting to read to index read from line.
-            if (idx == idx_read) {
-                # Update next index to read from input.
-                idx++;
-                # Output currently-buffered command (not on the first line,
-                # because we have not read anything at that point).
-                if (NR != 1) { printf("%s\0", cmd); }
-                # Store current line (including index; fzf needs it to read the
-                # command from Bash history later in the pipeline).
-                cmd = $0;
-                next;
-            }
-        }
-        # If either of the two conditions above is false, we are reading a
-        # continuation of the command from the previous line.
-        cmd = cmd "\n" $0;
-    }
-    END { printf("%s\0", line); }' | tac | perl -0 -e '
-        # Deduplicate lines. See `perldoc -q duplicate`.
-        print grep {
-            $cmd = $_; $cmd =~ s/^ *[0-9]+  //; ! $seen{ $cmd }++;
-        } <>' | \
-    FZF_DEFAULT_OPTS="--read0 --height ${FZF_TMUX_HEIGHT:-40%} $FZF_DEFAULT_OPTS --sync -n2..,.. --tiebreak=index --bind=ctrl-r:toggle-sort $FZF_CTRL_R_OPTS +m" $(__fzfcmd) \
-    $( : "FZF_DEFAULT_OPTS: compared to upstream version, removed --tac due to tac above" ) | \
-    command grep '^ *[0-9]') &&
-    if [[ $- =~ H ]]; then
-      sed 's/^ *\([0-9]*\)\** .*/!\1/' <<< "$line"
-    else
-      sed 's/^ *\([0-9]*\)\** *//' <<< "$line"
-    fi
-)
-
 # LOCAL SETTINGS
 if [ -f ~/.bashrc.local ]; then
     . ~/.bashrc.local
