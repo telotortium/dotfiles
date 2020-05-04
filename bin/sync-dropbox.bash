@@ -111,6 +111,15 @@ get_and_merge () {
             ' "$dropbox_org"
     fi
 
+    # Strip trailing blank lines from Org-mode files - Orgzly has a habit of
+    # introducing them.
+    git ls-files -z | perl -n0e 'print if /.*\.(org|org_archive)\0/' | \
+        $( : "Sed command removes trailing blank lines. See
+              https://unix.stackexchange.com/a/81687/21394.
+              Use `xargs -n1` so that newlines deleted from one file
+              are not prepended to the next file." ) \
+        xargs -n1 -0 sed -i '' -e :a -e '/^\n*$/{$d;N;};/\n$/ba'
+
     # Only commit if working directory dirty - see
     # https://unix.stackexchange.com/a/394674/21394
     if [ -n "$(git status --untracked-files=no --porcelain)" ]; then
