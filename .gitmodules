@@ -1,9 +1,12 @@
 [submodule ".vim"]
 	path = .vim
 	url = git@github.com:telotortium/vimrc.git
-[submodule ".emacs.d"]
-	path = .emacs.d
+[submodule "vanilla.emacs.d"]
+	path = vanilla.emacs.d
 	url = git@github.com:telotortium/emacs.d
 [submodule ".urxvt/ext/urxvt-perls"]
 	path = .urxvt/ext/urxvt-perls
 	url = https://github.com/muennich/urxvt-perls
+[submodule ".doom.d"]
+	path = .doom.d
+	url = git@github.com:telotortium/doom.d
