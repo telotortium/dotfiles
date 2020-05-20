@@ -11,9 +11,6 @@
 # Set umask to exclude group and other write permissions
 umask 022
 
-# Set up tmux attach actions
-[ -f "$HOME/.bash_tmux_reattach" ] && . "$HOME/.bash_tmux_reattach"
-
 # # Import ssh-agent settings
 # [ -f "$(command -v find-ssh-agent)" ] && . find-ssh-agent
 
