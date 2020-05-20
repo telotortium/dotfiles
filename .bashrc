@@ -296,4 +296,14 @@ export FZF_CTRL_R_OPTS="--preview 'echo {} |sed -e \"s/^ *\([0-9]*\) *//\" -e \"
 if [ -f ~/.bashrc.local ]; then
     . ~/.bashrc.local
 fi
+command_on_path direnv && eval "$(direnv hook bash)"
 [[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
+
+# Macports bash-completion
+if [ -f /opt/local/etc/profile.d/bash_completion.sh ]; then
+    . /opt/local/etc/profile.d/bash_completion.sh
+fi
+
+test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
+
+. ~/.bash-history-sqlite/bash-profile.stub
