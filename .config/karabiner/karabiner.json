@@ -65,7 +65,7 @@
                         ]
                     },
                     {
-                        "description": "Org Capture task with F12",
+                        "description": "Org Capture task with Cmd+Alt+F12",
                         "manipulators": [
                             {
                                 "from": {
@@ -73,12 +73,16 @@
                                     "modifiers": {
                                         "optional": [
                                             "fn"
+                                        ],
+                                        "mandatory": [
+                                            "command",
+                                            "option"
                                         ]
                                     }
                                 },
                                 "to": [
                                     {
-                                        "shell_command": "osascript ~/bin/org-capture.scpt"
+                                        "shell_command": "bash -l ~/doom.emacs.d/bin/org-capture"
                                     }
                                 ],
                                 "type": "basic"
