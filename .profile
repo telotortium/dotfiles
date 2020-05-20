@@ -78,18 +78,6 @@ export TEXMFHOME=$HOME/.texmf
 
 # Python initialization
 export PYTHONSTARTUP=$HOME/.pythonstartup
-python_version="$(python --version 2>&1 | sed 's/^Python \([0-9]\)\..*/\1/')"
-case "$python_version" in
-2)
-    d="$HOME/local/python/python2"
-    test -d "$d" && export PYTHONPATH="$(path_prepend "$PYTHONPATH" "$d")"
-    ;;
-3)
-    d="$HOME/local/python/python3"
-    test -d "$d" && export PYTHONPATH="$(path_prepend "$PYTHONPATH" "$d")"
-    ;;
-esac
-unset d python_version
 
 # Go initialization
 __ncpu () {
