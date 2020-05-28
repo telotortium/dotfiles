@@ -12,7 +12,12 @@ if ! "$EMACSCLIENT" --eval '(org-save-all-org-buffers)'; then
     exit 1
 fi
 
-org-bad-branch
+org-bad-branch || {
+    for repo in $ORG_REPOS; do
+        cd "$HOME/Documents/org/$repo"
+        git md-bad-branches || exit $?
+    done
+}
 org-git-sync
 org-git-push
 
