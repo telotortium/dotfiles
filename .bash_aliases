@@ -1,4 +1,4 @@
-#!/bin/bash
+# -*- mode: sh -*-
 # Basic ls aliases
 unalias ls &> /dev/null
 LS_COLOR_FLAG=""
