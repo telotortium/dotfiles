@@ -15,7 +15,7 @@ fi
 org-bad-branch || {
     for repo in $ORG_REPOS; do
         cd "$HOME/Documents/org/$repo"
-        git md-bad-branches || exit $?
+        git md-tmp-branches || exit $?
     done
 }
 org-git-sync
