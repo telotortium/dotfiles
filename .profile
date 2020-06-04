@@ -6,24 +6,16 @@
 
 [ -f "$HOME/.common.sh" ] && . "$HOME/.common.sh"
 
-# path_prepend|path_append current_value to_add
-# Add directories to a path environment variable without leaving empty
-# elements, which are equivalent to the current directory.
-path_prepend () {
-    echo "${2}$(test -n "$1" && echo :"$1")"
-}
-path_append () {
-    echo "$(test -n "$1" && echo "$1":)${2}"
-}
-
 # Evaluate system PATH on OS X
 if [ -x /usr/libexec/path_helper ]; then
     eval `/usr/libexec/path_helper -s`
 fi
 
 # User specific environment and startup programs
-export PATH="$(path_prepend "$PATH" \
-    "$HOME/bin:$HOME/winbin:$HOME/.local/bin:$HOME/.cabal/bin")"
+pathvarmunge PATH "$HOME/.cabal/bin"
+pathvarmunge PATH "$HOME/.local/bin"
+pathvarmunge PATH "$HOME/winbin"
+pathvarmunge PATH "$HOME/bin"
 
 # Default editor
 # Make sure that `gvim` doesn't fork, since a lot of programs that use
@@ -96,13 +88,13 @@ __ncpu () {
 export GOMAXPROCS=$(__ncpu)
 unset __ncpu
 export GOPATH="$HOME/Documents/code/go"
-export PATH="$(path_prepend "$PATH" "$GOPATH/bin")"
+pathvarmunge PATH "$GOPATH/bin"
 
 # Rust initialization
-export PATH="$(path_prepend "$PATH" "$HOME/.cargo/bin")"
+pathvarmunge PATH "$HOME/.cargo/bin"
 
 # Nix
-export PATH="$(path_prepend "$PATH" "$HOME/.nix-profile/bin")"
+pathvarmunge PATH "$HOME/.nix-profile/bin"
 
 # Perl local::lib - don't try to load it if it isn't installed
 if perl -Mlocal::lib -e1 2>/dev/null && [ -d "$HOME/local/perl5" ]; then
@@ -123,6 +115,3 @@ export EMACS_SERVER_FILE=~/doom.emacs.d/.local/cache/server/server
 if [ -f "$HOME/.profile.local" ]; then
     . "$HOME/.profile.local"
 fi
-
-unset path_prepend
-unset path_append

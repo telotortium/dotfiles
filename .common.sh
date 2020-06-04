@@ -19,3 +19,22 @@ command_on_path () {
         )
     } >/dev/null 2>&1
 }
+
+# pathvarmunge VAR DIR [AFTER]
+# Add DIR to pathlike-variable VAR if not already present. If AFTER="after",
+# add it to the end, else to the beginning.
+# Based on pathmunge function present in Fedora/RHEL (among other systems), but
+# generalized to set any type of variable.
+pathvarmunge () {
+    typeset "var=$1"
+    typeset "varval=$(eval "printf '%q' \"\$${var}\"")"
+    typeset "dir=$2"
+    typeset "after=$3"
+    if ! echo "$varval" | egrep -q "(^|:)$dir($|:)" ; then
+       if [ "$after" = "after" ] ; then
+           eval "$var=$(printf '%q' "$varval:$dir")"
+       else
+           eval "$var=$(printf '%q' "$dir:$varval")"
+       fi
+    fi
+}
