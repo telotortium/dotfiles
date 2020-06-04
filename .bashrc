@@ -194,7 +194,7 @@ bash_prompt_setup() {
         }
 
         # Set color based on the exit status of the lsat command.
-        local exit_status_cmd='$(test $__PROMPT_EXIT_STATUS -eq 0 && printf %s "'${G}'" || printf %s "'${BR}'")'
+        local exit_status_cmd='$(test "$__PROMPT_EXIT_STATUS" = 0 && printf %s "'${G}'" || printf %s "'${BR}'")'
         PS1="${1}[${2}\\u${3}@${4}\\h${5}]${6} ${7}${__pwd_escaped}${8}"$'\n'
         # Second line of prompt - start with `:` and end with `;` to allow
         # copying commands straight from the shell and re-executing them
