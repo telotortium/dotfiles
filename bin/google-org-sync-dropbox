@@ -12,4 +12,4 @@ org_repo=$HOME/Documents/org/google-org
 dropbox_local_root=$HOME/Dropbox
 dropbox_org=/google-org
 
-source "$(dirname ${BASH_SOURCE[0]})/sync-dropbox.bash"
+source "$(dirname ${BASH_SOURCE[0]})/sync-dropbox.bash" "$@"

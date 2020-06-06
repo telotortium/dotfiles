@@ -1,6 +1,22 @@
 #!/usr/bin/env bash
 set -e
 
+options=$(getopt -o g -- "$@")
+eval set -- "$options"
+no_dropbox_mode=0
+while true; do
+    case "$1" in
+    -g)
+        no_dropbox_mode=1
+        ;;
+    --)
+        shift
+        break
+        ;;
+    esac
+    shift
+done
+
 # Save all Org mode buffers. This will minimize the chance of conflicts between
 # the local version and remote version of the files.
 EMACSCLIENT=${EMACSCLIENT:-emacsclient}
@@ -20,6 +36,8 @@ org-bad-branch || {
 }
 org-git-sync
 org-git-push
+
+[[ "$no_dropbox_mode" -eq 1 ]] && exit 0
 
 echo
 echo '========================================'

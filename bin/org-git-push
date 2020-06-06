@@ -55,7 +55,7 @@ for repo in org_repos:
         # TODO: Do rebase in order to squash `--fixup`:
         # http://www.lowlevelmanager.com/2016/02/how-to-run-git-interactive-rebase-non.html
         start_branch = sp.check_output("git symbolic-ref --short HEAD", shell=True).strip()
-        log_and_run_cmd(r"""GIT={} git fetch --all""".format(q(git)),
+        log_and_run_cmd(r"""GIT={} git fetch""".format(q(git)),
                         verbose=options.verbose)
         log_and_run_cmd(r"""GIT={} git tag --force {} {}""".format(
             q(git), q(base_tag), q(start_branch)),
@@ -88,7 +88,7 @@ for repo in org_repos:
                         ),
                         verbose=options.verbose)
         # Update current status of remote tracking branches after push
-        log_and_run_cmd(r"""GIT={} git fetch --all""".format(q(git)),
+        log_and_run_cmd(r"""GIT={} git fetch""".format(q(git)),
                         verbose=options.verbose)
     except sp.CalledProcessError as e:
         print >>sys.stderr, e
