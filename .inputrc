@@ -1,5 +1,6 @@
 set editing-mode vi
 set completion-ignore-case on
+set blink-matching-paren on
 set enable-bracketed-paste on
 set history-size -1  # unlimited history
 # Map the Ctrl-up and Ctrl-down keys to search history
