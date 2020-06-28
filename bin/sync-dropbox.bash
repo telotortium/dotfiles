@@ -113,12 +113,9 @@ get_and_merge () {
 
     # Strip trailing blank lines from Org-mode files - Orgzly has a habit of
     # introducing them.
-    git ls-files -z | perl -n0e 'print if /.*\.(org|org_archive)\0/' | \
-        $( : "Sed command removes trailing blank lines. See
-              https://unix.stackexchange.com/a/81687/21394.
-              Use `xargs -n1` so that newlines deleted from one file
-              are not prepended to the next file." ) \
-        xargs -n1 -0 sed -i '' -e :a -e '/^\n*$/{$d;N;};/\n$/ba'
+    while IFS= read -r -d '' file; do
+        sed -i '' -e :a -e '/^\n*$/{$d;N;};/\n$/ba' "$file"
+    done < <(git ls-files -z | perl -n0e 'print if /.*\.(org|org_archive)\0/')
 
     # Only commit if working directory dirty - see
     # https://unix.stackexchange.com/a/394674/21394
@@ -139,7 +136,9 @@ fi
 git diff -z --name-only "$git_base_commit" | { \
     # Exclude files that shouldn't be uploaded to Dropbox.
     # Use Perl because MacOS grep doesn't support ASCII NUL-separated input.
-    perl -0 -ne 'print unless /gcal.*\.org/ || /\.org_archive$/'
+    # `\0` needed in regex because lines end with that, not `\n`, so `/$/`
+    # doesn't work.
+    perl -0 -ne 'print unless /gcal.*\.org/ || /\.org_archive\0/'
   } | {
     if [ "$local_mode" -eq 1 ]; then
         rsync --progress --delete -0 --files-from=/dev/stdin \
