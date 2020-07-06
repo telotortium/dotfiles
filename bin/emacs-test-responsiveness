@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+out=$(timeout 5 emacsclient --eval t 2>&1)
+rv=$?
+case $rv in
+0) ;;
+124)
+    now=$(date +%s)
+    waketime=$(sysctl -n kern.waketime | sed -E 's/.* sec = ([0-9]+).*/\1/')
+    # Don't prompt when system is waking from sleep.
+    if (( $now >= $waketime + 5 )); then
+        terminal-notifier -title 'Emacsclient not responding' -message 'Emacs may be hanging'
+    fi
+   ;;
+127)
+    terminal-notifier -title "${BASH_SRC[0]}" -message "Command not found: ${out}"
+    ;;
+*)
+    terminal-notifier -title "${BASH_SRC[0]}" -message "Error code ${rv}: ${out}"
+    ;;
+esac
+exit $rv
