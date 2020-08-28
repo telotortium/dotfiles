@@ -39,12 +39,18 @@ org-git-push
 
 [[ "$no_dropbox_mode" -eq 1 ]] && exit 0
 
+# Reset terminal echo state after a `read` call
+stty_echo () {
+    stty echo </dev/tty &>/dev/null || return 0
+}
+
 echo
 echo '========================================'
 echo '       Sync Orgzly on device now        '
 echo '========================================'
 echo
 read -rsp $'Press any key to continue...\n' -n1 _key
+stty_echo
 
 home-org-sync-dropbox -n
 cd ~/Documents/org/home-org
@@ -60,6 +66,7 @@ echo '       Sync Orgzly on device now        '
 echo '========================================'
 echo
 read -rsp $'Press any key to continue...\n' -n1 _key
+stty_echo
 
 # The documentation for `org-revert-all-org-buffers' says this:
 #
