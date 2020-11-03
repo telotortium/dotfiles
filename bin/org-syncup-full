@@ -1,6 +1,27 @@
 #!/usr/bin/env bash
 set -e
 
+# Reset terminal echo state after a `read` call
+stty_echo () {
+    stty echo </dev/tty &>/dev/null || true
+    echo
+}
+trap 'stty_echo' EXIT
+
+sync_orgzly_prompt () {
+    echo
+    echo '========================================'
+    echo '       Sync Orgzly on device now        '
+    echo '========================================'
+    echo
+    echo 'Press any key to continue...'
+    (
+        trap "exec </dev/tty; stty $(exec </dev/tty; stty -g;stty -icanon)" EXIT
+        stty -echo </dev/tty &>/dev/null
+        LC_ALL=C dd bs=1 count=1 >/dev/null 2>&1
+    )
+}
+
 options=$(getopt -o g -- "$@")
 eval set -- "$options"
 no_dropbox_mode=0
@@ -38,19 +59,7 @@ org-git-sync
 org-git-push
 
 [[ "$no_dropbox_mode" -eq 1 ]] && exit 0
-
-# Reset terminal echo state after a `read` call
-stty_echo () {
-    stty echo </dev/tty &>/dev/null || return 0
-}
-
-echo
-echo '========================================'
-echo '       Sync Orgzly on device now        '
-echo '========================================'
-echo
-read -rsp $'Press any key to continue...\n' -n1 _key
-stty_echo
+sync_orgzly_prompt
 
 home-org-sync-dropbox -n
 cd ~/Documents/org/home-org
@@ -60,13 +69,7 @@ google-org-sync-dropbox -n
 cd ~/Documents/org/google-org
 git push
 
-echo
-echo '========================================'
-echo '       Sync Orgzly on device now        '
-echo '========================================'
-echo
-read -rsp $'Press any key to continue...\n' -n1 _key
-stty_echo
+sync_orgzly_prompt
 
 # The documentation for `org-revert-all-org-buffers' says this:
 #
