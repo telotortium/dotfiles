@@ -8,7 +8,7 @@ case $rv in
     now=$(date +%s)
     waketime=$(sysctl -n kern.waketime | sed -E 's/.* sec = ([0-9]+).*/\1/')
     # Don't prompt when system is waking from sleep.
-    if (( $now >= $waketime + 5 )); then
+    if (( $now >= $waketime + 15 )); then
         terminal-notifier -title 'Emacsclient not responding' -message 'Emacs may be hanging'
     fi
    ;;
