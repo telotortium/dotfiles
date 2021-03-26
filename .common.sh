@@ -38,3 +38,9 @@ pathvarmunge () {
        fi
     fi
 }
+
+# source_if_exists FILE [ARGS...]
+# Source FILE if it exists, passing ARGS if given.
+source_if_exists () {
+    [ -f "$1" ] && source "$@"
+}
