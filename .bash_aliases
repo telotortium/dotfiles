@@ -383,6 +383,16 @@ git_bounce () {
 # Declares `config_bounce`
 eval "$(declare -f git_bounce | sed -e 's/git/config/g')"
 
+# MacOS aliases
+if [ $(uname) = "Darwin" ]; then
+    alias vlc="/Applications/VLC.app/Contents/MacOS/VLC"
+    alias gawk="rlwrap gawk"
+    alias preview='open -a Preview'
+fi
+source_if_exists /opt/local/share/bash-completion/bash_completion
+source_if_exists /opt/local/share/git/contrib/completion/git-completion.bash
+source_if_exists ~/.iterm2_shell_integration.bash
+
 function cheat() {
     curl https://cht.sh/$1
 }
