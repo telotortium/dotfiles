@@ -12,6 +12,7 @@ if [ -x /usr/libexec/path_helper ]; then
 fi
 
 # User specific environment and startup programs
+pathvarmunge PATH /usr/local/bin
 pathvarmunge PATH "$HOME/.cabal/bin"
 pathvarmunge PATH "$HOME/.local/bin"
 pathvarmunge PATH "$HOME/winbin"
@@ -111,6 +112,20 @@ export MOSH_ESCAPE_KEY='~'
 # Emacs server - set default name of Emacs server (relies on server also running
 # over TCP rather than local socket).
 export EMACS_SERVER_FILE=~/doom.emacs.d/server/server
+
+# MacPorts variables
+if [ -f /opt/local/etc/macports/macports.conf ]; then
+    pathvarmunge PATH /opt/local/sbin
+    pathvarmunge PATH /opt/local/bin
+    pathvarmunge MANPATH /opt/local/share/man
+
+    # Fix spurious "Warning: The macOS 11.1 SDK does not appear to be installed."
+    # from Macports on 11.1
+    export SYSTEM_VERSION_COMPAT=0
+
+    # MacPorts wants a DISPLAY variable set
+    export DISPLAY=:0
+fi
 
 if [ -f "$HOME/.profile.local" ]; then
     . "$HOME/.profile.local"
