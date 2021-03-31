@@ -396,3 +396,7 @@ source_if_exists ~/.iterm2_shell_integration.bash
 function cheat() {
     curl https://cht.sh/$1
 }
+
+if [ $(uname -s) = 'Darwin' ]; then
+    alias locate='echo "Use \`mdfind -name\` instead"; false'
+fi
