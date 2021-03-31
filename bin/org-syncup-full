@@ -1,6 +1,22 @@
 #!/usr/bin/env bash
 set -e
 
+options=$(getopt -o n -- "$@")
+eval set -- "$options"
+no_prompt=0
+while true; do
+    case "$1" in
+    -n)
+        no_prompt=1
+        ;;
+    --)
+        shift
+        break
+        ;;
+    esac
+    shift
+done
+
 # Reset terminal echo state after a `read` call
 stty_echo () {
     stty echo </dev/tty &>/dev/null || true
@@ -16,10 +32,10 @@ sync_orgzly_prompt () {
     echo
     echo 'Press any key to continue...'
     (
-        trap "exec </dev/tty; stty $(exec </dev/tty; stty -g;stty -icanon)" EXIT
-        stty -echo </dev/tty &>/dev/null
+        trap "stty $(stty -g;stty -icanon)" EXIT
+        stty -echo
         LC_ALL=C dd bs=1 count=1 >/dev/null 2>&1
-    )
+    )   </dev/tty
 }
 
 options=$(getopt -o g -- "$@")
@@ -59,7 +75,7 @@ org-git-sync
 org-git-push
 
 [[ "$no_dropbox_mode" -eq 1 ]] && exit 0
-sync_orgzly_prompt
+[[ "$no_prompt" -ne 1 ]] && sync_orgzly_prompt
 
 home-org-sync-dropbox -n
 cd ~/Documents/org/home-org
@@ -69,7 +85,7 @@ google-org-sync-dropbox -n
 cd ~/Documents/org/google-org
 git push
 
-sync_orgzly_prompt
+[[ "$no_prompt" -ne 1 ]] && sync_orgzly_prompt
 
 # The documentation for `org-revert-all-org-buffers' says this:
 #
