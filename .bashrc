@@ -202,17 +202,18 @@ bash_prompt_setup() {
         # a backslash to prevent any interpretation by the shell - this
         # requires 3 backslashes before `$` in `PS1`, since Bash interprets
         # backslashes as escapes when evaluating `PS1`.
+        PS0="${RS}"  # Always reset before command output starts.
         PS1="${PS1}${9}: ${10}\\D{%F %k:%M:%S} \! ${exit_status_cmd}"'\\\$'";${11} "
         PS2="${12}…${13} "
     }
 
     if [ $EUID = 0 ]; then
         _my_prompt_command ${BR} ${RS} ${BR} ${RS} ${BR} ${RS} ${BR}${UL} ${RS} \
-            ${R} "" ${RS} \
+            ${R} "" ${R} \
             ${R} ${RS}
     else
         _my_prompt_command ${BB} ${RS} ${BB} ${RS} ${BB} ${RS} ${BC}${UL} ${RS} \
-            ${C} "" ${RS} \
+            ${C} "" ${R} \
             ${R} ${RS}
     fi
     unset _my_prompt_command
