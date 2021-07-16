@@ -114,7 +114,15 @@ get_and_merge () {
     # Strip trailing blank lines from Org-mode files - Orgzly has a habit of
     # introducing them.
     while IFS= read -r -d '' file; do
-        sed -i '' -e :a -e '/^\n*$/{$d;N;};/\n$/ba' "$file"
+        local iargs
+        # Non-GNU sed (detected by lack of `--version` flag) requires empty
+        # arg after `-i` flag, which GNU sed doesn't accept.
+        if ! sed --version &>/dev/null; then
+            iargs=( "-i" "" )
+        else
+            iargs=( "-i" )
+        fi
+        sed "${iargs[@]}" -e :a -e '/^\n*$/{$d;N;};/\n$/ba' "$file"
     done < <(git ls-files -z | perl -n0e 'print if /.*\.(org|org_archive)\0/')
 
     # Only commit if working directory dirty - see
