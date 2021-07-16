@@ -13,3 +13,6 @@
 [submodule "doom.emacs.d"]
 	path = doom.emacs.d
 	url = https://github.com/hlissner/doom-emacs
+[submodule ".tmux/plugins/tpm"]
+	path = .tmux/plugins/tpm
+	url = https://github.com/tmux-plugins/tpm
