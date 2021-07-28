@@ -1,17 +1,20 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # Add org file changes to the repository
 ORG_REPOS=${ORG_REPOS?"no repos defined"}
 GIT=${GIT:-git}
 
 for repo in $ORG_REPOS
 do
-    maintree="$HOME/Documents/org/$repo"
-    echo "$0: Processing $maintree" 1>&2
-    cd "$maintree"
-    # Remove deleted files
-    "$GIT" ls-files --deleted -z | xargs -0 "$GIT" rm -q >/dev/null 2>&1
-    # Add new files
-    "$GIT" add . >/dev/null 2>&1
-    # Only commit if files have been added above
-    [ -z "$("$GIT" status -s)" ] || "$GIT" commit -q -m "$(date)"
+    (
+        set -eo pipefail
+        maintree="$HOME/Documents/org/$repo"
+        echo "$0: Processing $maintree" 1>&2
+        cd "$maintree"
+        # Remove deleted files
+        "$GIT" ls-files --deleted -z | xargs -0 "$GIT" rm -q >/dev/null 2>&1
+        # Add new files
+        "$GIT" add . >/dev/null 2>&1
+        # Only commit if files have been added above
+        [ -z "$("$GIT" status -s)" ] || "$GIT" commit -q -m "$(date)"
+    )
 done
