@@ -11,7 +11,7 @@ do
         echo "$0: Processing $maintree" 1>&2
         cd "$maintree"
         # Remove deleted files
-        "$GIT" ls-files --deleted -z | xargs -0 "$GIT" rm -q >/dev/null 2>&1
+        "$GIT" ls-files --deleted -z | xargs -r -0 "$GIT" rm -q >/dev/null 2>&1
         # Add new files
         "$GIT" add . >/dev/null 2>&1
         # Only commit if files have been added above
