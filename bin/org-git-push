@@ -69,6 +69,10 @@ for repo in org_repos:
                                 q(start_branch),
                             ),
                             verbose=options.verbose)
+            log_and_run_cmd(r"""GIT={} bash -c '$GIT md-tmp-branches'""".format(
+                                q(git),
+                            ),
+                            verbose=options.verbose)
         except sp.CalledProcessError as e:
             if options.noninteractive:
                 log_and_run_cmd("git rebase --abort",
