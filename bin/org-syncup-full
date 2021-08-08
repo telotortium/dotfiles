@@ -32,6 +32,7 @@ sync_orgzly_prompt () {
     echo
     echo 'Press any key to continue...'
     (
+        # shellcheck disable=SC2064
         trap "stty $(stty -g;stty -icanon)" EXIT
         stty -echo
         LC_ALL=C dd bs=1 count=1 >/dev/null 2>&1
