@@ -111,7 +111,7 @@ export MOSH_ESCAPE_KEY='~'
 
 # Emacs server - set default name of Emacs server (relies on server also running
 # over TCP rather than local socket).
-export EMACS_SERVER_FILE=~/doom.emacs.d/server/server
+export EMACS_SERVER_FILE=~/.doom.d/doom.emacs.d/server/server
 
 # MacPorts variables
 if [ -f /opt/local/etc/macports/macports.conf ]; then
