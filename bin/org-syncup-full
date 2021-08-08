@@ -66,13 +66,13 @@ if ! "$EMACSCLIENT" --eval '(org-save-all-org-buffers)'; then
     exit 1
 fi
 
+org-git-sync
 org-bad-branch || {
     for repo in $ORG_REPOS; do
         cd "$HOME/Documents/org/$repo"
         git md-tmp-branches || exit $?
     done
 }
-org-git-sync
 org-git-push
 
 [[ "$no_dropbox_mode" -eq 1 ]] && exit 0
