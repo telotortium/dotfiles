@@ -39,6 +39,34 @@ sync_orgzly_prompt () {
     )   </dev/tty
 }
 
+# The documentation for `org-revert-all-org-buffers' says this:
+#
+# This function is useful in a setup where one tracks Org files
+# with a version control system, to revert on one machine after pulling
+# changes from another.  I believe the procedure must be like this:
+#
+# 1. M-x org-save-all-org-buffers
+# 2. Pull changes from the other machine, resolve conflicts
+# 3. M-x org-revert-all-org-buffers
+#
+# I've decided to start reverting from this script because I no longer use
+# auto-revert-mode (see
+# https://www.gnu.org/software/emacs/manual/html_node/emacs/Reverting.html).
+revert_all_org_buffers () {
+    # Revert Org buffers to reload them from the file. Use `cl-letf` to disable
+    # `yes-or-no-p` prompt, and disable output, which seems to print
+    # `org-id-locations` for some reason, and so produces very long output.
+    if ! "$EMACSCLIENT" --eval '
+        (cl-letf (((symbol-function (quote yes-or-no-p)) (lambda (&rest args) t)))
+            (org-revert-all-org-buffers))' >/dev/null; then
+        rv=$?
+        echo "Failed to connect to Emacs daemon. If Emacs isn't open, run" \
+            "\`emacs --daemon\` and try again. Otherwise, run M-x" \
+            "server-force-delete followed by M-x server-start and try again."
+        return $rv
+    fi
+}
+
 options=$(getopt -o g -- "$@")
 eval set -- "$options"
 no_dropbox_mode=0
@@ -73,6 +101,7 @@ org-bad-branch || {
         git md-tmp-branches || exit $?
     done
 }
+revert_all_org_buffers  # Revert after each pull.
 org-git-push
 
 [[ "$no_dropbox_mode" -eq 1 ]] && exit 0
@@ -80,6 +109,7 @@ org-git-push
 
 home-org-sync-dropbox -n
 cd ~/Documents/org/home-org
+revert_all_org_buffers  # Revert after each pull.
 git push
 
 google-org-sync-dropbox -n
@@ -88,24 +118,5 @@ git push
 
 [[ "$no_prompt" -ne 1 ]] && sync_orgzly_prompt
 
-# The documentation for `org-revert-all-org-buffers' says this:
 #
-# This function is useful in a setup where one tracks Org files
-# with a version control system, to revert on one machine after pulling
-# changes from another.  I believe the procedure must be like this:
 #
-# 1. M-x org-save-all-org-buffers
-# 2. Pull changes from the other machine, resolve conflicts
-# 3. M-x org-revert-all-org-buffers
-#
-# However, I don't revert from this script because I use auto-revert-mode (see
-# https://www.gnu.org/software/emacs/manual/html_node/emacs/Reverting.html).
-# Therefore, manually triggering a revert is a waste of time. I've left the
-# code in here in case I end up not using auto-revert-mode in the future.
-#
-# # Revert Org buffers to reload them from the file. Use `cl-letf` to disable
-# # `yes-or-no-p` prompt, and disable output, which seems to print
-# # `org-id-locations` for some reason, and so produces very long output.
-# "$EMACSCLIENT" --eval '
-# (cl-letf (((symbol-function (quote yes-or-no-p)) (lambda (&rest args) t)))
-#     (org-revert-all-org-buffers))' >/dev/null
