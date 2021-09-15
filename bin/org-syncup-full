@@ -101,7 +101,6 @@ org-bad-branch || {
         git md-tmp-branches || exit $?
     done
 }
-revert_all_org_buffers  # Revert after each pull.
 org-git-push
 
 [[ "$no_dropbox_mode" -eq 1 ]] && exit 0
@@ -118,5 +117,14 @@ git push
 
 [[ "$no_prompt" -ne 1 ]] && sync_orgzly_prompt
 
+echo "Reverting all Org buffers - may take a while..."
+revert_all_org_buffers  # Revert after each pull.
+command -v git-restore-mtime &>/dev/null || {
+    for repo in $ORG_REPOS; do
+        cd "$HOME/Documents/org/$repo"
+        git-restore-mtime
+    done
+}
+echo "Reverting complete"
 #
 #
