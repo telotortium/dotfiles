@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+TAILSCALE_TEST_CONNECTIVITY_SSH_HOST=${TAILSCALE_TEST_CONNECTIVITY_SSH_HOST?}
+TAILSCALE_TEST_CONNECTIVITY_HTTP_HOST=${TAILSCALE_TEST_CONNECTIVITY_HTTP_HOST?}
+if ! ping -t 5 -o google.com; then
+   echo "Internet down - not testing Tailscale connectivity" 1>&2
+   exit 0
+fi
+
+echo "Now attempting to ssh to ${TAILSCALE_TEST_CONNECTIVITY_SSH_HOST}..." 1>&2
+state=$(set +o)
+set -v
+out=$(timeout 5 ssh -vvv "${TAILSCALE_TEST_CONNECTIVITY_SSH_HOST}" true)
+eval "${state}"
+rv=$?
+case $rv in
+0) echo "Success!" 1>&2 ;;
+*)
+    terminal-notifier -title "${BASH_SRC[0]}" -message "Error code ${rv}: ${out}"
+    exit $rv
+    ;;
+esac
+
+echo "Now attempting to curl ${TAILSCALE_TEST_CONNECTIVITY_HTTP_HOST}..." 1>&2
+state=$(set +o)
+set -v
+out=$(curl --max-time 5 --silent --show-error --output /dev/null "${TAILSCALE_TEST_CONNECTIVITY_HTTP_HOST}")
+eval "${state}"
+rv=$?
+case $rv in
+0) echo "Success!" 1>&2 ;;
+*)
+    terminal-notifier -title "${BASH_SRC[0]}" -message "Error code ${rv}: ${out}"
+    ;;
+esac
+exit $rv
