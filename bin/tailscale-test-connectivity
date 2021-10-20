@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+set -o pipefail
+
+cmd=$(basename "${BASH_SOURCE[0]}")
 TAILSCALE_TEST_CONNECTIVITY_SSH_HOST=${TAILSCALE_TEST_CONNECTIVITY_SSH_HOST?}
 TAILSCALE_TEST_CONNECTIVITY_HTTP_HOST=${TAILSCALE_TEST_CONNECTIVITY_HTTP_HOST?}
 if ! ping -t 5 -o google.com; then
@@ -7,30 +10,56 @@ if ! ping -t 5 -o google.com; then
    exit 0
 fi
 
-echo "Now attempting to ssh to ${TAILSCALE_TEST_CONNECTIVITY_SSH_HOST}..." 1>&2
+echo "Now attempting to ping ${TAILSCALE_TEST_CONNECTIVITY_SSH_HOST}..." 1>&2
 state=$(set +o)
-set -v
-out=$(timeout 5 ssh -vvv "${TAILSCALE_TEST_CONNECTIVITY_SSH_HOST}" true)
-eval "${state}"
+set -xv
+out=$(timeout 5 /Applications/Tailscale.app/Contents/MacOS/Tailscale ping "${TAILSCALE_TEST_CONNECTIVITY_SSH_HOST}" 2>&1)
 rv=$?
+eval "${state}"
 case $rv in
 0) echo "Success!" 1>&2 ;;
+137)
+    terminal-notifier -title "${cmd}" -message "ping: Timeout after 5 seconds"
+    exit $rv
+    ;;
 *)
-    terminal-notifier -title "${BASH_SRC[0]}" -message "Error code ${rv}: ${out}"
+    terminal-notifier -title "${cmd}" -message "ping: Error code ${rv}: ${out}"
+    exit $rv
+    ;;
+esac
+
+echo "Now attempting to ssh to ${TAILSCALE_TEST_CONNECTIVITY_SSH_HOST}..." 1>&2
+state=$(set +o)
+set -xv
+out=$(timeout 5 ssh -vvv "${TAILSCALE_TEST_CONNECTIVITY_SSH_HOST}" true 2>&1)
+rv=$?
+eval "${state}"
+case $rv in
+0) echo "Success!" 1>&2 ;;
+137)
+    terminal-notifier -title "${cmd}" -message "ssh: Timeout after 5 seconds"
+    exit $rv
+    ;;
+*)
+    terminal-notifier -title "${cmd}" -message "ssh: Error code ${rv}: ${out}"
     exit $rv
     ;;
 esac
 
 echo "Now attempting to curl ${TAILSCALE_TEST_CONNECTIVITY_HTTP_HOST}..." 1>&2
 state=$(set +o)
-set -v
-out=$(curl --max-time 5 --silent --show-error --output /dev/null "${TAILSCALE_TEST_CONNECTIVITY_HTTP_HOST}")
-eval "${state}"
+set -xv
+out=$(timeout 5 curl --silent --show-error --output /dev/null "${TAILSCALE_TEST_CONNECTIVITY_HTTP_HOST}" 2>&1)
 rv=$?
+eval "${state}"
 case $rv in
 0) echo "Success!" 1>&2 ;;
+137)
+    terminal-notifier -title "${cmd}" -message "curl: Timeout after 5 seconds"
+    exit $rv
+    ;;
 *)
-    terminal-notifier -title "${BASH_SRC[0]}" -message "Error code ${rv}: ${out}"
+    terminal-notifier -title "${cmd}" -message "curl: Error code ${rv}: ${out}"
     ;;
 esac
 exit $rv
