@@ -60,8 +60,8 @@ export LESS="XRI"
 # the -C option is passed.
 [ "$TERM" = "linux" ] && export LESS="${LESS}C"
 
-if command_on_path nvim; then
-    export MANPAGER="nvim -u NONE -c 'syntax on'  -c 'filetype plugin indent on' -c 'set nocp ft=man' -"
+if command_on_path nvimpager; then
+    export MANPAGER="nvimpager"
 fi
 
 export TEXMFHOME=$HOME/.texmf
