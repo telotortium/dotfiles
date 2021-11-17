@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -e
 
+( getopt --version | grep 'getopt (enhanced)' ) &>/dev/null || {
+  echo "GNU getopt not on path" 1>&2
+  exit 1
+}
 options=$(getopt -o n -- "$@")
 eval set -- "$options"
 no_prompt=0

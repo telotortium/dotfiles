@@ -20,6 +20,10 @@ set -o pipefail
 
 cd "$org_repo"
 
+( getopt --version | grep 'getopt (enhanced)' ) &>/dev/null || {
+  echo "GNU getopt not on path" 1>&2
+  exit 1
+}
 options=$(getopt -o lpn -- "$@")
 eval set -- "$options"
 local_mode=0
