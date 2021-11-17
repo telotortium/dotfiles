@@ -20,7 +20,7 @@ set -o pipefail
 
 cd "$org_repo"
 
-( getopt --version | grep 'getopt (enhanced)' ) &>/dev/null || {
+( getopt --version | grep -e 'getopt (enhanced)' -e 'util-linux' ) &>/dev/null || {
   echo "GNU getopt not on path" 1>&2
   exit 1
 }
