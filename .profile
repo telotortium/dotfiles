@@ -8,7 +8,7 @@
 
 # Evaluate system PATH on OS X
 if [ -x /usr/libexec/path_helper ]; then
-    eval `/usr/libexec/path_helper -s`
+    eval "$(/usr/libexec/path_helper -s)"
 fi
 
 # User specific environment and startup programs
