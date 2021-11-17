@@ -4,6 +4,17 @@
         cp = cherry-pick
         l = log --date-order --date=iso --graph --full-history --all --pretty=format:'%x08%x09%C(red)%h %C(cyan)%ad%x08%x08%x08%x08%x08%x08%x08%x08%x08%x08%x08%x08%x08%x08%x08 %C(bold blue)%aN%C(reset)%C(bold yellow)%d %C(reset)%s'
         lg = log --graph --pretty=format:'%Cred%h%Creset %C(yellow)%an%d%Creset %s %Cgreen(%ar)%Creset' --date=relative
+        imd = "!f() { \
+          (( $# > 0 )) || { echo Pass at least one branch 1>&2; return 1; }; \
+          for branch in \"$@\"; do \
+            git imerge merge \"$branch\" && git branch -d \"$branch\"; \
+          done; \
+        }; f"
+        imd-tmp-branches = "!f () { \
+            git checkout master && git branch | \
+            grep --color=auto -E '^ *(gac|dropbox)-merge-([0-9]+)(\\.[0-9]+)? *$' | \
+            while read branch; do git imd \"$branch\"; done; \
+        }; f"
         md = "!f() { \
           (( $# > 0 )) || { echo Pass at least one branch 1>&2; return 1; }; \
           for branch in \"$@\"; do \
