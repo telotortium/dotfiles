@@ -3,6 +3,14 @@
 set -o pipefail
 
 cmd=$(basename "${BASH_SOURCE[0]}")
+now=$(date +%s)
+waketime=$(sysctl -n kern.waketime | sed -E 's/.* sec = ([0-9]+).*/\1/')
+# Don't prompt when system is waking from sleep.
+if (( now < waketime + 15 )); then
+   echo "${cmd}: system just woke from sleep - exiting" 1>&2
+   exit 0
+fi
+
 TAILSCALE_TEST_CONNECTIVITY_SSH_HOST=${TAILSCALE_TEST_CONNECTIVITY_SSH_HOST?}
 TAILSCALE_TEST_CONNECTIVITY_HTTP_HOST=${TAILSCALE_TEST_CONNECTIVITY_HTTP_HOST?}
 if ! ping -t 5 -o google.com; then
