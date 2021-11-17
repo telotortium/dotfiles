@@ -127,6 +127,11 @@ if [ -f /opt/local/etc/macports/macports.conf ]; then
     export DISPLAY=:0
 fi
 
+if [ -d "$HOME/misc/build/git-tools" ]; then
+    pathvarmunge PATH "$HOME/misc/build/git-tools"
+    pathvarmunge MANPATH "$HOME/misc/build/git-tools"
+fi
+
 if [ -f "$HOME/.profile.local" ]; then
     . "$HOME/.profile.local"
 fi
