@@ -21,20 +21,20 @@ fi
 echo "Now attempting to ping ${TAILSCALE_TEST_CONNECTIVITY_SSH_HOST}..." 1>&2
 state=$(set +o)
 set -xv
-out=$(timeout 5 /Applications/Tailscale.app/Contents/MacOS/Tailscale ping "${TAILSCALE_TEST_CONNECTIVITY_SSH_HOST}" 2>&1)
+out=$(timeout 5 /Applications/Tailscale.app/Contents/MacOS/Tailscale ping \
+      -c 10 --until-direct "${TAILSCALE_TEST_CONNECTIVITY_SSH_HOST}" 2>&1)
 rv=$?
 eval "${state}"
 case $rv in
 0) echo "Success!" 1>&2 ;;
 137)
     terminal-notifier -title "${cmd}" -message "ping: Timeout after 5 seconds"
-    exit $rv
     ;;
 *)
     terminal-notifier -title "${cmd}" -message "ping: Error code ${rv}: ${out}"
-    exit $rv
     ;;
 esac
+(( rv != 0 )) && exit $rv
 
 echo "Now attempting to ssh to ${TAILSCALE_TEST_CONNECTIVITY_SSH_HOST}..." 1>&2
 state=$(set +o)
