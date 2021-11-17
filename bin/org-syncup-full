@@ -60,15 +60,38 @@ revert_all_org_buffers () {
     # Revert Org buffers to reload them from the file. Use `cl-letf` to disable
     # `yes-or-no-p` prompt, and disable output, which seems to print
     # `org-id-locations` for some reason, and so produces very long output.
-    if ! "$EMACSCLIENT" --eval '
-        (cl-letf (((symbol-function (quote yes-or-no-p)) (lambda (&rest args) t)))
-            (org-revert-all-org-buffers))' >/dev/null; then
-        rv=$?
-        echo "Failed to connect to Emacs daemon. If Emacs isn't open, run" \
-            "\`emacs --daemon\` and try again. Otherwise, run M-x" \
-            "server-force-delete followed by M-x server-start and try again."
-        return $rv
-    fi
+    for (( i=0; i < "${#org_repos_local[@]}"; i++ )); do
+        repo="${org_repos_local[$i]}"
+        cd "$HOME/Documents/org/$repo"
+        if type -p git-restore-mtime &>/dev/null; then
+            echo "Running git-restore-mtime..." 1>&2
+            git-restore-mtime
+        fi
+        tmp=$(mktemp)
+        git diff -z --name-only "${org_repos_orig_commits[$i]}" HEAD | \
+            xargs -0 printf "$(pwd | sed 's/%/%%/g')/%s\n" >"$tmp"
+        if ! "$EMACSCLIENT" --eval '
+            (with-current-buffer (find-file-noselect "'"$tmp"'")
+              (require (quote s))
+              (unwind-protect
+                (progn
+                  (goto-char (point-min))
+                  (while (not (eobp))
+                    (let* ((line (buffer-substring
+                                   (point)
+                                   (progn (forward-line 1) (point))))
+                           (file (s-chomp line)))
+                      (with-current-buffer (find-file-noselect file)
+                        (revert-buffer t t)))))
+                (kill-current-buffer)))'; then
+            rv=$?
+            echo "Failed to connect to Emacs daemon. If Emacs isn't open, run" \
+                "\`emacs --daemon\` and try again. Otherwise, run M-x" \
+                "server-force-delete followed by M-x server-start and try again."
+            exit $rv
+        fi
+        rm -f "$tmp"
+    done
 }
 
 options=$(getopt -o g -- "$@")
@@ -87,6 +110,14 @@ while true; do
     shift
 done
 
+read -r -a org_repos_local <<<"$ORG_REPOS"
+org_repos_orig_commits=()
+for repo in "${org_repos_local[@]}"; do
+    cd "$HOME/Documents/org/$repo"
+    org_repos_orig_commits+=("$(git rev-parse HEAD)")
+done
+
+
 # Save all Org mode buffers. This will minimize the chance of conflicts between
 # the local version and remote version of the files.
 EMACSCLIENT=${EMACSCLIENT:-emacsclient}
@@ -100,7 +131,7 @@ fi
 
 org-git-sync
 org-bad-branch || {
-    for repo in $ORG_REPOS; do
+    for repo in "${org_repos_local[@]}"; do
         cd "$HOME/Documents/org/$repo"
         git md-tmp-branches || exit $?
     done
@@ -112,7 +143,6 @@ org-git-push
 
 home-org-sync-dropbox -n
 cd ~/Documents/org/home-org
-revert_all_org_buffers  # Revert after each pull.
 git push
 
 google-org-sync-dropbox -n
@@ -123,12 +153,6 @@ git push
 
 echo "Reverting all Org buffers - may take a while..."
 revert_all_org_buffers  # Revert after each pull.
-command -v git-restore-mtime &>/dev/null || {
-    for repo in $ORG_REPOS; do
-        cd "$HOME/Documents/org/$repo"
-        git-restore-mtime
-    done
-}
 echo "Reverting complete"
 #
 #
