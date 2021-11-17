@@ -86,9 +86,9 @@ __ncpu () {
         echo 1 ;;
     esac
 }
-export GOMAXPROCS=$(__ncpu)
+GOMAXPROCS=$(__ncpu); export GOMAXPROCS
 unset __ncpu
-export GOPATH="$HOME/Documents/code/go"
+GOPATH="$HOME/Documents/code/go"; export GOPATH
 pathvarmunge PATH "$GOPATH/bin"
 
 # Rust initialization
