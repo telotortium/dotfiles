@@ -53,6 +53,7 @@ case $rv in
     exit $rv
     ;;
 esac
+(( rv != 0 )) && exit $rv
 
 echo "Now attempting to curl ${TAILSCALE_TEST_CONNECTIVITY_HTTP_HOST}..." 1>&2
 state=$(set +o)
@@ -64,10 +65,9 @@ case $rv in
 0) echo "Success!" 1>&2 ;;
 137)
     terminal-notifier -title "${cmd}" -message "curl: Timeout after 5 seconds"
-    exit $rv
     ;;
 *)
     terminal-notifier -title "${cmd}" -message "curl: Error code ${rv}: ${out}"
     ;;
 esac
-exit $rv
+(( rv != 0 )) && exit $rv
