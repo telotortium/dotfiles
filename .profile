@@ -11,6 +11,24 @@ if [ -x /usr/libexec/path_helper ]; then
     eval "$(/usr/libexec/path_helper -s)"
 fi
 
+# MacPorts variables
+if [ -f /opt/local/etc/macports/macports.conf ]; then
+    if ! ( echo "$PATH" | grep -q "/usr/local/bin:/opt/local/bin" ); then
+        PATH="$(echo "$PATH" | sed 's!/usr/local/bin!/usr/local/bin:/opt/local/bin!g')"
+    fi
+    if ! ( echo "$PATH" | grep -q "/usr/local/sbin:/opt/local/sbin" ); then
+        PATH="$(echo "$PATH" | sed 's!/usr/local/sbin!/usr/local/sbin:/opt/local/sbin!g')"
+    fi
+    pathvarmunge MANPATH /opt/local/share/man
+
+    # Fix spurious "Warning: The macOS 11.1 SDK does not appear to be installed."
+    # from Macports on 11.1
+    export SYSTEM_VERSION_COMPAT=0
+
+    # MacPorts wants a DISPLAY variable set
+    export DISPLAY=:0
+fi
+
 # User specific environment and startup programs
 pathvarmunge PATH /usr/local/bin
 pathvarmunge PATH "$HOME/.cabal/bin"
@@ -92,7 +110,7 @@ GOPATH="$HOME/Documents/code/go"; export GOPATH
 pathvarmunge PATH "$GOPATH/bin"
 
 # Rust initialization
-pathvarmunge PATH "$HOME/.cargo/bin"
+. "$HOME/.cargo/env"
 
 # Nix
 pathvarmunge PATH "$HOME/.nix-profile/bin"
@@ -112,20 +130,6 @@ export MOSH_ESCAPE_KEY='~'
 # Emacs server - set default name of Emacs server (relies on server also running
 # over TCP rather than local socket).
 export EMACS_SERVER_FILE=~/.doom.d/doom.emacs.d/server/server
-
-# MacPorts variables
-if [ -f /opt/local/etc/macports/macports.conf ]; then
-    pathvarmunge PATH /opt/local/sbin
-    pathvarmunge PATH /opt/local/bin
-    pathvarmunge MANPATH /opt/local/share/man
-
-    # Fix spurious "Warning: The macOS 11.1 SDK does not appear to be installed."
-    # from Macports on 11.1
-    export SYSTEM_VERSION_COMPAT=0
-
-    # MacPorts wants a DISPLAY variable set
-    export DISPLAY=:0
-fi
 
 if [ -d "$HOME/misc/build/git-tools" ]; then
     pathvarmunge PATH "$HOME/misc/build/git-tools"
