@@ -33,6 +33,7 @@ fi
 pathvarmunge PATH /usr/local/bin
 pathvarmunge PATH "$HOME/.cabal/bin"
 pathvarmunge PATH "$HOME/.local/bin"
+pathvarmunge PATH "$HOME/.fzf/bin"
 pathvarmunge PATH "$HOME/winbin"
 pathvarmunge PATH "$HOME/bin"
 

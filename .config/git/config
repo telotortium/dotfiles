@@ -32,8 +32,8 @@
         root = rev-parse --show-toplevel
         untracked = ls-files --others --exclude-standard
 [user]
-        name = Robert Irelan
-        email = rirelan@gmail.com
+	name = Robert Irelan
+	email = robert.irelan@bytedance.com
 [merge]
         tool = vimdiff
 [credential]
