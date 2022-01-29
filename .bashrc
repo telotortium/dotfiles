@@ -40,7 +40,7 @@ if which loginctl > /dev/null && loginctl >& /dev/null; then
     fi
 fi
 
-CDPATH="$HOME/Documents/org"
+CDPATH=.:~:~/Documents/org
 
 # Terminal setup
 precmd_functions+=(precmd_prompt_exit_status)
