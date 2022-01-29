@@ -30,7 +30,9 @@ pathvarmunge () {
     typeset "varval=$(eval "printf '%q' \"\$${var}\"")"
     typeset "dir=$2"
     typeset "after=$3"
-    if ! echo "$varval" | egrep -q "(^|:)$dir($|:)" ; then
+    if [ -z "$varval" -o "$varval" = "''" ]; then
+       eval "$var=$(printf '%q' "$dir")"
+    elif ! echo "$varval" | egrep -q "(^|:)$dir($|:)" ; then
        if [ "$after" = "after" ] ; then
            eval "$var=$(printf '%q' "$varval:$dir")"
        else
