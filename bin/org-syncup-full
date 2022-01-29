@@ -145,8 +145,8 @@ home-org-sync-dropbox -n
 cd ~/Documents/org/home-org
 git push
 
-google-org-sync-dropbox -n
-cd ~/Documents/org/google-org
+tiktok-org-sync-dropbox -n
+cd ~/Documents/org/tiktok-org
 git push
 
 [[ "$no_prompt" -ne 1 ]] && sync_orgzly_prompt
