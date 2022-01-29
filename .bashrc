@@ -5,7 +5,6 @@
 # If not running interactively, don't do anything
 [ -z "${PS1:-}" ] && return
 
-
 [ -f "$HOME/.common.sh" ] && . "$HOME/.common.sh"
 
 # Set umask to exclude group and other write permissions
@@ -40,6 +39,8 @@ if which loginctl > /dev/null && loginctl >& /dev/null; then
         echo "Tell the sysadmin to set KillUserProcesses=no in /etc/systemd/login.conf"
     fi
 fi
+
+CDPATH="$HOME/Documents/org"
 
 # Terminal setup
 precmd_functions+=(precmd_prompt_exit_status)
