@@ -1,4 +1,11 @@
 # -*- mode: sh -*-
+# Page following command with color - works with most GNU tools and others
+# like them.
+cless () {
+    "$@" --color=always | less
+}
+alias cpg=cless  # Not sure which spelling will be more useful.
+
 # Basic ls aliases
 unalias ls &> /dev/null
 LS_COLOR_FLAG=""
