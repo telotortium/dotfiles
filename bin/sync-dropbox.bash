@@ -14,6 +14,8 @@
 set -eu
 set -o pipefail
 
+exec </dev/null
+
 : ${org_repo?:"Set org_repo to location of org repo on this machine"}
 : ${dropbox_local_root?:"Set dropbox_local_root to location of Dropbox directory on this machine"}
 : ${dropbox_org?:"Set dropbox_org to location of org repo directory relative to Dropbox root"}
