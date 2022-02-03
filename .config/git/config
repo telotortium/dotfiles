@@ -44,6 +44,8 @@
         pager = less -R
         autocrlf = input
         untrackedCache = true
+        quotePath = false
+        precomposeunicode = true
 [diff]
         submodule = log
         colorMoved = default
