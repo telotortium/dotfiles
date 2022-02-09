@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# Refresh access token for dbxcli if necessary
+
+output=$(dbxcli ls / </dev/null 2>&1)
+if [[ "$output" != *"expired_access_token"* ]] \
+    && [[ "$output" != *"Enter the authorization code"* ]]; then
+    exit 0
+fi
+rm -f ~/.config/dbxcli/auth.json  # Remove token
+echo "Now running \`dbxcli version\` to refresh access token" 1>&2
+echo "Will print version info when successful" 1>&2
+exec dbxcli version

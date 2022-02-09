@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Template:
 #
 # Merge changes in $org_repo from Dropbox into repo, and then upload repo
@@ -13,8 +14,6 @@
 
 set -eu
 set -o pipefail
-
-exec </dev/null
 
 : ${org_repo?:"Set org_repo to location of org repo on this machine"}
 : ${dropbox_local_root?:"Set dropbox_local_root to location of Dropbox directory on this machine"}
@@ -58,6 +57,9 @@ if [ "$no_prompt" -ne 1 ]; then
     echo
     read -rsp $'Press any key to continue...\n' -n1 _key
 fi
+
+# Refresh Dropbox token if necessary
+"$(dirname ${BASH_SOURCE[0]})/dbxcli-refresh"
 
 dbxcli_list_revs_files () {
     base_dir="$1"

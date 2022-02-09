@@ -407,3 +407,9 @@ function cheat() {
 if [ $(uname -s) = 'Darwin' ]; then
     alias locate='echo "Use \`mdfind -name\` instead"; false'
 fi
+
+# Force dbxcli-refresh if necessary before running dbxcli
+dbxcli () {
+    command dbxcli-refresh
+    command dbxcli "$@"
+}
