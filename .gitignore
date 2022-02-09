@@ -1,5 +1,4 @@
 /.Trash/**
-/mbox
 /crontab-local-backup
 
 # Credentials
@@ -23,3 +22,19 @@
 
 # Credentials
 /.config/dbxcli/auth.json
+
+# History and logs
+/.bash_history
+/.bash_sessions/
+/.hist.db
+/.lesshst
+/.python_history
+/mbox
+/.testlog
+/.viminfo
+/.vt_locations
+
+# Emacs caches
+/.emacs.d/cask
+/.emacs.d/eln-cache
+/.emacs.d/elpa
