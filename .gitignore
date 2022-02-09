@@ -1,2 +1,25 @@
 /.Trash/**
 /mbox
+/crontab-local-backup
+
+# Credentials
+/.config/dbxcli/auth.json
+
+# User data, not for tracking
+/Applications/
+/Desktop/
+/Documents/
+/Documents/
+/Documents/
+/Documents/
+/Downloads/
+/Library/
+/Movies/
+/Music/
+/Pictures/
+/Public/
+
+/PycharmProjects/
+
+# Credentials
+/.config/dbxcli/auth.json
