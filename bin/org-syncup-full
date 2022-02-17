@@ -5,13 +5,21 @@ set -e
   echo "GNU getopt not on path" 1>&2
   exit 1
 }
-options=$(getopt -o n -- "$@")
+options=$(getopt -o gnP -- "$@")
 eval set -- "$options"
 no_prompt=0
+no_push=0
+no_dropbox_mode=0
 while true; do
     case "$1" in
     -n)
         no_prompt=1
+        ;;
+    -P)
+        no_push=1
+        ;;
+    -g)
+        no_dropbox_mode=1
         ;;
     --)
         shift
@@ -20,6 +28,7 @@ while true; do
     esac
     shift
 done
+
 
 # Reset terminal echo state after a `read` call
 stty_echo () {
@@ -94,22 +103,6 @@ revert_all_org_buffers () {
     done
 }
 
-options=$(getopt -o g -- "$@")
-eval set -- "$options"
-no_dropbox_mode=0
-while true; do
-    case "$1" in
-    -g)
-        no_dropbox_mode=1
-        ;;
-    --)
-        shift
-        break
-        ;;
-    esac
-    shift
-done
-
 read -r -a org_repos_local <<<"$ORG_REPOS"
 org_repos_orig_commits=()
 for repo in "${org_repos_local[@]}"; do
@@ -136,20 +129,21 @@ org-bad-branch || {
         git md-tmp-branches || exit $?
     done
 }
-org-git-push
+[[ "$no_push" -eq 1 ]] || org-git-push
 
-[[ "$no_dropbox_mode" -eq 1 ]] && exit 0
-[[ "$no_prompt" -ne 1 ]] && sync_orgzly_prompt
+if [[ "$no_dropbox_mode" -ne 1 ]]; then
+    [[ "$no_prompt" -ne 1 ]] && sync_orgzly_prompt
 
-home-org-sync-dropbox -n
-cd ~/Documents/org/home-org
-git push
+    home-org-sync-dropbox -n
+    cd ~/Documents/org/home-org
+    git push
 
-tiktok-org-sync-dropbox -n
-cd ~/Documents/org/tiktok-org
-git push
+    tiktok-org-sync-dropbox -n
+    cd ~/Documents/org/tiktok-org
+    git push
 
-[[ "$no_prompt" -ne 1 ]] && sync_orgzly_prompt
+    [[ "$no_prompt" -ne 1 ]] && sync_orgzly_prompt
+fi
 
 echo "Reverting all Org buffers - may take a while..."
 revert_all_org_buffers  # Revert after each pull.
