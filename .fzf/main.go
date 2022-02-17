@@ -1,13 +1,14 @@
 package main
 
 import (
-	"github.com/junegunn/fzf/src"
+	fzf "github.com/junegunn/fzf/src"
 	"github.com/junegunn/fzf/src/protector"
 )
 
-var revision string
+var version string = "0.29"
+var revision string = "devel"
 
 func main() {
 	protector.Protect()
-	fzf.Run(fzf.ParseOptions(), revision)
+	fzf.Run(fzf.ParseOptions(), version, revision)
 }

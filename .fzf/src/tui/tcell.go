@@ -5,7 +5,6 @@ package tui
 import (
 	"os"
 	"time"
-	"unicode/utf8"
 
 	"runtime"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/gdamore/tcell/encoding"
 
 	"github.com/mattn/go-runewidth"
+	"github.com/rivo/uniseg"
 )
 
 func HasFullscreenRenderer() bool {
@@ -77,11 +77,13 @@ const (
 	Blink          = Attr(tcell.AttrBlink)
 	Reverse        = Attr(tcell.AttrReverse)
 	Underline      = Attr(tcell.AttrUnderline)
-	Italic         = Attr(tcell.AttrNone) // Not supported
+	Italic         = Attr(tcell.AttrItalic)
 )
 
 const (
-	AttrRegular Attr = 0
+	AttrUndefined = Attr(0)
+	AttrRegular   = Attr(1 << 7)
+	AttrClear     = Attr(1 << 8)
 )
 
 func (r *FullscreenRenderer) defaultTheme() *ColorTheme {
@@ -118,8 +120,11 @@ func (a Attr) Merge(b Attr) Attr {
 	return a | b
 }
 
+// handle the following as private members of FullscreenRenderer instance
+// they are declared here to prevent introducing tcell library in non-windows builds
 var (
-	_screen tcell.Screen
+	_screen          tcell.Screen
+	_prevMouseButton tcell.ButtonMask
 )
 
 func (r *FullscreenRenderer) initScreen() {
@@ -166,10 +171,6 @@ func (w *TcellWindow) Y() int {
 	return w.lastY
 }
 
-func (r *FullscreenRenderer) DoesAutoWrap() bool {
-	return false
-}
-
 func (r *FullscreenRenderer) Clear() {
 	_screen.Sync()
 	_screen.Clear()
@@ -187,14 +188,48 @@ func (r *FullscreenRenderer) GetChar() Event {
 
 	// process mouse events:
 	case *tcell.EventMouse:
+		// mouse down events have zeroed buttons, so we can't use them
+		// mouse up event consists of two events, 1. (main) event with modifier and other metadata, 2. event with zeroed buttons
+		// so mouse click is three consecutive events, but the first and last are indistinguishable from movement events (with released buttons)
+		// dragging has same structure, it only repeats the middle (main) event appropriately
 		x, y := ev.Position()
-		button := ev.Buttons()
 		mod := ev.Modifiers() != 0
-		if button&tcell.WheelDown != 0 {
+
+		// since we dont have mouse down events (unlike LightRenderer), we need to track state in prevButton
+		prevButton, button := _prevMouseButton, ev.Buttons()
+		_prevMouseButton = button
+		drag := prevButton == button
+
+		switch {
+		case button&tcell.WheelDown != 0:
 			return Event{Mouse, 0, &MouseEvent{y, x, -1, false, false, false, mod}}
-		} else if button&tcell.WheelUp != 0 {
+		case button&tcell.WheelUp != 0:
 			return Event{Mouse, 0, &MouseEvent{y, x, +1, false, false, false, mod}}
-		} else if runtime.GOOS != "windows" {
+		case button&tcell.Button1 != 0 && !drag:
+			// all potential double click events put their 'line' coordinate in the clickY array
+			// double click event has two conditions, temporal and spatial, the first is checked here
+			now := time.Now()
+			if now.Sub(r.prevDownTime) < doubleClickDuration {
+				r.clickY = append(r.clickY, y)
+			} else {
+				r.clickY = []int{y}
+			}
+			r.prevDownTime = now
+
+			// detect double clicks (also check for spatial condition)
+			n := len(r.clickY)
+			double := n > 1 && r.clickY[n-2] == r.clickY[n-1]
+			if double {
+				// make sure two consecutive double clicks require four clicks
+				r.clickY = []int{}
+			}
+
+			// fire single or double click event
+			return Event{Mouse, 0, &MouseEvent{y, x, 0, true, !double, double, mod}}
+		case button&tcell.Button2 != 0 && !drag:
+			return Event{Mouse, 0, &MouseEvent{y, x, 0, false, true, false, mod}}
+		case runtime.GOOS != "windows":
+
 			// double and single taps on Windows don't quite work due to
 			// the console acting on the events and not allowing us
 			// to consume them.
@@ -224,101 +259,153 @@ func (r *FullscreenRenderer) GetChar() Event {
 
 		// process keyboard:
 	case *tcell.EventKey:
-		alt := (ev.Modifiers() & tcell.ModAlt) > 0
-		keyfn := func(r rune) int {
+		mods := ev.Modifiers()
+		none := mods == tcell.ModNone
+		alt := (mods & tcell.ModAlt) > 0
+		ctrl := (mods & tcell.ModCtrl) > 0
+		shift := (mods & tcell.ModShift) > 0
+		ctrlAlt := ctrl && alt
+		altShift := alt && shift
+
+		keyfn := func(r rune) Event {
 			if alt {
-				return CtrlAltA - 'a' + int(r)
+				return CtrlAltKey(r)
 			}
-			return CtrlA - 'a' + int(r)
+			return EventType(CtrlA.Int() - 'a' + int(r)).AsEvent()
 		}
 		switch ev.Key() {
+		// section 1: Ctrl+(Alt)+[a-z]
 		case tcell.KeyCtrlA:
-			return Event{keyfn('a'), 0, nil}
+			return keyfn('a')
 		case tcell.KeyCtrlB:
-			return Event{keyfn('b'), 0, nil}
+			return keyfn('b')
 		case tcell.KeyCtrlC:
-			return Event{keyfn('c'), 0, nil}
+			return keyfn('c')
 		case tcell.KeyCtrlD:
-			return Event{keyfn('d'), 0, nil}
+			return keyfn('d')
 		case tcell.KeyCtrlE:
-			return Event{keyfn('e'), 0, nil}
+			return keyfn('e')
 		case tcell.KeyCtrlF:
-			return Event{keyfn('f'), 0, nil}
+			return keyfn('f')
 		case tcell.KeyCtrlG:
-			return Event{keyfn('g'), 0, nil}
+			return keyfn('g')
 		case tcell.KeyCtrlH:
-			return Event{keyfn('h'), 0, nil}
+			switch ev.Rune() {
+			case 0:
+				if ctrl {
+					return Event{BSpace, 0, nil}
+				}
+			case rune(tcell.KeyCtrlH):
+				switch {
+				case ctrl:
+					return keyfn('h')
+				case alt:
+					return Event{AltBS, 0, nil}
+				case none, shift:
+					return Event{BSpace, 0, nil}
+				}
+			}
 		case tcell.KeyCtrlI:
-			return Event{keyfn('i'), 0, nil}
+			return keyfn('i')
 		case tcell.KeyCtrlJ:
-			return Event{keyfn('j'), 0, nil}
+			return keyfn('j')
 		case tcell.KeyCtrlK:
-			return Event{keyfn('k'), 0, nil}
+			return keyfn('k')
 		case tcell.KeyCtrlL:
-			return Event{keyfn('l'), 0, nil}
+			return keyfn('l')
 		case tcell.KeyCtrlM:
-			return Event{keyfn('m'), 0, nil}
+			return keyfn('m')
 		case tcell.KeyCtrlN:
-			return Event{keyfn('n'), 0, nil}
+			return keyfn('n')
 		case tcell.KeyCtrlO:
-			return Event{keyfn('o'), 0, nil}
+			return keyfn('o')
 		case tcell.KeyCtrlP:
-			return Event{keyfn('p'), 0, nil}
+			return keyfn('p')
 		case tcell.KeyCtrlQ:
-			return Event{keyfn('q'), 0, nil}
+			return keyfn('q')
 		case tcell.KeyCtrlR:
-			return Event{keyfn('r'), 0, nil}
+			return keyfn('r')
 		case tcell.KeyCtrlS:
-			return Event{keyfn('s'), 0, nil}
+			return keyfn('s')
 		case tcell.KeyCtrlT:
-			return Event{keyfn('t'), 0, nil}
+			return keyfn('t')
 		case tcell.KeyCtrlU:
-			return Event{keyfn('u'), 0, nil}
+			return keyfn('u')
 		case tcell.KeyCtrlV:
-			return Event{keyfn('v'), 0, nil}
+			return keyfn('v')
 		case tcell.KeyCtrlW:
-			return Event{keyfn('w'), 0, nil}
+			return keyfn('w')
 		case tcell.KeyCtrlX:
-			return Event{keyfn('x'), 0, nil}
+			return keyfn('x')
 		case tcell.KeyCtrlY:
-			return Event{keyfn('y'), 0, nil}
+			return keyfn('y')
 		case tcell.KeyCtrlZ:
-			return Event{keyfn('z'), 0, nil}
+			return keyfn('z')
+		// section 2: Ctrl+[ \]_]
 		case tcell.KeyCtrlSpace:
 			return Event{CtrlSpace, 0, nil}
 		case tcell.KeyCtrlBackslash:
 			return Event{CtrlBackSlash, 0, nil}
 		case tcell.KeyCtrlRightSq:
 			return Event{CtrlRightBracket, 0, nil}
+		case tcell.KeyCtrlCarat:
+			return Event{CtrlCaret, 0, nil}
 		case tcell.KeyCtrlUnderscore:
 			return Event{CtrlSlash, 0, nil}
+		// section 3: (Alt)+Backspace2
 		case tcell.KeyBackspace2:
 			if alt {
 				return Event{AltBS, 0, nil}
 			}
 			return Event{BSpace, 0, nil}
 
+		// section 4: (Alt+Shift)+Key(Up|Down|Left|Right)
 		case tcell.KeyUp:
+			if altShift {
+				return Event{AltSUp, 0, nil}
+			}
+			if shift {
+				return Event{SUp, 0, nil}
+			}
 			if alt {
 				return Event{AltUp, 0, nil}
 			}
 			return Event{Up, 0, nil}
 		case tcell.KeyDown:
+			if altShift {
+				return Event{AltSDown, 0, nil}
+			}
+			if shift {
+				return Event{SDown, 0, nil}
+			}
 			if alt {
 				return Event{AltDown, 0, nil}
 			}
 			return Event{Down, 0, nil}
 		case tcell.KeyLeft:
+			if altShift {
+				return Event{AltSLeft, 0, nil}
+			}
+			if shift {
+				return Event{SLeft, 0, nil}
+			}
 			if alt {
 				return Event{AltLeft, 0, nil}
 			}
 			return Event{Left, 0, nil}
 		case tcell.KeyRight:
+			if altShift {
+				return Event{AltSRight, 0, nil}
+			}
+			if shift {
+				return Event{SRight, 0, nil}
+			}
 			if alt {
 				return Event{AltRight, 0, nil}
 			}
 			return Event{Right, 0, nil}
 
+		// section 5: (Insert|Home|Delete|End|PgUp|PgDn|BackTab|F1-F12)
 		case tcell.KeyInsert:
 			return Event{Insert, 0, nil}
 		case tcell.KeyHome:
@@ -331,10 +418,8 @@ func (r *FullscreenRenderer) GetChar() Event {
 			return Event{PgUp, 0, nil}
 		case tcell.KeyPgDn:
 			return Event{PgDn, 0, nil}
-
 		case tcell.KeyBacktab:
 			return Event{BTab, 0, nil}
-
 		case tcell.KeyF1:
 			return Event{F1, 0, nil}
 		case tcell.KeyF2:
@@ -360,31 +445,31 @@ func (r *FullscreenRenderer) GetChar() Event {
 		case tcell.KeyF12:
 			return Event{F12, 0, nil}
 
-		// ev.Ch doesn't work for some reason for space:
+		// section 6: (Ctrl+Alt)+'rune'
 		case tcell.KeyRune:
 			r := ev.Rune()
-			if alt {
-				switch r {
-				case ' ':
-					return Event{AltSpace, 0, nil}
-				case '/':
-					return Event{AltSlash, 0, nil}
-				}
-				if r >= 'a' && r <= 'z' {
-					return Event{AltA + int(r) - 'a', 0, nil}
-				}
-				if r >= '0' && r <= '9' {
-					return Event{Alt0 + int(r) - '0', 0, nil}
-				}
-			}
-			return Event{Rune, r, nil}
 
+			switch {
+			// translate native key events to ascii control characters
+			case r == ' ' && ctrl:
+				return Event{CtrlSpace, 0, nil}
+			// handle AltGr characters
+			case ctrlAlt:
+				return Event{Rune, r, nil} // dropping modifiers
+			// simple characters (possibly with modifier)
+			case alt:
+				return AltKey(r)
+			default:
+				return Event{Rune, r, nil}
+			}
+
+		// section 7: Esc
 		case tcell.KeyEsc:
 			return Event{ESC, 0, nil}
-
 		}
 	}
 
+	// section 8: Invalid
 	return Event{Invalid, 0, nil}
 }
 
@@ -418,7 +503,7 @@ func (r *FullscreenRenderer) NewWindow(top int, left int, width int, height int,
 		normal = ColPreview
 	}
 	return &TcellWindow{
-		color:       r.theme != nil,
+		color:       r.theme.Colored,
 		preview:     preview,
 		top:         top,
 		left:        left,
@@ -464,65 +549,56 @@ func (w *TcellWindow) MoveAndClear(y int, x int) {
 }
 
 func (w *TcellWindow) Print(text string) {
-	w.printString(text, w.normal, 0)
+	w.printString(text, w.normal)
 }
 
-func (w *TcellWindow) printString(text string, pair ColorPair, a Attr) {
-	t := text
+func (w *TcellWindow) printString(text string, pair ColorPair) {
 	lx := 0
+	a := pair.Attr()
 
-	var style tcell.Style
-	if w.color {
-		style = pair.style().
+	style := pair.style()
+	if a&AttrClear == 0 {
+		style = style.
 			Reverse(a&Attr(tcell.AttrReverse) != 0).
-			Underline(a&Attr(tcell.AttrUnderline) != 0)
-	} else {
-		style = w.normal.style().
-			Reverse(a&Attr(tcell.AttrReverse) != 0 || pair == ColCurrent || pair == ColCurrentMatch).
-			Underline(a&Attr(tcell.AttrUnderline) != 0 || pair == ColMatch || pair == ColCurrentMatch)
+			Underline(a&Attr(tcell.AttrUnderline) != 0).
+			Italic(a&Attr(tcell.AttrItalic) != 0).
+			Blink(a&Attr(tcell.AttrBlink) != 0).
+			Dim(a&Attr(tcell.AttrDim) != 0)
 	}
-	style = style.
-		Blink(a&Attr(tcell.AttrBlink) != 0).
-		Bold(a&Attr(tcell.AttrBold) != 0).
-		Dim(a&Attr(tcell.AttrDim) != 0)
 
-	for {
-		if len(t) == 0 {
-			break
-		}
-		r, size := utf8.DecodeRuneInString(t)
-		t = t[size:]
+	gr := uniseg.NewGraphemes(text)
+	for gr.Next() {
+		rs := gr.Runes()
 
-		if r < rune(' ') { // ignore control characters
-			continue
-		}
-
-		if r == '\n' {
-			w.lastY++
-			lx = 0
-		} else {
-
-			if r == '\u000D' { // skip carriage return
+		if len(rs) == 1 {
+			r := rs[0]
+			if r < rune(' ') { // ignore control characters
+				continue
+			} else if r == '\n' {
+				w.lastY++
+				lx = 0
+				continue
+			} else if r == '\u000D' { // skip carriage return
 				continue
 			}
-
-			var xPos = w.left + w.lastX + lx
-			var yPos = w.top + w.lastY
-			if xPos < (w.left+w.width) && yPos < (w.top+w.height) {
-				_screen.SetContent(xPos, yPos, r, nil, style)
-			}
-			lx += runewidth.RuneWidth(r)
 		}
+		var xPos = w.left + w.lastX + lx
+		var yPos = w.top + w.lastY
+		if xPos < (w.left+w.width) && yPos < (w.top+w.height) {
+			_screen.SetContent(xPos, yPos, rs[0], rs[1:], style)
+		}
+		lx += runewidth.StringWidth(string(rs))
 	}
 	w.lastX += lx
 }
 
-func (w *TcellWindow) CPrint(pair ColorPair, attr Attr, text string) {
-	w.printString(text, pair, attr)
+func (w *TcellWindow) CPrint(pair ColorPair, text string) {
+	w.printString(text, pair)
 }
 
-func (w *TcellWindow) fillString(text string, pair ColorPair, a Attr) FillReturn {
+func (w *TcellWindow) fillString(text string, pair ColorPair) FillReturn {
 	lx := 0
+	a := pair.Attr()
 
 	var style tcell.Style
 	if w.color {
@@ -535,40 +611,48 @@ func (w *TcellWindow) fillString(text string, pair ColorPair, a Attr) FillReturn
 		Bold(a&Attr(tcell.AttrBold) != 0).
 		Dim(a&Attr(tcell.AttrDim) != 0).
 		Reverse(a&Attr(tcell.AttrReverse) != 0).
-		Underline(a&Attr(tcell.AttrUnderline) != 0)
+		Underline(a&Attr(tcell.AttrUnderline) != 0).
+		Italic(a&Attr(tcell.AttrItalic) != 0)
 
-	for _, r := range text {
-		if r == '\n' {
+	gr := uniseg.NewGraphemes(text)
+	for gr.Next() {
+		rs := gr.Runes()
+		if len(rs) == 1 && rs[0] == '\n' {
 			w.lastY++
 			w.lastX = 0
 			lx = 0
-		} else {
-			var xPos = w.left + w.lastX + lx
-
-			// word wrap:
-			if xPos >= (w.left + w.width) {
-				w.lastY++
-				w.lastX = 0
-				lx = 0
-				xPos = w.left
-			}
-			var yPos = w.top + w.lastY
-
-			if yPos >= (w.top + w.height) {
-				return FillSuspend
-			}
-
-			_screen.SetContent(xPos, yPos, r, nil, style)
-			lx += runewidth.RuneWidth(r)
+			continue
 		}
+
+		// word wrap:
+		xPos := w.left + w.lastX + lx
+		if xPos >= (w.left + w.width) {
+			w.lastY++
+			w.lastX = 0
+			lx = 0
+			xPos = w.left
+		}
+
+		yPos := w.top + w.lastY
+		if yPos >= (w.top + w.height) {
+			return FillSuspend
+		}
+
+		_screen.SetContent(xPos, yPos, rs[0], rs[1:], style)
+		lx += runewidth.StringWidth(string(rs))
 	}
 	w.lastX += lx
+	if w.lastX == w.width {
+		w.lastY++
+		w.lastX = 0
+		return FillNextLine
+	}
 
 	return FillContinue
 }
 
 func (w *TcellWindow) Fill(str string) FillReturn {
-	return w.fillString(str, w.normal, 0)
+	return w.fillString(str, w.normal)
 }
 
 func (w *TcellWindow) CFill(fg Color, bg Color, a Attr, str string) FillReturn {
@@ -578,11 +662,12 @@ func (w *TcellWindow) CFill(fg Color, bg Color, a Attr, str string) FillReturn {
 	if bg == colDefault {
 		bg = w.normal.Bg()
 	}
-	return w.fillString(str, NewColorPair(fg, bg), a)
+	return w.fillString(str, NewColorPair(fg, bg, a))
 }
 
 func (w *TcellWindow) drawBorder() {
-	if w.borderStyle.shape == BorderNone {
+	shape := w.borderStyle.shape
+	if shape == BorderNone {
 		return
 	}
 
@@ -602,17 +687,32 @@ func (w *TcellWindow) drawBorder() {
 		style = w.normal.style()
 	}
 
-	for x := left; x < right; x++ {
-		_screen.SetContent(x, top, w.borderStyle.horizontal, nil, style)
-		_screen.SetContent(x, bot-1, w.borderStyle.horizontal, nil, style)
+	switch shape {
+	case BorderRounded, BorderSharp, BorderHorizontal, BorderTop:
+		for x := left; x < right; x++ {
+			_screen.SetContent(x, top, w.borderStyle.horizontal, nil, style)
+		}
 	}
-
-	if w.borderStyle.shape != BorderHorizontal {
+	switch shape {
+	case BorderRounded, BorderSharp, BorderHorizontal, BorderBottom:
+		for x := left; x < right; x++ {
+			_screen.SetContent(x, bot-1, w.borderStyle.horizontal, nil, style)
+		}
+	}
+	switch shape {
+	case BorderRounded, BorderSharp, BorderVertical, BorderLeft:
 		for y := top; y < bot; y++ {
 			_screen.SetContent(left, y, w.borderStyle.vertical, nil, style)
+		}
+	}
+	switch shape {
+	case BorderRounded, BorderSharp, BorderVertical, BorderRight:
+		for y := top; y < bot; y++ {
 			_screen.SetContent(right-1, y, w.borderStyle.vertical, nil, style)
 		}
-
+	}
+	switch shape {
+	case BorderRounded, BorderSharp:
 		_screen.SetContent(left, top, w.borderStyle.topLeft, nil, style)
 		_screen.SetContent(right-1, top, w.borderStyle.topRight, nil, style)
 		_screen.SetContent(left, bot-1, w.borderStyle.bottomLeft, nil, style)
