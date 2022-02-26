@@ -30,14 +30,21 @@ while true; do
 done
 
 
+# Does tty exist? Needed for stty.
+tty_exists () {
+    /usr/bin/tty &>/dev/null
+}
+
 # Reset terminal echo state after a `read` call
 stty_echo () {
+    tty_exists || return 0;
     stty echo </dev/tty &>/dev/null || true
     echo
 }
 trap 'stty_echo' EXIT
 
 sync_orgzly_prompt () {
+    tty_exists || return 0;
     echo
     echo '========================================'
     echo '       Sync Orgzly on device now        '
