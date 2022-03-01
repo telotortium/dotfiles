@@ -38,3 +38,11 @@
 /.emacs.d/cask
 /.emacs.d/eln-cache
 /.emacs.d/elpa
+
+# Temporary build files
+/misc/build/
+/misc/ports/
+
+
+# Doom upstream - maintain using instructions in ~/.doom.d/init.el
+/doom.emacs.d/
