@@ -26,8 +26,8 @@
             grep --color=auto -E '^ *(gac|dropbox)-merge-([0-9]+)(\\.[0-9]+)? *$' | \
             while read branch; do git md \"$branch\"; done; \
         }; f"
-        news = log -p HEAD@{1}..HEAD@{0}
-        newslg = log HEAD@{1}..HEAD@{0} --graph --pretty=format:'%Cred%h%Creset %C(yellow)%an%d%Creset %s %Cgreen(%ar)%Creset' --date=relative
+        news = log -p @{1}..@{0}
+        newslg = log @{1}..@{0} --graph --pretty=format:'%Cred%h%Creset %C(yellow)%an%d%Creset %s %Cgreen(%ar)%Creset' --date=relative
         recent = branch --sort=-committerdate --format='%(color:blue bold)%(align:20,left)%(refname:short)%(end) %(color:red)%(align:35,middle)%(objectname:short) %(color:white)%(committerdate:iso)%(end) %(color:normal no-bold)%(subject)'
         root = rev-parse --show-toplevel
         untracked = ls-files --others --exclude-standard
