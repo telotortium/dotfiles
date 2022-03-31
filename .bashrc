@@ -262,6 +262,10 @@ fi
 if [ -f /etc/bash_completion ]; then
     . /etc/bash_completion
 fi
+if command_on_path register-python-argcomplete-3.9 && \
+    command_on_path pipx; then
+    eval "$(register-python-argcomplete-3.9 pipx)"
+fi
 
 # History control
 # no duplicate entries, and ignore entries starting with space
