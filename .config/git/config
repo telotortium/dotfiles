@@ -51,6 +51,9 @@
         colorMoved = default
 [diff "lisp"]
       xfuncname = "^(\\(.*)$"
+[diff "scpt"]
+        textconv = osadecompile
+        binary = true
 [diff "rstats"]
       xfuncname = "^([a-zA-z.]+ <- function.*)$"
 [diff "texinfo"]

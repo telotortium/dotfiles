@@ -29,3 +29,5 @@
 *.jpg   diff=exif
 *.jpeg  diff=exif
 *.gif   diff=exif
+
+*.scpt  diff=scpt
