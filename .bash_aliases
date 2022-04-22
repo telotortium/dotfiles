@@ -413,3 +413,5 @@ dbxcli () {
     command dbxcli-refresh
     command dbxcli "$@"
 }
+
+alias mail="ec -u -e '(call-interactively (quote rmail))'"
