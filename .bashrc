@@ -286,6 +286,19 @@ precmd_functions+=(precmd_history_append)
 
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
+# Use `fd` instead of `find` for faster `fzf` - see
+# https://spin.atomicobject.com/2020/02/13/command-line-fuzzy-find-with-fzf/
+export FZF_DEFAULT_COMMAND="fd --hidden --follow --exclude \".git\" . \"$HOME\""
+export FZF_CTRL_T_COMMAND="${FZF_DEFAULT_COMMAND}"
+export FZF_ALT_C_COMMAND="fd -t d --hidden --follow --exclude \".git\" ."
+_fzf_compgen_path() {
+    fd --type f --hidden --follow --exclude .git . "$1"
+}
+_fzf_compgen_dir() {
+    fd --type d . "$1"
+}
+
+
 # Multiline preview window for history search (see
 # https://github.com/junegunn/fzf/issues/577#issuecomment-473241837)
 export FZF_CTRL_R_OPTS="--preview 'echo {} |sed -e \"s/^ *\([0-9]*\) *//\" -e \"s/^\\(.\\{0,\$COLUMNS\\}\\).*$/\\1/\"; echo {} |sed -e \"s/^ *[0-9]* *//\" -e \"s/^.\\{0,\$COLUMNS\\}//g\" -e \"s/.\\{1,\$((COLUMNS-2))\\}/⏎ &\\n/g\"' --preview-window down:5 --bind ?:toggle-preview"
