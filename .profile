@@ -8,6 +8,9 @@
 
 # Evaluate system PATH on OS X
 if [ -x /usr/libexec/path_helper ]; then
+    # If MANPATH is not yet present in the environment, `path_helper` will not
+    # print a value for MANPATH, so make sure it's present.
+    MANPATH="${MANPATH:-}"; export MANPATH
     eval "$(/usr/libexec/path_helper -s)"
 fi
 
