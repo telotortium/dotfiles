@@ -87,19 +87,20 @@ revert_all_org_buffers () {
         git diff -z --name-only "${org_repos_orig_commits[$i]}" HEAD | \
             xargs -0 printf "$(pwd | sed 's/%/%%/g')/%s\n" >"$tmp"
         if ! "$EMACSCLIENT" --eval '
-            (with-current-buffer (find-file-noselect "'"$tmp"'")
-              (require (quote s))
-              (unwind-protect
-                (progn
-                  (goto-char (point-min))
-                  (while (not (eobp))
-                    (let* ((line (buffer-substring
-                                   (point)
-                                   (progn (forward-line 1) (point))))
-                           (file (s-chomp line)))
-                      (with-current-buffer (find-file-noselect file)
-                        (revert-buffer t t)))))
-                (kill-current-buffer)))'; then
+            (let ((minibuffer-auto-raise nil))
+              (with-current-buffer (find-file-noselect "'"$tmp"'")
+                (require (quote s))
+                (unwind-protect
+                  (progn
+                    (goto-char (point-min))
+                    (while (not (eobp))
+                      (let* ((line (buffer-substring
+                                     (point)
+                                     (progn (forward-line 1) (point))))
+                             (file (s-chomp line)))
+                        (with-current-buffer (find-file-noselect file)
+                          (revert-buffer t t)))))
+                  (kill-current-buffer))))'; then
             rv=$?
             echo "Failed to connect to Emacs daemon. If Emacs isn't open, run" \
                 "\`emacs --daemon\` and try again. Otherwise, run M-x" \
@@ -127,7 +128,7 @@ if [[ "$no_prompt" -eq 1 ]]; then
 else
     letvars=''
 fi
-if ! "$EMACSCLIENT" --eval "(let (${letvars}) (org-save-all-org-buffers))"; then
+if ! "$EMACSCLIENT" --eval "(let (${letvars} (minibuffer-auto-raise nil)) (org-save-all-org-buffers))"; then
     echo "Failed to connect to Emacs daemon. If Emacs isn't open, run" \
         "\`emacs --daemon\` and try again. Otherwise, run M-x" \
         "server-force-delete followed by M-x server-start and try again."
