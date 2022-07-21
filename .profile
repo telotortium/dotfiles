@@ -76,8 +76,22 @@ export VISUAL="$EDITOR"
 export HISTIGNORE="&:ls:ls:mutt:[bf]g:exit:exec:exec *"
 
 export PAGER=less
+# Take default LESS value from https://github.com/sharkdp/bat documentation.
+# There it's documented that X is only needed for less versions before 530, so
+# check the `less` version. Also add I because I like case-insensitive search
+# by default.
+export LESS="FRI"
+if ! [ "$(less -V | head -n1 | sed -E 's/^less ([0-9]+).*/\1/')" -ge 530 ]
+then
+    LESS="${LESS}X"
+fi
 export MANPAGER="$PAGER"
-export LESS="XRI"
+
+if command_on_path bat; then
+    MANPAGER='sh -c "col -bx | bat --language=man --plain -"'
+fi
+
+
 # Page scroll is often slow on the Linux console with higher resolution unless
 # the -C option is passed.
 [ "$TERM" = "linux" ] && export LESS="${LESS}C"
