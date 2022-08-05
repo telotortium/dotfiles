@@ -4,7 +4,7 @@
 
 # start templated
 INSTALL_PYTHON=/opt/local/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10
-ARGS=(hook-impl --config=.pre-commit-config.yaml --hook-type=pre-commit)
+ARGS=(hook-impl --config=.pre-commit-config.yaml --hook-type=pre-push)
 # end templated
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
