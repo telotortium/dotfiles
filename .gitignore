@@ -44,6 +44,8 @@
 /misc/build/
 /misc/ports/
 
-
 # Doom upstream - maintain using instructions in ~/.doom.d/init.el
 /doom.emacs.d/
+
+# Override global ignore of bin for my bin scripts
+!/bin/
