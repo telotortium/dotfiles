@@ -317,4 +317,6 @@ fi
 
 test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
 
+command_on_path sshrc && complete -F _ssh sshrc
+
 . ~/.bash-history-sqlite/bash-profile.stub
