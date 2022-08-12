@@ -422,3 +422,26 @@ dbxcli () {
 }
 
 alias mail="ec -u -e '(call-interactively (quote rmail))'"
+
+# Commands to use fzf to select and open editors based on the output of rg.
+# tab opens the file without closing fzf; enter opens the file and closes fzf.
+rg-code () {
+    local fzf_cmd='execute-silent(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); code --goto "$1:$2:$3" </dev/tty >/dev/tty)'
+    rg --smart-case --vimgrep --color ansi "$@" \
+        | fzf-tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
+}
+rg-vim () {
+    local fzf_cmd='execute-silent(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); vim -c "$2" -c "norm 0" -c "norm $(( $3 - 1 ))l" "$1" </dev/tty >/dev/tty)'
+    rg --smart-case --vimgrep --color ansi "$@" \
+        | fzf-tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
+}
+rg-gvim () {
+    local fzf_cmd='execute-silent(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); "$(if [ "$(uname)" = "Darwin" ]; then echo mvim; else echo gvim; fi)" -c "$2" -c "norm 0" -c "norm $(( $3 - 1 ))l" "$1" </dev/tty >/dev/tty)'
+    rg --smart-case --vimgrep --color ansi "$@" \
+        | fzf-tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
+}
+rg-ec () {
+    local fzf_cmd='execute-silent(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); emacsclient -n "$(printf "\\x2b")$2:$3" "$1" </dev/tty >/dev/tty)'
+    rg --smart-case --vimgrep --color ansi "$@" \
+        | fzf-tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
+}
