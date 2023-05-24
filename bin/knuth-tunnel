@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 # Script to establish tunnel to knuth, preferably over LAN (ssh knuth-lan), but
-# otherwise over Tailscale (ssh knuth).
+# otherwise over Tailscale (ssh knuth-tailscale). This is done using the
+# `knuth` host in ~/.ssh/config.
 #
 # Usage: `knuth-tunnel` will loop forever, attempting to connect to each host in
 # round-robin.
@@ -23,8 +24,6 @@ trap_with_arg sig_rekill HUP INT QUIT PIPE TERM
 
 while true; do
     printf '%s ' "$(date)"
-    echo -n 'knuth-lan: '
-    autossh -M 0 -o ControlPath=none -o ConnectTimeout=3 -o ServerAliveInterval=3 -o ServerAliveCountMax=2 -N -D 9090 knuth-lan
     echo -n 'knuth: '
     autossh -M 0 -o ControlPath=none -o ConnectTimeout=3 -o ServerAliveInterval=3 -o ServerAliveCountMax=2 -N -D 9090 knuth
 done
