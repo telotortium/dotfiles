@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+set -eu -o pipefail
+cd "$HOME"
+
+caffeinate -t 1500 & caffeinate_pid=$!
+trap 'kill -9 $caffeinate_pid || true' EXIT
+
+usage () {
+        cat <<EOF
+Usage: $(basename "$0") [-hi]
+
+-a: only update Anki - don't download new items from Pocket
+-D: don't delete old exported JSON files from Pocket
+-h: help
+-i: incremental mode - only update items added to Pocket since last run
+    of this script
+-P: no promnesia index - download new items from Pocket, but don't add to
+    Promesia index
+EOF
+}
+
+anki_only=0
+incremental_mode=0
+no_delete_old=0
+no_promnesia_index=0
+while getopts aDhiP opt; do
+    case "$opt" in
+    a)
+        anki_only=1 ;;
+    D)
+        no_delete_old=1 ;;
+    h)
+        usage; exit 0 ;;
+    i)
+        incremental_mode=1 ;;
+    P)
+        no_promnesia_index=1 ;;
+    *)
+        usage 1>&2; exit 1 ;;
+    esac
+done
+
+dir="$HOME/Library/Application Support/my/my/pockexport/"
+if [[ "$incremental_mode" -ne 0 ]]; then
+    # shellcheck disable=SC2010,SC2012
+    jsons=$(ls -t "$dir" | grep 'pockexport.*\.json$')
+    next_newest=$(echo "$jsons" | head -n1)
+fi
+
+
+if [[ "$anki_only" -ne 1 ]]; then
+    arctee "$HOME/Library/Application Support/my/my/pockexport/pockexport-{utcnow}.json" \
+        --retries 3 -- ~/.local/pipx/venvs/promnesia/bin/python3 \
+        -m pockexport.export --secrets ~/.config/pockexport/secrets.py
+    if [[ "$no_promnesia_index" -ne 1 ]]; then
+        promnesia index --source=pocket
+    fi
+fi
+# shellcheck disable=SC2010,SC2012
+jsons=$(ls -t "$dir" | grep 'pockexport.*\.json$')
+newest=$(echo "$jsons" | head -n1)
+pta_args=( "$dir/$newest" )
+if [[ "$incremental_mode" -ne 0 ]]; then
+    pta_args=( "$dir/$next_newest" "${pta_args[@]}" )
+fi
+pockexport-to-anki "${pta_args[@]}"
+if [[ "$no_delete_old" -ne 1 ]]; then
+    if [[ "$(echo "$jsons" | wc -l)" -gt 14 ]]; then
+        find "$dir" -type f -mtime +30 -name "pockexport-*.json" -delete
+    fi
+fi
