@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Sync pockexport files to apricots so `pockexport-update -i` can be used
+# there.
+set -eu -o pipefail
+set -xv
+export source_home="$HOME"
+export backup_home="/Users/rmi1"
+export source_pockexport_dir="${source_home}/Library/Application Support/my/my/pockexport"
+export backup_pockexport_dir="${backup_home}/Library/Application Support/my/my/pockexport"
+export backup_host="apricots"
+
+rsync -a --progress --delete "${source_pockexport_dir}/" "${backup_host}:${backup_pockexport_dir}"
