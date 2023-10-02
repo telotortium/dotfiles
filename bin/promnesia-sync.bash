@@ -21,6 +21,12 @@ fi
 cd "$source_promnesia_dir"
 sqlite3 "$source_db" ".backup ${backup_db}"
 sqlite3 "$backup_db" <<EOF
+-- Need to set this PRAGMA because we're updating fields from the command line
+-- that have triggers set on the virtual table for full-text search.
+-- See https://stackoverflow.com/a/76344213/207384.
+-- If not set, the following message is displayed:
+-- unsafe use of virtual table "visits_fts"
+PRAGMA trusted_schema=1;
 UPDATE
     visits
 SET
