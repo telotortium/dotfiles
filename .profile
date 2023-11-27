@@ -159,6 +159,11 @@ if [ -d "$HOME/misc/build/git-tools" ]; then
     pathvarmunge MANPATH "$HOME/misc/build/git-tools"
 fi
 
+# ASDF init
+if [ -f "/opt/local/share/asdf/asdf.sh" ]; then
+    . "/opt/local/share/asdf/asdf.sh"
+fi
+
 if [ -f "$HOME/.profile.local" ]; then
     . "$HOME/.profile.local"
 fi
