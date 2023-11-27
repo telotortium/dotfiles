@@ -288,9 +288,9 @@ precmd_functions+=(precmd_history_append)
 
 # Use `fd` instead of `find` for faster `fzf` - see
 # https://spin.atomicobject.com/2020/02/13/command-line-fuzzy-find-with-fzf/
-export FZF_DEFAULT_COMMAND="fd --hidden --follow --exclude \".git\" . \"$HOME\""
+export FZF_DEFAULT_COMMAND="fd --unrestricted --follow --exclude \".git\" . \"$HOME\""
 export FZF_CTRL_T_COMMAND="${FZF_DEFAULT_COMMAND}"
-export FZF_ALT_C_COMMAND="fd -t d --hidden --follow --exclude \".git\" ."
+export FZF_ALT_C_COMMAND="fd -t d --unrestricted --follow --exclude \".git\" ."
 _fzf_compgen_path() {
     fd --type f --hidden --follow --exclude .git . "$1"
 }
