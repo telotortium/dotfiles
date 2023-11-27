@@ -132,6 +132,12 @@ export MOSH_ESCAPE_KEY='~'
 # over TCP rather than local socket).
 export EMACS_SERVER_FILE=~/doom.emacs.d/server/server
 
+# Doom Emacs - set Git config to always use my personal name and email for
+# repos managed by Straight.
+if [ -f ~/.doom.d/.doomgitconfig ]; then
+    export DOOMGITCONFIG=~/.doom.d/.doomgitconfig
+fi
+
 if [ -d "$HOME/misc/build/git-tools" ]; then
     pathvarmunge PATH "$HOME/misc/build/git-tools"
     pathvarmunge MANPATH "$HOME/misc/build/git-tools"
