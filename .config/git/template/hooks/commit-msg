@@ -4,14 +4,14 @@
 
 # start templated
 INSTALL_PYTHON=/opt/local/Library/Frameworks/Python.framework/Versions/3.10/bin/python3.10
-ARGS=(hook-impl --config=.pre-commit-config.yaml --hook-type=pre-commit)
+ARGS=(hook-impl --config=.pre-commit-config.yaml --hook-type=commit-msg)
 # end templated
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ARGS+=(--hook-dir "$HERE" -- "$@")
 
 filter_out_passed_skipped () {
-    grep -E -v '(Passed|Skipped)('$'\E''\[m)?$' >/dev/tty; rv=$?; [ $rv -le 1 ] && return 0; return $rv
+    grep -E -v '(Passed|Skipped)'$'\E''\[m$' >/dev/tty; rv=$?; [ $rv -le 1 ] && return 0; return $rv
 }
 
 if [ -x "$INSTALL_PYTHON" ]; then
