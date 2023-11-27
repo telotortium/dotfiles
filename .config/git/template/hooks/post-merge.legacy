@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-. "$(dirname "${BASH_SOURCE[0]}")/common.bash"
-"${GIT_DIR}/hooks/ctags" >/dev/null 2>&1 &
