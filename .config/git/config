@@ -44,6 +44,7 @@
 	name = Robert Irelan
 	email = robert.irelan@bytedance.com
 [merge]
+        conflictStyle = zdiff3
         tool = vimdiff
 [credential]
         helper = cache
