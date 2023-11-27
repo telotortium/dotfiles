@@ -73,8 +73,8 @@
         root = rev-parse --show-toplevel
         untracked = ls-files --others --exclude-standard
 [user]
-	name = Robert Irelan
-	email = robert.irelan@bytedance.com
+        name = Robert Irelan
+        email = rirelan@gmail.com
 [merge]
         conflictStyle = zdiff3
         tool = vimdiff
