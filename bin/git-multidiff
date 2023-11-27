@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # Downloaded from
 # https://github.com/xenomachina/public/blob/e7acbaa/bin/git-multidiff.
 
@@ -21,7 +21,7 @@ Installation:
         tool = vd -f
 """
 
-import commands
+import subprocess
 import os
 import shutil
 import stat
@@ -40,8 +40,7 @@ def main(argv):
   try:
     tool = subprocess.check_output(['git', 'config', '--get', 'multidiff.tool']).strip()
   except subprocess.CalledProcessError as exc:
-    print >>sys.stderr, \
-        'Error: %r returned status %r' % (' '.join(exc.cmd), exc.returncode)
+    print('Error: %r returned status %r' % (' '.join(exc.cmd), exc.returncode), file=sys.stderr)
     sys.exit(1)
 
   tmpdir = os.path.join(tempfile.mkdtemp(), '')
@@ -75,7 +74,7 @@ def main(argv):
             perms = file_stat.st_mode \
                 & ~(stat.S_IWGRP | stat.S_IWOTH | stat.S_IWUSR)
             os.chmod(fnam, perms)
-            if DEBUG: print 'chmod a-r %r' % fnam
+            if DEBUG: print('chmod a-r %r' % fnam)
           except IOError:
             pass # we tried, but it isn't critical that we succeed
 
@@ -85,7 +84,7 @@ def main(argv):
       # Instead of using `subprocess.check_call([tool] + difftool_args)`
       # we use os.system. This makes it possible for the tool to contain
       # flags (or potentially other stuff evaluated by the shell).
-      os.system(tool + ''.join(commands.mkarg(x) for x in difftool_args))
+      os.system(tool + ''.join(subprocess.mkarg(x) for x in difftool_args))
   finally:
     shutil.rmtree(tmpdir, ignore_errors=True)
 
