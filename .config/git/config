@@ -8,6 +8,19 @@
                 git rev-list \"$rev^2\" --not \"$rev^\"; \
             done | xargs git bisect skip; \
         }; f"
+        branch-cleanup-deleted-remotes = "!f() { \
+            set -xv; \
+            current=$(git branch --show-current); \
+            trap \"git checkout $current\" ERR EXIT; \
+            for branch in $(git branch | grep -v '^ \\*'); do \
+                set -e; git checkout \"$branch\"; \
+                upstream=$(git rev-parse --abbrev-ref \"${branch}@{upstream}\" 2>/dev/null) || continue; \
+                git checkout \"$current\"; \
+                if git ls-remote --exit-code --heads ${upstream/\\// } >/dev/null 2>&1; then \
+                    git branch -d \"${branch}\"; \
+                fi; \
+            done; \
+        }; f"
         brt = "!git for-each-ref refs/heads --color=always --sort -committerdate --format='%(HEAD)%(color:reset);%(color:yellow)%(refname:short)%(color:reset);%(contents:subject);%(color:green)(%(committerdate:relative))%(color:blue);<%(authorname)>' | column -t -s ';'"
         co = checkout
         cp = cherry-pick
