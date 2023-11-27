@@ -87,6 +87,7 @@ fi
 export MANPAGER="$PAGER"
 
 if command_on_path bat; then
+    export BAT_THEME="Monokai Extended"
     MANPAGER='sh -c "col -bx | bat --language=man --plain -"'
 fi
 
