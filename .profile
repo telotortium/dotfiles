@@ -34,9 +34,11 @@ fi
 
 # User specific environment and startup programs
 pathvarmunge PATH /usr/local/bin
+pathvarmunge MANPATH /usr/local/share/man
 pathvarmunge PATH "$HOME/.cabal/bin"
 pathvarmunge PATH "$HOME/.local/bin"
 pathvarmunge PATH "$HOME/.fzf/bin"
+pathvarmunge MANPATH "$HOME/.fzf/man"
 pathvarmunge PATH "$HOME/winbin"
 pathvarmunge PATH "$HOME/bin"
 
