@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 """Sync Org git repos with upstream.
 
@@ -11,7 +11,7 @@ one on the path by default).
 
 import optparse
 import os
-from pipes import quote as q
+from shlex import quote as q
 import re
 import shutil
 import subprocess as sp
@@ -39,7 +39,7 @@ os.putenv('GIT_SSH_COMMAND', ' '.join(q(x) for x in ssh_git_args))
 
 def log_and_run_cmd(cmd, verbose=False, check=True):
     if verbose:
-        print >>sys.stderr, "{}: Running cmd: {}".format(sys.argv[0], cmd)
+        print(f"{sys.argv[0]}: Running cmd: {cmd}", file=sys.stderr)
     if check:
         sp.check_call(cmd, shell=True)
     else:
@@ -48,13 +48,13 @@ def log_and_run_cmd(cmd, verbose=False, check=True):
 exit = 0
 for repo in org_repos:
     maintree = os.path.join(os.environ['HOME'], 'Documents', 'org', repo)
-    print >>sys.stderr, "{}: Processing {}".format(sys.argv[0], maintree)
+    print(f"{sys.argv[0]}: Processing {maintree}", file=sys.stderr)
     try:
         start_branch = None
         os.chdir(maintree)
         # TODO: Do rebase in order to squash `--fixup`:
         # http://www.lowlevelmanager.com/2016/02/how-to-run-git-interactive-rebase-non.html
-        start_branch = sp.check_output("git symbolic-ref --short HEAD", shell=True).strip()
+        start_branch = sp.check_output("git symbolic-ref --short HEAD", shell=True).strip().decode('utf-8')
         log_and_run_cmd(r"""GIT={} git fetch""".format(q(git)),
                         verbose=options.verbose)
         log_and_run_cmd(r"""GIT={} git tag --no-sign -m "ignore message" --force {} {}""".format(
@@ -95,7 +95,7 @@ for repo in org_repos:
         log_and_run_cmd(r"""GIT={} git fetch""".format(q(git)),
                         verbose=options.verbose)
     except sp.CalledProcessError as e:
-        print >>sys.stderr, e
+        print(e, file=sys.stderr)
         exit = 1
         continue
     finally:
