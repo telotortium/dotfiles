@@ -2,6 +2,7 @@
         ap = add -p
         brt = "!git for-each-ref refs/heads --color=always --sort -committerdate --format='%(HEAD)%(color:reset);%(color:yellow)%(refname:short)%(color:reset);%(contents:subject);%(color:green)(%(committerdate:relative))%(color:blue);<%(authorname)>' | column -t -s ';'"
         cp = cherry-pick
+        dft = difftool
         l = log --date-order --date=iso --graph --full-history --all --pretty=format:'%x08%x09%C(red)%h %C(cyan)%ad%x08%x08%x08%x08%x08%x08%x08%x08%x08%x08%x08%x08%x08%x08%x08 %C(bold blue)%aN%C(reset)%C(bold yellow)%d %C(reset)%s'
         lg = log --graph --pretty=format:'%Cred%h%Creset %C(yellow)%an%d%Creset %s %Cgreen(%ar)%Creset' --date=relative
         imd = "!f() { \
@@ -69,6 +70,10 @@
       textconv = exiftool
 [diff "pdf"]
       textconv = pdftotext-stdout
+[difftool]
+        prompt = false
+[difftool "difftastic"]
+        cmd = difft "$LOCAL" "$REMOTE"
 [help]
         autocorrect = 1
 [interactive]
@@ -81,6 +86,7 @@
         whitespace = red reverse
 [pager]
         diff = diff-highlight | less
+        difftool = true
         show = diff-highlight | less
         log = diff-highlight | less
 [pull]
