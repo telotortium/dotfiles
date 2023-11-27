@@ -46,3 +46,15 @@ pathvarmunge () {
 source_if_exists () {
     [ -f "$1" ] && source "$@"
 }
+
+# Set proxy environment variables
+# Based on https://gist.github.com/yougg/5d2b3353fc5e197a0917aae0b3287d64.
+# Takes one argument "HOST:PORT". Assumed to be a SOCKS5 proxy (as set up
+# by SSH, for example).
+proxy_setup () {
+    export http_proxy="socks5://${1}"
+    export {https,ftp,rsync,all}_proxy=$http_proxy
+    export {HTTP,HTTPS,FTP,RSYNC,ALL}_PROXY=$http_proxy
+    export no_proxy="127.0.0.1,localhost,.localdomain.com"
+    export NO_PROXY=$no_proxy
+}
