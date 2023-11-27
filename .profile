@@ -27,9 +27,6 @@ if [ -f /opt/local/etc/macports/macports.conf ]; then
     # Fix spurious "Warning: The macOS 11.1 SDK does not appear to be installed."
     # from Macports on 11.1
     export SYSTEM_VERSION_COMPAT=0
-
-    # MacPorts wants a DISPLAY variable set
-    export DISPLAY=:0
 fi
 
 # User specific environment and startup programs
