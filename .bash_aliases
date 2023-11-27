@@ -324,6 +324,7 @@ alias pu="pushd"
 alias po="popd"
 alias screen="/usr/bin/screen"
 alias byobu="byobu -S byobu"
+alias tcp-listeners="lsof -P -iTCP -sTCP:LISTEN"
 command_on_path ack-grep && alias ack=ack-grep
 command_on_path ag && alias ag='ag --pager=less'
 command_on_path xdg-open && alias open="xdg-open"
