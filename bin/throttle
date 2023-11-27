@@ -1,0 +1,13 @@
+#!/bin/sh
+
+case "$(uname -s)" in
+Linux)
+    exec nice -n19 ionice -c 3 "$@"
+    ;;
+Darwin)
+    exec nice -n19 /usr/sbin/taskpolicy -d throttle "$@"
+    ;;
+*)
+    exec nice -n19 "$@"
+    ;;
+esac
