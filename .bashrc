@@ -298,16 +298,11 @@ _fzf_compgen_dir() {
     fd --type d . "$1"
 }
 
-
 # Multiline preview window for history search (see
 # https://github.com/junegunn/fzf/issues/577#issuecomment-473241837)
 export FZF_CTRL_R_OPTS="--preview 'echo {} |sed -e \"s/^ *\([0-9]*\) *//\" -e \"s/^\\(.\\{0,\$COLUMNS\\}\\).*$/\\1/\"; echo {} |sed -e \"s/^ *[0-9]* *//\" -e \"s/^.\\{0,\$COLUMNS\\}//g\" -e \"s/.\\{1,\$((COLUMNS-2))\\}/⏎ &\\n/g\"' --preview-window down:5 --bind ?:toggle-preview"
 
-# LOCAL SETTINGS
-if [ -f ~/.bashrc.local ]; then
-    . ~/.bashrc.local
-fi
-command_on_path direnv && eval "$(direnv hook bash)"
+eval "$(direnv hook bash)"
 [[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
 
 # Macports bash-completion
@@ -320,3 +315,27 @@ test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shel
 command_on_path sshrc && complete -F _ssh sshrc
 
 . ~/.bash-history-sqlite/bash-profile.stub
+
+if [ -n "$TMUX" ]; then
+    function refresh_tmux_env {
+        while IFS= read -r line; do
+            if [ "$line" != "${line#-*}" ]; then
+                # Line starts with -, which means it's removed from the Tmux
+                # environment, so skip it.
+                continue
+            fi
+            var="${line%%=*}"
+            val="${line#*=}"
+            if [ "$(eval echo "\$$var")" != "$val" ]; then
+                echo "Setting $var to $val" 1>&2
+                export $var="$val"
+            fi
+        done < <(tmux show-environment)
+    }
+fi
+preexec_functions+=(refresh_tmux_env)
+
+# LOCAL SETTINGS
+if [ -f ~/.bashrc.local ]; then
+    . ~/.bashrc.local
+fi
