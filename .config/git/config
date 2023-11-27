@@ -9,6 +9,7 @@
             done | xargs git bisect skip; \
         }; f"
         brt = "!git for-each-ref refs/heads --color=always --sort -committerdate --format='%(HEAD)%(color:reset);%(color:yellow)%(refname:short)%(color:reset);%(contents:subject);%(color:green)(%(committerdate:relative))%(color:blue);<%(authorname)>' | column -t -s ';'"
+        co = checkout
         cp = cherry-pick
         cp-donate = "!f() { \
             (( $# == 2 )) || { echo Usage: git cp-donate BRANCH CHERRY-PICK-ARGS; return 1; }; \
