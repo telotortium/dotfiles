@@ -19,6 +19,15 @@ Pros
 - Batteries included
     - Vim/Neovim plugin, key bindings, and fuzzy auto-completion
 
+Sponsors ❤️
+-----------
+
+I would like to thank all the sponsors of this project who make it possible for me to continue to improve fzf.
+
+If you'd like to sponsor this project, please visit https://github.com/sponsors/junegunn.
+
+<!-- sponsors --><a href="https://github.com/miyanokomiya"><img src="https://github.com/miyanokomiya.png" width="60px" alt="miyanokomiya" /></a><a href="https://github.com/jonhoo"><img src="https://github.com/jonhoo.png" width="60px" alt="Jon Gjengset" /></a><a href="https://github.com/AceofSpades5757"><img src="https://github.com/AceofSpades5757.png" width="60px" alt="Kyle L. Davis" /></a><a href="https://github.com/Frederick888"><img src="https://github.com/Frederick888.png" width="60px" alt="Frederick Zhang" /></a><a href="https://github.com/moritzdietz"><img src="https://github.com/moritzdietz.png" width="60px" alt="Moritz Dietz" /></a><a href="https://github.com/mikker"><img src="https://github.com/mikker.png" width="60px" alt="Mikkel Malmberg" /></a><a href="https://github.com/dfsnow"><img src="https://github.com/dfsnow.png" width="60px" alt="Dan Snow" /></a><a href="https://github.com/pldubouilh"><img src="https://github.com/pldubouilh.png" width="60px" alt="Pierre Dubouilh" /></a><a href="https://github.com/rcorre"><img src="https://github.com/rcorre.png" width="60px" alt="Ryan Roden-Corrent" /></a><a href="https://github.com/getsentry"><img src="https://github.com/getsentry.png" width="60px" alt="Sentry" /></a><a href="https://github.com/blissdev"><img src="https://github.com/blissdev.png" width="60px" alt="Jordan Arentsen" /></a><a href="https://github.com/mislav"><img src="https://github.com/mislav.png" width="60px" alt="Mislav Marohnić" /></a><a href="https://github.com/aexvir"><img src="https://github.com/aexvir.png" width="60px" alt="Alex Viscreanu" /></a><a href="https://github.com/dbalatero"><img src="https://github.com/dbalatero.png" width="60px" alt="David Balatero" /></a><a href="https://github.com/comatory"><img src="https://github.com/comatory.png" width="60px" alt="Ondrej Synacek" /></a><a href="https://github.com/moobar"><img src="https://github.com/moobar.png" width="60px" alt="" /></a><a href="https://github.com/majjoha"><img src="https://github.com/majjoha.png" width="60px" alt="Mathias Jean Johansen" /></a><a href="https://github.com/benelan"><img src="https://github.com/benelan.png" width="60px" alt="Ben Elan" /></a><a href="https://github.com/jryom"><img src="https://github.com/jryom.png" width="60px" alt="Jesper" /></a><a href="https://github.com/nckmrnv"><img src="https://github.com/nckmrnv.png" width="60px" alt="Nikolay Marinov" /></a><a href="https://github.com/pawelduda"><img src="https://github.com/pawelduda.png" width="60px" alt="Paweł Duda" /></a><a href="https://github.com/slezica"><img src="https://github.com/slezica.png" width="60px" alt="Santiago Lezica" /></a><a href="https://github.com/pbwn"><img src="https://github.com/pbwn.png" width="60px" alt="" /></a><a href="https://github.com/timgluz"><img src="https://github.com/timgluz.png" width="60px" alt="Timo Sulg" /></a><a href="https://github.com/seanmorton"><img src="https://github.com/seanmorton.png" width="60px" alt="Sean Morton" /></a><a href="https://github.com/pyrho"><img src="https://github.com/pyrho.png" width="60px" alt="Damien Rajon" /></a><a href="https://github.com/ArtBIT"><img src="https://github.com/ArtBIT.png" width="60px" alt="ArtBIT" /></a><a href="https://github.com/da-moon"><img src="https://github.com/da-moon.png" width="60px" alt="" /></a><a href="https://github.com/hovissimo"><img src="https://github.com/hovissimo.png" width="60px" alt="Hovis" /></a><a href="https://github.com/dariusjonda"><img src="https://github.com/dariusjonda.png" width="60px" alt="Darius Jonda" /></a><a href="https://github.com/cristiand391"><img src="https://github.com/cristiand391.png" width="60px" alt="Cristian Dominguez" /></a><a href="https://github.com/eliangcs"><img src="https://github.com/eliangcs.png" width="60px" alt="Chang-Hung Liang" /></a><a href="https://github.com/raveensrk"><img src="https://github.com/raveensrk.png" width="60px" alt="Raveen Kumar" /></a><a href="https://github.com/asphaltbuffet"><img src="https://github.com/asphaltbuffet.png" width="60px" alt="Ben Lechlitner" /></a><a href="https://github.com/BenSandeen"><img src="https://github.com/BenSandeen.png" width="60px" alt="" /></a><!-- sponsors -->
+
 Table of Contents
 -----------------
 
@@ -61,8 +70,8 @@ Table of Contents
         * [3. Interactive ripgrep integration](#3-interactive-ripgrep-integration)
     * [Preview window](#preview-window)
 * [Tips](#tips)
-        * [Respecting `.gitignore`](#respecting-gitignore)
-        * [Fish shell](#fish-shell)
+    * [Respecting `.gitignore`](#respecting-gitignore)
+    * [Fish shell](#fish-shell)
 * [Related projects](#related-projects)
 * [License](#license)
 
@@ -124,6 +133,7 @@ git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
 | pkg             | FreeBSD                 | `pkg install fzf`                  |
 | pkgin           | NetBSD                  | `pkgin install fzf`                |
 | pkg_add         | OpenBSD                 | `pkg_add fzf`                      |
+| Portage         | Gentoo                  | `emerge --ask app-shells/fzf`      |
 | XBPS            | Void Linux              | `sudo xbps-install -S fzf`         |
 | Zypper          | openSUSE                | `sudo zypper install fzf`          |
 
@@ -629,8 +639,8 @@ more details.
 #### 1. Update the list of processes by pressing CTRL-R
 
 ```sh
-FZF_DEFAULT_COMMAND='ps -ef' \
-  fzf --bind 'ctrl-r:reload(eval "$FZF_DEFAULT_COMMAND")' \
+ps -ef |
+  fzf --bind 'ctrl-r:reload(ps -ef)' \
       --header 'Press CTRL-R to reload' --header-lines=1 \
       --height=50% --layout=reverse
 ```
@@ -652,12 +662,12 @@ expression `{q}`. Also, note that we used `--disabled` option so that fzf
 doesn't perform any secondary filtering.
 
 ```sh
-INITIAL_QUERY=""
-RG_PREFIX="rg --column --line-number --no-heading --color=always --smart-case "
-FZF_DEFAULT_COMMAND="$RG_PREFIX '$INITIAL_QUERY'" \
-  fzf --bind "change:reload:$RG_PREFIX {q} || true" \
-      --ansi --disabled --query "$INITIAL_QUERY" \
-      --height=50% --layout=reverse
+: | rg_prefix='rg --column --line-number --no-heading --color=always --smart-case' \
+    fzf --bind 'start:reload:$rg_prefix ""' \
+        --bind 'change:reload:$rg_prefix {q} || true' \
+        --bind 'enter:become(vim {1} +{2})' \
+        --ansi --disabled \
+        --height=50% --layout=reverse
 ```
 
 If ripgrep doesn't find any matches, it will exit with a non-zero exit status,
@@ -665,7 +675,7 @@ and fzf will warn you about it. To suppress the warning message, we added
 `|| true` to the command, so that it always exits with 0.
 
 See ["Using fzf as interactive Ripgrep launcher"](https://github.com/junegunn/fzf/blob/master/ADVANCED.md#using-fzf-as-interactive-ripgrep-launcher)
-for a fuller example with preview window options.
+for more sophisticated examples.
 
 ### Preview window
 
@@ -723,7 +733,7 @@ history | fzf
 Tips
 ----
 
-#### Respecting `.gitignore`
+### Respecting `.gitignore`
 
 You can use [fd](https://github.com/sharkdp/fd),
 [ripgrep](https://github.com/BurntSushi/ripgrep), or [the silver
@@ -752,7 +762,7 @@ hidden files, use the following command:
 export FZF_DEFAULT_COMMAND='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
 ```
 
-#### Fish shell
+### Fish shell
 
 `CTRL-T` key binding of fish, unlike those of bash and zsh, will use the last
 token on the command-line as the root directory for the recursive search. For
