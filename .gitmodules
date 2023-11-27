@@ -16,3 +16,6 @@
 [submodule ".emacs.d"]
 	path = .emacs.d
 	url = https://github.com/plexus/chemacs2.git
+[submodule ".bash-history-sqlite"]
+	path = .bash-history-sqlite
+	url = https://github.com/thenewwazoo/bash-history-sqlite.git

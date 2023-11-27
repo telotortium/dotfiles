@@ -1,7 +1,0 @@
-
-HISTDB="${HOME}/.hist.db"
-if [[ -r "${BASH_SOURCE[0]%/*}/bash-history-sqlite.sh" ]]; then
-    source "${BASH_SOURCE[0]%/*}/bash-history-sqlite.sh"
-else
-    source "${HOME}/.bash-history-sqlite.sh"
-fi
