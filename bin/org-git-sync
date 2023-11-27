@@ -3,6 +3,14 @@
 ORG_REPOS=${ORG_REPOS?"no repos defined"}
 GIT=${GIT:-git}
 
+while getopts m: opt; do
+    case "$opt" in
+    m)
+        commit_msg="$OPTARG" ;;
+    *) ;;
+    esac
+done
+
 for repo in $ORG_REPOS
 do
     (
@@ -20,7 +28,9 @@ do
         # message, no matter how long it is. Otherwise, put as many files in the
         # commit heading as will fit in 69 characters, and put all of them in
         # the body.
-        if (( "$(printf '%s' "$status" | wc -l)" <= 1 )) || \
+        if [[ -n "${commit_msg:-}" ]]; then
+            msg="${commit_msg}"
+        elif (( "$(printf '%s' "$status" | wc -l)" <= 1 )) || \
                 (( "$(printf '%s' "$status_joined" | wc -c)" <= 72 )); then
             msg="$status_joined"
         else
@@ -29,7 +39,7 @@ do
         # Run pre-commit hook once to fix files, ignoring errors.
         if command -v pre-commit &>/dev/null && [ -r ".pre-commit-config.yaml" ]; then
             # Call the hook script because it filters out passed or skipped checks.
-            .git/hooks/pre-commit || true
+            "$("$GIT" rev-parse --git-dir)/hooks/pre-commit" || true
             "$GIT" add . &>/dev/null
         fi
         # Only commit if files have been added above
