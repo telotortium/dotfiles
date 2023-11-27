@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -e
+
+if [[ $# -ne 1 ]]; then
+    echo "USAGE: $0 SECONDS
+Test if Emacs server has been idle for at least this many SECONDS.
+Exit zero if yes, non-zero if no." 1>&2
+    exit 1
+fi
+rv=$(emacsclient --eval \
+    "$(printf \
+        '(if (< (float-time (current-idle-time)) %g) 1 0)' \
+        "$1")")
+exit "$rv"
