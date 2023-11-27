@@ -2,6 +2,7 @@
 # ---------
 if [[ ! "$PATH" == *${HOME}/.fzf/bin* ]]; then
   export PATH="${PATH:+${PATH}:}${HOME}/.fzf/bin"
+  export MANPATH="${MANPATH:+${MANPATH}:}${HOME}/.fzf/man"
 fi
 
 # Auto-completion
