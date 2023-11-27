@@ -42,6 +42,13 @@ dumb)
 *)
     ;;
 esac
+# https://github.com/mgunyho/tere - cd+ls
+if command_on_path tere; then
+    tere () {
+        local result="$(command tere "$@")"
+        [ -n "$result" ] && cd -- "$result"
+    }
+fi
 alias ls="ls ${LS_COLOR_FLAG}"
 alias l="ls -CF ${LS_COLOR_FLAG}"
 alias la="ls -lA ${LS_COLOR_FLAG}"
