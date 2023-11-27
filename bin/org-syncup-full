@@ -1,15 +1,34 @@
 #!/usr/bin/env bash
-set -e
+set -eu -o pipefail
+
+cleanup () {
+    rv=$?
+    stty_echo
+    echo in cleanup
+    if [[ $no_revert -ne 1 ]]; then
+        echo "Reverting all Org buffers - may take a while..."
+        revert_all_org_buffers  # Revert after each pull.
+        revert_rv=$?
+        echo "Reverting complete"
+        [[ $revert_rv -ne 0 ]] && exit $revert_rv
+    fi
+    exit $rv
+}
+
+trap cleanup EXIT ERR
 
 ( getopt --version | grep -e 'getopt (enhanced)' -e 'util-linux' ) &>/dev/null || {
   echo "GNU getopt not on path" 1>&2
   exit 1
 }
-options=$(getopt -o gnP -- "$@")
+options=$(getopt -o gnvPR -- "$@")
 eval set -- "$options"
 no_prompt=0
 no_push=0
 no_dropbox_mode=0
+no_revert=0
+noninteractive_push=0
+verbose_mode=0
 while true; do
     case "$1" in
     -n)
@@ -18,8 +37,14 @@ while true; do
     -P)
         no_push=1
         ;;
+    -P)
+        no_revert=1
+        ;;
     -g)
         no_dropbox_mode=1
+        ;;
+    -v)
+        verbose_mode=1
         ;;
     --)
         shift
@@ -41,7 +66,6 @@ stty_echo () {
     stty echo </dev/tty &>/dev/null || true
     echo
 }
-trap 'stty_echo' EXIT
 
 sync_orgzly_prompt () {
     tty_exists || return 0;
@@ -135,16 +159,20 @@ if ! "$EMACSCLIENT" --eval "(let (${letvars} (minibuffer-auto-raise nil)) (org-s
     exit 1
 fi
 
-args=()
-[[ "$no_prompt" -eq 1 ]] && args=("--noninteractive")
-org-git-sync "${args[@]}"
+org-git-sync
 org-bad-branch || {
     for repo in "${org_repos_local[@]}"; do
         cd "$HOME/Documents/org/$repo"
         git md-tmp-branches || exit $?
     done
 }
-[[ "$no_push" -eq 1 ]] || org-git-push
+
+if [[ "$no_push" -ne 1 ]]; then
+    args=()
+    [[ "$no_prompt" -eq 1 ]] && args+=("--noninteractive")
+    [[ "$verbose_mode" -eq 1 ]] && args+=("--verbose")
+    org-git-push "${args[@]}"
+fi
 
 if [[ "$no_dropbox_mode" -ne 1 ]]; then
     [[ "$no_prompt" -ne 1 ]] && sync_orgzly_prompt
@@ -159,9 +187,3 @@ if [[ "$no_dropbox_mode" -ne 1 ]]; then
 
     [[ "$no_prompt" -ne 1 ]] && sync_orgzly_prompt
 fi
-
-echo "Reverting all Org buffers - may take a while..."
-revert_all_org_buffers  # Revert after each pull.
-echo "Reverting complete"
-#
-#
