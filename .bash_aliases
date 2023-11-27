@@ -445,3 +445,23 @@ rg-ec () {
     rg --smart-case --vimgrep --color ansi "$@" \
         | fzf-tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }
+fd-code () {
+    local fzf_cmd='execute-silent(code {} </dev/tty >/dev/tty)'
+    fd --color always "$@" \
+        | fzf-tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
+}
+fd-vim () {
+    local fzf_cmd='execute-silent(vim {} </dev/tty >/dev/tty)'
+    fd --color always "$@" \
+        | fzf-tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
+}
+fd-gvim () {
+    local fzf_cmd='execute-silent("$(if [ "$(uname)" = "Darwin" ]; then echo mvim; else echo gvim; fi)" {} </dev/tty >/dev/tty)'
+    fd --color always "$@" \
+        | fzf-tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
+}
+fd-ec () {
+    local fzf_cmd='execute-silent(emacsclient -n {} </dev/tty >/dev/tty)'
+    fd --color always "$@" \
+        | fzf-tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
+}
