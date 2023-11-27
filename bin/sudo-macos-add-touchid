@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+sudo ed /etc/pam.d/sudo <<'EOF'
+/pam_smartcard
+.t.
+s/pam_smartcard/pam_tid
+w
+q
+EOF
