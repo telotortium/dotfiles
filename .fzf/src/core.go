@@ -146,18 +146,20 @@ func Run(opts *Options, version string, revision string) {
 
 	// Matcher
 	forward := true
-	for _, cri := range opts.Criteria[1:] {
-		if cri == byEnd {
+	withPos := false
+	for idx := len(opts.Criteria) - 1; idx > 0; idx-- {
+		switch opts.Criteria[idx] {
+		case byChunk:
+			withPos = true
+		case byEnd:
 			forward = false
-			break
-		}
-		if cri == byBegin {
-			break
+		case byBegin:
+			forward = true
 		}
 	}
 	patternBuilder := func(runes []rune) *Pattern {
 		return BuildPattern(
-			opts.Fuzzy, opts.FuzzyAlgo, opts.Extended, opts.Case, opts.Normalize, forward,
+			opts.Fuzzy, opts.FuzzyAlgo, opts.Extended, opts.Case, opts.Normalize, forward, withPos,
 			opts.Filter == nil, opts.Nth, opts.Delimiter, runes)
 	}
 	matcher := NewMatcher(patternBuilder, sort, opts.Tac, eventBox)
@@ -242,9 +244,11 @@ func Run(opts *Options, version string, revision string) {
 	for {
 		delay := true
 		ticks++
-		input := func() []rune {
+		input := func(reloaded bool) []rune {
 			paused, input := terminal.Input()
-			if !paused {
+			if reloaded && paused {
+				query = []rune{}
+			} else if !paused {
 				query = input
 			}
 			return query
@@ -274,7 +278,8 @@ func Run(opts *Options, version string, revision string) {
 						opts.Sync = false
 						terminal.UpdateList(PassMerger(&snapshot, opts.Tac), false)
 					}
-					matcher.Reset(snapshot, input(), false, !reading, sort, clearCache())
+					reset := clearCache()
+					matcher.Reset(snapshot, input(reset), false, !reading, sort, reset)
 
 				case EvtSearchNew:
 					var command *string
@@ -293,7 +298,8 @@ func Run(opts *Options, version string, revision string) {
 						break
 					}
 					snapshot, _ := chunkList.Snapshot()
-					matcher.Reset(snapshot, input(), true, !reading, sort, clearCache())
+					reset := clearCache()
+					matcher.Reset(snapshot, input(reset), true, !reading, sort, reset)
 					delay = false
 
 				case EvtSearchProgress:

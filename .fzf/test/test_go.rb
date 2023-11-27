@@ -754,6 +754,26 @@ class TestGoFZF < TestBase
     assert_equal output, `#{FZF} -fh -n2 -d: < #{tempname}`.lines(chomp: true)
   end
 
+  def test_tiebreak_chunk
+    writelines(tempname, [
+                 '1 foobarbaz ba',
+                 '2 foobar baz',
+                 '3 foo barbaz'
+               ])
+
+    assert_equal [
+      '3 foo barbaz',
+      '2 foobar baz',
+      '1 foobarbaz ba'
+    ], `#{FZF} -fo --tiebreak=chunk < #{tempname}`.lines(chomp: true)
+
+    assert_equal [
+      '1 foobarbaz ba',
+      '2 foobar baz',
+      '3 foo barbaz'
+    ], `#{FZF} -fba --tiebreak=chunk < #{tempname}`.lines(chomp: true)
+  end
+
   def test_invalid_cache
     tmux.send_keys "(echo d; echo D; echo x) | #{fzf('-q d')}", :Enter
     tmux.until { |lines| assert_equal '  2/3', lines[-2] }
@@ -2043,8 +2063,8 @@ class TestGoFZF < TestBase
     tmux.until { |lines| assert_equal(%w[1 2 3 4 5], top5[lines]) }
   end
 
-  def test_unbind
-    tmux.send_keys "seq 100 | #{FZF} --bind 'c:clear-query,d:unbind(c,d)'", :Enter
+  def test_unbind_rebind
+    tmux.send_keys "seq 100 | #{FZF} --bind 'c:clear-query,d:unbind(c,d),e:rebind(c,d)'", :Enter
     tmux.until { |lines| assert_equal 100, lines.item_count }
     tmux.send_keys 'ab'
     tmux.until { |lines| assert_equal '> ab', lines[-1] }
@@ -2052,6 +2072,8 @@ class TestGoFZF < TestBase
     tmux.until { |lines| assert_equal '>', lines[-1] }
     tmux.send_keys 'dabcd'
     tmux.until { |lines| assert_equal '> abcd', lines[-1] }
+    tmux.send_keys 'ecabddc'
+    tmux.until { |lines| assert_equal '> abdc', lines[-1] }
   end
 
   def test_item_index_reset_on_reload
@@ -2074,6 +2096,15 @@ class TestGoFZF < TestBase
     tmux.send_keys "seq 3 | #{FZF} --bind 'ctrl-t:reload:echo 4' --preview 'echo {}' --preview-window 'nohidden'", :Enter
     tmux.until { |lines| assert_includes lines[1], '1' }
     tmux.send_keys 'C-t'
+    tmux.until { |lines| assert_includes lines[1], '4' }
+  end
+
+  def test_reload_and_change_preview_should_update_preview
+    tmux.send_keys "seq 3 | #{FZF} --bind 'ctrl-t:reload(echo 4)+change-preview(echo {})'", :Enter
+    tmux.until { |lines| assert_equal 3, lines.item_count }
+    tmux.until { |lines| refute_includes lines[1], '1' }
+    tmux.send_keys 'C-t'
+    tmux.until { |lines| assert_equal 1, lines.item_count }
     tmux.until { |lines| assert_includes lines[1], '4' }
   end
 
@@ -2207,6 +2238,12 @@ class TestGoFZF < TestBase
       tmux.until { |lines| refute_includes lines[0], 'hello' }
       tmux.send_keys 'a'
     end
+  end
+
+  def test_ellipsis
+    tmux.send_keys 'seq 1000 | tr "\n" , | fzf --ellipsis=SNIPSNIP -e -q500', :Enter
+    tmux.until { |lines| assert_equal 1, lines.match_count }
+    tmux.until { |lines| assert_match(/^> SNIPSNIP.*SNIPSNIP$/, lines[-3]) }
   end
 end
 
@@ -2461,7 +2498,7 @@ module CompletionTest
     pid = lines[-1]&.split&.last
     tmux.prepare
     tmux.send_keys 'C-L'
-    tmux.send_keys 'kill ', :Tab
+    tmux.send_keys 'kill **', :Tab
     tmux.until { |lines| assert_operator lines.match_count, :>, 0 }
     tmux.send_keys 'sleep12345'
     tmux.until { |lines| assert lines.any_include?('sleep 12345') }
