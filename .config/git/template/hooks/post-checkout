@@ -5,6 +5,16 @@
 
 set -eu -o pipefail
 
+# This value of `$1` is the null-ref from githooks(5) - see
+# https://stackoverflow.com/a/73000183/207384.
+if [[ "$1" = "$(git hash-object -t tree --stdin </dev/null | sed s/./0/g)" ]]; then
+    # Set user.email specially for work repositories.
+    if [[ "$(git config remote."$(git config branch."$(git branch --show-current)".remote)".url)" =~ "code.byted.org" ]]; then
+        git config user.name "Robert Irelan"
+        git config user.email "robert.irelan@bytedance.com"
+    fi
+fi
+
 # start templated
 INSTALL_PYTHON=/opt/local/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11
 ARGS=(hook-impl --config=.pre-commit-config.yaml --hook-type=post-checkout)

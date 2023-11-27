@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -eu -o pipefail
 . "$(dirname "${BASH_SOURCE[0]}")/common.bash"
 mkdir "${GIT_DIR}/tags_lock" 2>/dev/null || exit 0
 trap "rmdir \"${GIT_DIR}/tags_lock\"; rm -f \"${GIT_DIR}/tags.$$\"" EXIT
