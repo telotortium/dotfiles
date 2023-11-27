@@ -466,3 +466,30 @@ fd-ec () {
     fd --color always "$@" \
         | fzf-tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }
+
+rga-fzf() {
+    RG_PREFIX="rga --files-with-matches"
+    local file
+    file="$(
+        FZF_DEFAULT_COMMAND="$RG_PREFIX '$1'" \
+            fzf --sort --preview="[[ ! -z {} ]] && rga --pretty --context 5 {q} {}" \
+                --phony -q "$1" \
+                --bind "change:reload:$RG_PREFIX {q}" \
+                --preview-window="70%:wrap"
+    )" &&
+    echo "opening $file" &&
+    "$(command_on_path xdg-open && echo xdg-open || echo open)" "$file"
+}
+rga-fzf-ocr() {
+    RG_PREFIX="rga --files-with-matches --rga-adapters=+pdfpages,tesseract"
+    local file
+    file="$(
+        FZF_DEFAULT_COMMAND="$RG_PREFIX '$1'" \
+            fzf --sort --preview="[[ ! -z {} ]] && rga --pretty --context 5 {q} {}" \
+                --phony -q "$1" \
+                --bind "change:reload:$RG_PREFIX {q}" \
+                --preview-window="70%:wrap"
+    )" &&
+    echo "opening $file" &&
+    "$(command_on_path xdg-open && echo xdg-open || echo open)" "$file"
+}
