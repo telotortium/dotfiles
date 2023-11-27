@@ -1,5 +1,13 @@
 [alias]
         ap = add -p
+        # Bisect only merge commits:
+        # https://interrupt.memfault.com/blog/git-bisect#choosing-the-correct-types-of-commits
+        bisect-merge-bad-good = "!f() { \
+            (( $# == 2 )) || { echo Usage: git bisect-merge-bad-good BAD GOOD; return 1; }; \
+            for rev in $(git rev-list \"$1..$2\" --merges --first-parent); do \
+                git rev-list \"$rev^2\" --not \"$rev^\"; \
+            done | xargs git bisect skip; \
+        }; f"
         brt = "!git for-each-ref refs/heads --color=always --sort -committerdate --format='%(HEAD)%(color:reset);%(color:yellow)%(refname:short)%(color:reset);%(contents:subject);%(color:green)(%(committerdate:relative))%(color:blue);<%(authorname)>' | column -t -s ';'"
         cp = cherry-pick
         dft = difftool
