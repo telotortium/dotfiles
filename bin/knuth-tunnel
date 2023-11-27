@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# Script to establish tunnel to knuth, preferably over LAN (ssh knuth-lan), but
+# otherwise over Tailscale (ssh knuth).
+#
+# Usage: `knuth-tunnel` will loop forever, attempting to connect to each host in
+# round-robin.
+
+# Set trap for several signals and pass signal name to trap function.
+# https://stackoverflow.com/a/2183063/207384
+trap_with_arg() {
+    func="$1" ; shift
+    for sig ; do
+        trap "$func $sig" "$sig"
+    done
+}
+sig_rekill() {
+    # Kill whole process group.
+    trap "$1"; kill -"$1" -$$
+}
+# Catch signal and kill whole process group.
+trap_with_arg sig_rekill HUP INT QUIT PIPE TERM
+
+while true; do
+    printf '%s ' "$(date)"
+    echo -n 'knuth-lan: '
+    autossh -M 0 -o ControlPath=none -o ConnectTimeout=3 -o ServerAliveInterval=3 -o ServerAliveCountMax=2 -N -D 9090 knuth-lan
+    echo -n 'knuth: '
+    autossh -M 0 -o ControlPath=none -o ConnectTimeout=3 -o ServerAliveInterval=3 -o ServerAliveCountMax=2 -N -D 9090 knuth
+done
