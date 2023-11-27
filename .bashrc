@@ -300,7 +300,8 @@ _fzf_compgen_dir() {
 
 # Multiline preview window for history search (see
 # https://github.com/junegunn/fzf/issues/577#issuecomment-473241837)
-export FZF_CTRL_R_OPTS="--preview 'echo {} |sed -e \"s/^ *\([0-9]*\) *//\" -e \"s/^\\(.\\{0,\$COLUMNS\\}\\).*$/\\1/\"; echo {} |sed -e \"s/^ *[0-9]* *//\" -e \"s/^.\\{0,\$COLUMNS\\}//g\" -e \"s/.\\{1,\$((COLUMNS-2))\\}/⏎ &\\n/g\"' --preview-window down:5 --bind ?:toggle-preview"
+GSED=$(case "$(uname -s)" in Linux) echo "sed" ;; *) echo "gsed" ;; esac)
+export FZF_CTRL_R_OPTS="--preview 'echo {} |$GSED -e \"s/^ *\([0-9]*\) *//\" -e \"s/^\\(.\\{0,\$COLUMNS\\}\\).*$/\\1/\"; echo {} |$GSED -e \"s/^ *[0-9]* *//\" -e \"s/^.\\{0,\$COLUMNS\\}//g\" -e \"s/.\\{1,\$((COLUMNS-2))\\}/⏎ &\\n/g\"' --preview-window down:5 --bind ?:toggle-preview"
 
 eval "$(direnv hook bash)"
 [[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
