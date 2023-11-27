@@ -1,0 +1,17 @@
+#!/usr/bin/env bash -l
+
+exec &>/tmp/open-in-editor.log
+set -xv
+
+args=( "$@" )
+for (( i=0; i < ${#args[@]}; i++ )); do
+    args[$i]="$(echo "${args[$i]}" | \
+        sed -E 's!^editor:///(home|Users)/[^/]+!editor://'"$HOME"'!')"
+done
+
+python3 ~/misc/build/open-in-editor/open_in_editor.py \
+    --editor=emacs "${args[@]}"
+rv=$?
+sleep 1
+ps -ef | grep '/Open In Editor$' | awk '{print $2}' | xargs kill
+exit $rv
