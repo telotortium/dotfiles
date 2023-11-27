@@ -1,0 +1,4 @@
+#!/bin/sh
+
+preserve_env_list=$(echo http_proxy {https,ftp,all}_proxy {HTTP,HTTPS,FTP,ALL}_PROXY no_proxy NO_PROXY | sed 's/ /,/g')
+exec sudo --preserve-env="${preserve_env_list}" throttle bash -c 'port selfupdate && port upgrade outdated'
