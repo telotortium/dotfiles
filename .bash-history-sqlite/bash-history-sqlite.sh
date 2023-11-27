@@ -1,30 +1,36 @@
 #!/bin/bash
 
-HISTSESSION=`dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64`
+HISTSESSION=$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64)
 
 # This utility requires bash-preexec to function, so get it.
 # n.b. we presume cwd is ~
+if [ ! -f ${HOME}/.bash-preexec.sh ]
+then
+    wget -q -O ${HOME}/.bash-preexec.sh 'https://raw.githubusercontent.com/rcaloras/bash-preexec/master/bash-preexec.sh' 2> /dev/null ||
+    curl -s -o ${HOME}/.bash-preexec.sh 'https://raw.githubusercontent.com/rcaloras/bash-preexec/master/bash-preexec.sh' 2> /dev/null
+fi
+source ${HOME}/.bash-preexec.sh
 . ~/.bash-preexec.sh || echo "Missing bash-preexec" 1>&2
 
 # header guard
-[ -n "$_SQLITE_HIST" ] && return || readonly _SQLITE_HIST=1
+if [ -n "$_SQLITE_HIST" ]; then return; else readonly _SQLITE_HIST=1; fi
 
 
 # Let's define some utility functions
 # TODO figure out how to integrate this with the history builtins
 
 dbhistory() {
-    sqlite3 -separator '#' ${HISTDB} "select command_id, command from command where command like "\""%${@}%"\"";" | awk -F '#' '{printf "%8s    %s\n", $1, $2}'
+    sqlite3 -separator '#' ${HISTDB} "select command_id, command from command where command like '%${@}%';" | awk -F'#' '/^[0-9]+#/ {printf "%8s    %s\n", $1, substr($0,index($0,FS)+1); next} { print $0; }'
 }
 
 dbhist() {
-    dbhistory $@
+    dbhistory "$@"
 }
 
 # TODO figure out how to make this function rewrite history so the up arrow
 #  (or ^r searches) give you what you ran, and not the dbexec() call.
 dbexec() {
-    bash -c "$(sqlite3 ${HISTDB} "select command from command where command_id="\""${1}"\"";")"
+    bash -c "$(sqlite3 "${HISTDB}" "select command from command where command_id='${1}';")"
 }
 
 
@@ -55,7 +61,7 @@ __create_histdb() {
 	fi
 }
 
-preexec() {
+preexec_bash_history_sqlite() {
 	[[ -z ${HISTDB} ]] && return 0
 	local cmd
 	cmd="$1"
@@ -75,7 +81,7 @@ preexec() {
 			'bash',
 			$(__quote_str "$cmd"),
 			$(__quote_str "$PWD"),
-			"$(date +%s%3N)",
+			'$(date +%s%3N)',
 			$(__quote_str "$HISTSESSION"),
 			$quotedloginsession
 		);
@@ -86,16 +92,19 @@ preexec() {
 	echo "$cmd" >> ~/.testlog
 }
 
-precmd() {
+precmd_bash_history_sqlite() {
 	local ret_value="$?"
 	if [[ -n "${LASTHISTID}" ]]; then
 		__create_histdb
 		sqlite3 "$HISTDB" <<- EOD
 			UPDATE command SET
-				ended="$(date +%s%3N)",
+				ended='$(date +%s%3N)',
 				return=$ret_value
 			WHERE
 				command_id=$LASTHISTID ;
 		EOD
 	fi
 }
+
+preexec_functions+=(preexec_bash_history_sqlite)
+precmd_functions+=(precmd_bash_history_sqlite)
