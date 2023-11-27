@@ -1,0 +1,26 @@
+#!/bin/sh
+
+( getopt --version | grep -e 'getopt (enhanced)' -e 'util-linux' ) &>/dev/null || {
+  echo "GNU getopt not on path" 1>&2
+  exit 1
+}
+options=$(getopt -o n -l dry-run -- "$@")
+eval set -- "$options"
+dry_run=0
+while true; do
+    case "$1" in
+    -n|--dry-run)
+        dry_run=1
+        ;;
+    --)
+        shift
+        break
+        ;;
+    esac
+    shift
+done
+xargs_args=( kill -HUP )
+if [[ $dry_run -eq 1 ]]; then
+    xargs_args=( echo dry run - would run: "${xargs_args[@]}" )
+fi
+ps -ef | grep -i 'ssh.*\[mux\]' | awk '{ print $2 }' | xargs "${xargs_args[@]}"
