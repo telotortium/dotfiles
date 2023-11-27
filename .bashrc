@@ -316,6 +316,31 @@ test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shel
 command_on_path sshrc && complete -F _ssh sshrc
 
 . ~/.bash-history-sqlite/bash-profile.stub
+# Use bash-history-sqlite database for history search instead of builtin
+# history, since the latter gets truncated every so often.
+__fzf_history_bash_history_sqlite__() {
+  local output opts script
+  opts="--height ${FZF_TMUX_HEIGHT:-40%} --bind=ctrl-z:ignore $FZF_DEFAULT_OPTS -n2..,.. --tiebreak=index --bind=ctrl-r:toggle-sort $FZF_CTRL_R_OPTS +m --read0"
+  script='BEGIN { getc; $/ = "\n\t"; $HISTCOUNT = $ENV{last_hist} + 1 } s/^[ *]//; print $HISTCOUNT - $. . "\t$_" if !$seen{$_}++'
+  output=$(
+    sqlite3 -separator '#' ${HISTDB} "select command_id, command from command order by command_id DESC" | awk -F'#' '/^[0-9]+#/ {idx=index($0,FS); printf "\t%s\n", (idx > 0 ? substr($0,idx+1) : ""); next} { print $0 }'  |
+      last_hist=$(sqlite3 -separator ' ' ${HISTDB} "select command_id, command from command order by command_id DESC LIMIT 1") perl -n -l0 -e "$script" |
+      FZF_DEFAULT_OPTS="$opts" $(__fzfcmd) --query "$READLINE_LINE"
+  ) || return
+  READLINE_LINE=${output#*$'\t'}
+  if [[ -z "$READLINE_POINT" ]]; then
+    echo "$READLINE_LINE"
+  else
+    READLINE_POINT=0x7fffffff
+  fi
+}
+eval "$(printf '__fzf_history_builtin__ ()\n%s' "$(declare -f __fzf_history__ | sed 1d)")"
+eval "$(printf '__fzf_history__ ()\n%s' "$(declare -f __fzf_history_bash_history_sqlite__ | sed 1d)")"
+
+dbcmd ()
+{
+    echo "$(sqlite3 ${HISTDB} "select command from command where command_id="\""${1}"\"";")"
+}
 
 if [ -n "$TMUX" ]; then
     function refresh_tmux_env {
