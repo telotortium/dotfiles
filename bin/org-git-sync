@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -eu -o pipefail
+
 # Add org file changes to the repository
 ORG_REPOS=${ORG_REPOS?"no repos defined"}
 GIT=${GIT:-git}
@@ -11,6 +13,7 @@ while getopts m: opt; do
     esac
 done
 
+exit_status=0
 for repo in $ORG_REPOS
 do
     (
@@ -45,4 +48,7 @@ do
         # Only commit if files have been added above
         [ -z "$status" ] || "$GIT" commit -q -m "$msg";
     )
+    rv=$?
+    [[ "$rv" -ne 0 ]] && exit_status="$rv"
 done
+exit "$exit_status"
