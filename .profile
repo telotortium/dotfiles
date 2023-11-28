@@ -174,3 +174,9 @@ fi
 if [ -f "$HOME/.profile.local" ]; then
     . "$HOME/.profile.local"
 fi
+
+# Visual Studio Code (VSCode)
+VSCODE_BIN_DIR="/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+if [ -d "${VSCODE_BIN_DIR}" ]; then
+    pathvarmunge PATH "${VSCODE_BIN_DIR}"
+fi
