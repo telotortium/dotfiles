@@ -1,29 +1,97 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
+"""
+Script to establish tunnel to knuth, preferably over LAN (ssh knuth-lan), but
+otherwise over Tailscale (ssh knuth-tailscale). This is done using the
+`knuth` host in ~/.ssh/config.
 
-# Script to establish tunnel to knuth, preferably over LAN (ssh knuth-lan), but
-# otherwise over Tailscale (ssh knuth-tailscale). This is done using the
-# `knuth` host in ~/.ssh/config.
-#
-# Usage: `knuth-tunnel` will loop forever, attempting to connect to each host in
-# round-robin.
+Usage: `knuth-tunnel` will loop forever, attempting to connect to each host in
+round-robin.
+"""
 
-# Set trap for several signals and pass signal name to trap function.
-# https://stackoverflow.com/a/2183063/207384
-trap_with_arg() {
-    func="$1" ; shift
-    for sig ; do
-        trap "$func $sig" "$sig"
-    done
-}
-sig_rekill() {
-    # Kill whole process group.
-    trap "$1"; kill -"$1" -$$
-}
-# Catch signal and kill whole process group.
-trap_with_arg sig_rekill HUP INT QUIT PIPE TERM
+from argparse import ArgumentParser, RawTextHelpFormatter
 
-while true; do
-    printf '%s ' "$(date)"
-    echo -n 'knuth: '
-    autossh -M 0 -o ControlPath=none -o ConnectTimeout=3 -o ServerAliveInterval=3 -o ServerAliveCountMax=2 -N -D 9090 knuth
-done
+import datetime
+import os
+import signal
+import subprocess
+import sys
+
+
+# Signal handler function
+def signal_handler(signum, frame):
+    # Reset the signal handler for the signal received
+    signal.signal(signum, signal.SIG_DFL)
+    # Signal the entire process group
+    os.killpg(0, signum)
+
+
+autossh_process = None
+
+
+def sighup_handler(signum, frame):
+    global autossh_process
+    try:
+        # Send SIGTERM to the autossh process
+        if autossh_process:
+            autossh_process.terminate()
+            autossh_process = None
+    except Exception as e:
+        print(f"Error while handling SIGHUP: {e}", file=sys.stderr)
+
+
+signals = [signal.SIGINT, signal.SIGQUIT, signal.SIGPIPE, signal.SIGTERM]
+for sig in signals:
+    signal.signal(sig, signal_handler)
+signal.signal(signal.SIGHUP, sighup_handler)
+
+# Create a new process group in order to make it easy to kill all processes
+# spawned by this script.
+os.setpgrp()
+
+HOST = "knuth"
+
+
+def main():
+    parser = ArgumentParser(
+        description=__doc__,
+        formatter_class=RawTextHelpFormatter,
+    )
+    _args = parser.parse_args()
+
+    # Infinite loop running the shell command
+    while True:
+        try:
+            # Run the shell command
+            print(f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            print(f"{HOST}: ", end="")
+            with subprocess.Popen(
+                [
+                    "autossh",
+                    "-M",
+                    "0",
+                    "-o",
+                    "ControlPath=none",
+                    "-o",
+                    "ConnectTimeout=3",
+                    "-o",
+                    "ServerAliveInterval=3",
+                    "-o",
+                    "ServerAliveCountMax=2",
+                    "-N",
+                    "-D",
+                    "9090",
+                    HOST,
+                ],
+                text=True,
+            ) as p:
+                global autossh_process
+                autossh_process = p
+                autossh_process.wait()
+                autossh_process = None
+        except KeyboardInterrupt:
+            # Handle KeyboardInterrupt (Ctrl+C) to exit gracefully
+            sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
