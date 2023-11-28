@@ -68,6 +68,12 @@
             range=${1:-'@{1}..@{0}'}; \
                 git log -p \"$range\" --graph --pretty=format:'%Cred%h%Creset %C(yellow)%an%d%Creset %s %Cgreen(%ar)%Creset' --date=relative; \
         }; f"
+        pc = push-create
+        push-create = "!f () { \
+            local_branch=$(git name-rev --name-only HEAD); \
+            remote=$(git remote show); \
+            git push --set-upstream \"$remote\" \"$local_branch\"; \
+        }; f"
         pushfwl = push --force-with-lease --force-if-includes
         recent = branch --sort=-committerdate --format='%(color:blue bold)%(align:20,left)%(refname:short)%(end) %(color:red)%(align:35,middle)%(objectname:short) %(color:white)%(committerdate:iso)%(end) %(color:normal no-bold)%(subject)'
         root = rev-parse --show-toplevel
