@@ -31,7 +31,7 @@ source ~/.bash_profile
 umask 022
 
 # # Import ssh-agent settings
-# [ -f "$(command -v find-ssh-agent)" ] && . find-ssh-agent
+# [ -f "$(command -v find-ssh-agent)" ] && source find-ssh-agent
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
