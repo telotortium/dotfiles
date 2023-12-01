@@ -375,8 +375,6 @@ if [ -f /opt/local/etc/profile.d/bash_completion.sh ]; then
     source /opt/local/etc/profile.d/bash_completion.sh
 fi
 
-test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
-
 command_on_path sshrc && complete -F _ssh sshrc
 
 # shellcheck disable=SC1090,SC1091
