@@ -24,6 +24,7 @@ echo "${HOME}/.bashrc: loading full Bashrc. Will run \`source ~/bin/bash-dump-st
 # shellcheck disable=SC1090,SC1091
 source ~/.bash_profile
 
+# shellcheck disable=SC1091
 [ -f "$HOME/.common.sh" ] && source "$HOME/.common.sh"
 
 # Set umask to exclude group and other write permissions
@@ -75,7 +76,8 @@ fi
 # Handle screen pecularities
 if [ -n "$STY" ]; then
     # byobu likes to set SSH_AUTH_SOCK for some reason. Bad!
-    [ -f "$HOME/bin/find-ssh-agent" ] && . "$HOME/bin/find-ssh-agent"
+    # shellcheck disable=SC1091
+    [ -f "$HOME/bin/find-ssh-agent" ] && source "$HOME/bin/find-ssh-agent"
 fi
 case "$TERM" in
 putty*)
@@ -97,25 +99,26 @@ bash_prompt_setup() {
     fi
 
     # normal colors
-    local K="\[$(tput setaf 0)\]"    # black
-    local R="\[$(tput setaf 1)\]"    # red
-    local G="\[$(tput setaf 2)\]"    # green
-    local Y="\[$(tput setaf 3)\]"    # yellow
-    local B="\[$(tput setaf 4)\]"    # blue
-    local M="\[$(tput setaf 5)\]"    # magenta
-    local C="\[$(tput setaf 6)\]"    # cyan
-    local W="\[$(tput setaf 7)\]"    # white
+    local K; K="\[$(tput setaf 0)\]"    # black
+    local R; R="\[$(tput setaf 1)\]"    # red
+    local G; G="\[$(tput setaf 2)\]"    # green
+    local Y; Y="\[$(tput setaf 3)\]"    # yellow
+    local B; B="\[$(tput setaf 4)\]"    # blue
+    local M; M="\[$(tput setaf 5)\]"    # magenta
+    local C; C="\[$(tput setaf 6)\]"    # cyan
+    local W; W="\[$(tput setaf 7)\]"    # white
 
     # background colors
-    local BGK="\[$(tput setab 0)\]"
-    local BGR="\[$(tput setab 1)\]"
-    local BGG="\[$(tput setab 2)\]"
-    local BGY="\[$(tput setab 3)\]"
-    local BGB="\[$(tput setab 4)\]"
-    local BGM="\[$(tput setab 5)\]"
-    local BGC="\[$(tput setab 6)\]"
-    local BGW="\[$(tput setab 7)\]"
+    local BGK; BGK="\[$(tput setab 0)\]"
+    local BGR; BGR="\[$(tput setab 1)\]"
+    local BGG; BGG="\[$(tput setab 2)\]"
+    local BGY; BGY="\[$(tput setab 3)\]"
+    local BGB; BGB="\[$(tput setab 4)\]"
+    local BGM; BGM="\[$(tput setab 5)\]"
+    local BGC; BGC="\[$(tput setab 6)\]"
+    local BGW; BGW="\[$(tput setab 7)\]"
 
+    # shellcheck disable=SC2127
     case $TERM in
     # Assume these terminals support at least 16 colors, since TERM is often
     # set to these even if the terminal supports more colors.
@@ -124,58 +127,68 @@ bash_prompt_setup() {
     # Explicitly enable for all terminals with >8 colors
     *-[0-9]+([0-9])color?(-*))
         # bright colors
-        local BK="\[\033[0;90m\]"
-        local BR="\[\033[0;91m\]"
-        local BG="\[\033[0;92m\]"
-        local BY="\[\033[0;93m\]"
-        local BB="\[\033[0;94m\]"
-        local BM="\[\033[0;95m\]"
-        local BC="\[\033[0;96m\]"
-        local BW="\[\033[0;97m\]"
+        local BK; BK="\[\033[0;90m\]"
+        local BR; BR="\[\033[0;91m\]"
+        local BG; BG="\[\033[0;92m\]"
+        local BY; BY="\[\033[0;93m\]"
+        local BB; BB="\[\033[0;94m\]"
+        local BM; BM="\[\033[0;95m\]"
+        local BC; BC="\[\033[0;96m\]"
+        local BW; BW="\[\033[0;97m\]"
 
         # bright background colors
-        local BBGK="\[\033[0;100m\]"
-        local BBGR="\[\033[0;101m\]"
-        local BBGG="\[\033[0;102m\]"
-        local BBGY="\[\033[0;103m\]"
-        local BBGB="\[\033[0;104m\]"
-        local BBGM="\[\033[0;105m\]"
-        local BBGC="\[\033[0;106m\]"
-        local BBGW="\[\033[0;107m\]"
+        local BBGK; BBGK="\[\033[0;100m\]"
+        local BBGR; BBGR="\[\033[0;101m\]"
+        local BBGG; BBGG="\[\033[0;102m\]"
+        local BBGY; BBGY="\[\033[0;103m\]"
+        local BBGB; BBGB="\[\033[0;104m\]"
+        local BBGM; BBGM="\[\033[0;105m\]"
+        local BBGC; BBGC="\[\033[0;106m\]"
+        local BBGW; BBGW="\[\033[0;107m\]"
         ;;
 
     # Simulate bright colors with normal if bright colors are not supported
     *)
-        local BK="${K}"
-        local BR="${R}"
-        local BG="${G}"
-        local BY="${Y}"
-        local BB="${B}"
-        local BM="${M}"
-        local BC="${C}"
-        local BW="${W}"
+        # Don't warn if unused
+        # shellcheck disable=SC2034
+        {
+            local BK; BK="${K}"
+            local BR; BR="${R}"
+            local BG; BG="${G}"
+            local BY; BY="${Y}"
+            local BB; BB="${B}"
+            local BM; BM="${M}"
+            local BC; BC="${C}"
+            local BW; BW="${W}"
 
-        local BBGK="${BGK}"
-        local BBGR="${BGR}"
-        local BBGG="${BGG}"
-        local BBGY="${BGY}"
-        local BBGB="${BGB}"
-        local BBGM="${BGM}"
-        local BBGC="${BGC}"
-        local BBGW="${BGW}"
+            local BBGK; BBGK="${BGK}"
+            local BBGR; BBGR="${BGR}"
+            local BBGG; BBGG="${BGG}"
+            local BBGY; BBGY="${BGY}"
+            local BBGB; BBGB="${BGB}"
+            local BBGM; BBGM="${BGM}"
+            local BBGC; BBGC="${BGC}"
+            local BBGW; BBGW="${BGW}"
+        }
         ;;
 
     esac
 
-    local BD="\[$(tput bold)\]" # bold
-    local UL="\[$(tput smul)\]" # underline
+    # Don't warn if unused
+    # shellcheck disable=SC2034
+    {
+        local BD; BD="\[$(tput bold)\]" # bold
+        local UL; UL="\[$(tput smul)\]" # underline
 
-    # reset terminal to normal text
-    local RS="\[$(tput sgr0)\]"
+        # reset terminal to normal text
+        local RS; RS="\[$(tput sgr0)\]"
+    }
 
     ##################
     # Prompts themselves
 
+    # This expression should be eval'd in the prompt, not here.
+    # shellcheck disable=SC2016
     local __pwd_escaped='$(__pwd=${PWD#$HOME};
         if [ "$__pwd" = "$PWD" ]; then
             __pwd=$(printf "%q" "${__pwd}");
@@ -213,10 +226,13 @@ bash_prompt_setup() {
         precmd_prompt_exit_status () {
             # $__bp_last_ret_value is set by bash-preexec to be the return value of the
             # command executed at the prompt.
+            # shellcheck disable=SC2154
             __PROMPT_EXIT_STATUS=$__bp_last_ret_value
         }
 
         # Set color based on the exit status of the lsat command.
+        # This expression should be eval'd in the prompt, not here.
+        # shellcheck disable=SC2016
         local exit_status_cmd='$(test "$__PROMPT_EXIT_STATUS" = 0 && printf %s "'${G}'" || printf %s "'${BR}'")'
         PS1="${1}[${2}\\u${3}@${4}\\h${5}]${6} ${7}${__pwd_escaped}${8}"$'\n'
         # Second line of prompt - start with `:` and end with `;` to allow
@@ -231,13 +247,13 @@ bash_prompt_setup() {
     }
 
     if [ $EUID = 0 ]; then
-        _my_prompt_command ${BR} ${RS} ${BR} ${RS} ${BR} ${RS} ${BR}${UL} ${RS} \
-            ${R} "" ${R} \
-            ${R} ${RS}
+        _my_prompt_command "${BR}" "${RS}" "${BR}" "${RS}" "${BR}" "${RS}" "${BR}""${UL}" "${RS}" \
+            "${R}" "" "${R}" \
+            "${R}" "${RS}"
     else
-        _my_prompt_command ${BB} ${RS} ${BB} ${RS} ${BB} ${RS} ${BC}${UL} ${RS} \
-            ${C} "" ${R} \
-            ${R} ${RS}
+        _my_prompt_command "${BB}" "${RS}" "${BB}" "${RS}" "${BB}" "${RS}" "${BC}""${UL}" "${RS}" \
+            "${C}" "" "${R}" \
+            "${R}" "${RS}"
     fi
     unset _my_prompt_command
 }
@@ -275,14 +291,16 @@ bind -m emacs -x '"\C-x\C-e":__bind_edit_in_editor'
 # See /usr/share/doc/bash-doc/examples in the bash-doc package.
 
 if [ -f ~/.bash_aliases ]; then
-    . ~/.bash_aliases
+    # shellcheck disable=SC1090,SC1091
+    source ~/.bash_aliases
 fi
 
 # enable programmable completion features (you don't need to enable
 # this, if it's already enabled in /etc/bash.bashrc and /etc/profile
 # sources /etc/bash.bashrc).
 if [ -f /etc/bash_completion ]; then
-    . /etc/bash_completion
+    # shellcheck disable=SC1090,SC1091
+    source /etc/bash_completion
 fi
 if command_on_path register-python-argcomplete-3.9 && \
     command_on_path pipx; then
@@ -306,6 +324,7 @@ shopt -s histappend                      # append to history, don't overwrite
 precmd_history_append () { history -a; }
 precmd_functions+=(precmd_history_append)
 
+# shellcheck disable=SC1090,SC1091
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
 # Use `fd` instead of `find` for faster `fzf` - see
@@ -325,28 +344,54 @@ _fzf_compgen_dir() {
 GSED=$(case "$(uname -s)" in Linux) echo "sed" ;; *) echo "gsed" ;; esac)
 export FZF_CTRL_R_OPTS="--preview 'echo {} |$GSED -e \"s/^ *\([0-9]*\) *//\" -e \"s/^\\(.\\{0,\$COLUMNS\\}\\).*$/\\1/\"; echo {} |$GSED -e \"s/^ *[0-9]* *//\" -e \"s/^.\\{0,\$COLUMNS\\}//g\" -e \"s/.\\{1,\$((COLUMNS-2))\\}/⏎ &\\n/g\"' --preview-window down:5 --bind ?:toggle-preview"
 
-eval "$(direnv hook bash)"
-[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
+# BEGIN eval "$(direnv hook bash)"
+# Based on that command, but change to use bash-preexec instead.
+_direnv_install() {
+    _direnv_hook() {
+      local previous_exit_status=$?;
+      trap -- '' SIGINT;
+      eval "$("/opt/local/bin/direnv" export bash)";
+      trap - SIGINT;
+      return $previous_exit_status;
+    };
+    local _direnv_install=1
+    for cmd in "${precmd_functions[@]}"; do
+        if [[ "$cmd" == "_direnv_hook" ]]; then
+            _direnv_install=0
+            break
+        fi
+    done
+    if [[ "$_direnv_install" -eq 1 ]]; then
+        precmd_functions+=("_direnv_hook")
+    fi
+}
+_direnv_install
+unset -f _direnv_install
+# END eval "$(direnv hook bash)"
 
 # Macports bash-completion
 if [ -f /opt/local/etc/profile.d/bash_completion.sh ]; then
-    . /opt/local/etc/profile.d/bash_completion.sh
+    # shellcheck disable=SC1090,SC1091
+    source /opt/local/etc/profile.d/bash_completion.sh
 fi
 
 test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
 
 command_on_path sshrc && complete -F _ssh sshrc
 
-. ~/.bash-history-sqlite/bash-profile.stub
+# shellcheck disable=SC1090,SC1091
+source ~/.bash-history-sqlite/bash-profile.stub
 # Use bash-history-sqlite database for history search instead of builtin
 # history, since the latter gets truncated every so often.
 __fzf_history_bash_history_sqlite__() {
   local output opts script
   opts="--height ${FZF_TMUX_HEIGHT:-40%} --bind=ctrl-z:ignore $FZF_DEFAULT_OPTS -n2..,.. --tiebreak=index --bind=ctrl-r:toggle-sort $FZF_CTRL_R_OPTS +m --read0"
+  # This is a Perl script, not a shell expression.
+  # shellcheck disable=SC2016
   script='BEGIN { getc; $/ = "\n\t"; $HISTCOUNT = $ENV{last_hist} + 1 } s/^[ *]//; print $HISTCOUNT - $. . "\t$_" if !$seen{$_}++'
   output=$(
-    sqlite3 -separator '#' ${HISTDB} "select command_id, command from command order by command_id DESC" | awk -F'#' '/^[0-9]+#/ {idx=index($0,FS); printf "\t%s\n", (idx > 0 ? substr($0,idx+1) : ""); next} { print $0 }'  |
-      last_hist=$(sqlite3 -separator ' ' ${HISTDB} "select command_id, command from command order by command_id DESC LIMIT 1") perl -n -l0 -e "$script" |
+    sqlite3 -separator '#' "${HISTDB}" "select command_id, command from command order by command_id DESC" | awk -F'#' '/^[0-9]+#/ {idx=index($0,FS); printf "\t%s\n", (idx > 0 ? substr($0,idx+1) : ""); next} { print $0 }'  |
+      last_hist=$(sqlite3 -separator ' ' "${HISTDB}" "select command_id, command from command order by command_id DESC LIMIT 1") perl -n -l0 -e "$script" |
       FZF_DEFAULT_OPTS="$opts" $(__fzfcmd) --query "$READLINE_LINE"
   ) || return
   READLINE_LINE=${output#*$'\t'}
@@ -361,7 +406,7 @@ eval "$(printf '__fzf_history__ ()\n%s' "$(declare -f __fzf_history_bash_history
 
 dbcmd ()
 {
-    echo "$(sqlite3 ${HISTDB} "select command from command where command_id="\""${1}"\"";")"
+    sqlite3 "${HISTDB}" "select command from command where command_id=\"${1}\";"
 }
 
 if [ -n "$TMUX" ]; then
@@ -376,7 +421,7 @@ if [ -n "$TMUX" ]; then
             val="${line#*=}"
             if [ "$(eval echo "\$$var")" != "$val" ]; then
                 echo "Setting $var to $val" 1>&2
-                export $var="$val"
+                export "$var=$val"
             fi
         done < <(tmux show-environment)
     }
