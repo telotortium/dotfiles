@@ -11,8 +11,11 @@ usage () {
 Usage: $(basename "$0") [-hi]
 
 -a: only update Anki - don't download new items from Pocket
+-d: debug mode - enter PDB on exception
 -D: don't delete old exported JSON files from Pocket
 -h: help
+-e: Requires numeric argument N. If present, only examine Anki notes edited in
+    the past N days.
 -i: incremental mode - only update items added to Pocket since last run
     of this script
 -P: no promnesia index - download new items from Pocket, but don't add to
@@ -21,13 +24,19 @@ EOF
 }
 
 anki_only=0
+edited_days=''
 incremental_mode=0
 no_delete_old=0
+debug_mode=0
 no_promnesia_index=0
-while getopts aDhiP opt; do
+while getopts adDe:hiP opt; do
     case "$opt" in
     a)
         anki_only=1 ;;
+    e)
+        edited_days=$OPTARG ;;
+    d)
+        debug_mode=1 ;;
     D)
         no_delete_old=1 ;;
     h)
@@ -61,10 +70,17 @@ fi
 jsons=$(ls -t "$dir" | grep 'pockexport.*\.json$')
 newest=$(echo "$jsons" | head -n1)
 pta_args=( "$dir/$newest" )
+env_args=( )
 if [[ "$incremental_mode" -ne 0 ]]; then
     pta_args=( "$dir/$next_newest" "${pta_args[@]}" )
 fi
-pockexport-to-anki "${pta_args[@]}"
+if [[ -n "$edited_days" ]]; then
+    pta_args=( --edited="$edited_days" "${pta_args[@]}" )
+fi
+if [[ "$debug_mode" -ne 0 ]]; then
+    env_args=( POCKEXPORT_TO_ANKI_DEBUG=1 "${env_args[@]}" )
+fi
+env "${env_args[@]}" pockexport-to-anki "${pta_args[@]}"
 if [[ "$no_delete_old" -ne 1 ]]; then
     if [[ "$(echo "$jsons" | wc -l)" -gt 14 ]]; then
         find "$dir" -type f -mtime +30 -name "pockexport-*.json" -delete
