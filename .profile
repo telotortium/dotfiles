@@ -18,6 +18,9 @@ if [ -x /usr/libexec/path_helper ]; then
     # print a value for MANPATH, so make sure it's present.
     MANPATH="${MANPATH:-}"; export MANPATH
     eval "$(/usr/libexec/path_helper -s)"
+    # path_helper is leaving a trailing ":" on its variables, so remove it.
+    PATH=${PATH%*:}
+    MANPATH=${MANPATH%*:}
 fi
 
 # MacPorts variables
