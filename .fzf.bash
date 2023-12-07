@@ -1,13 +1,13 @@
 # Setup fzf
 # ---------
-if [[ ! "$PATH" == */Users/rmi1/.fzf/bin* ]]; then
-  PATH="${PATH:+${PATH}:}/Users/rmi1/.fzf/bin"
+if [[ ! "$PATH" == *${HOME}/.fzf/bin* ]]; then
+  PATH="${PATH:+${PATH}:}${HOME}/.fzf/bin"
 fi
 
 # Auto-completion
 # ---------------
-[[ $- == *i* ]] && source "/Users/rmi1/.fzf/shell/completion.bash" 2> /dev/null
+source "${HOME}/.fzf/shell/completion.bash"
 
 # Key bindings
 # ------------
-source "/Users/rmi1/.fzf/shell/key-bindings.bash"
+source "${HOME}/.fzf/shell/key-bindings.bash"
