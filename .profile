@@ -6,6 +6,12 @@
 
 [ -f "$HOME/.common.sh" ] && . "$HOME/.common.sh"
 
+if pstree -p $$ | grep -q '[m]osh-server'; then
+    export MOSH_CONNECTION=1
+else
+    export MOSH_CONNECTION=
+fi
+
 # Evaluate system PATH on OS X
 if [ -x /usr/libexec/path_helper ]; then
     # If MANPATH is not yet present in the environment, `path_helper` will not
