@@ -5,7 +5,26 @@
 # If not running interactively, don't do anything
 [ -z "${PS1:-}" ] && return
 
-[ -f "$HOME/.common.sh" ] && . "$HOME/.common.sh"
+BASH_LOAD_STATE=${BASH_LOAD_STATE:-1}
+BASH_STATE_FILE=${BASH_STATE_FILE:-"/tmp/bash-load-state-${USER}-${EUID}"}
+if [[ "${BASH_LOAD_STATE:-0}" -ne 0 ]] && [[ -r "${BASH_STATE_FILE}" ]]; then
+    if [[ -O "${BASH_STATE_FILE}" ]]; then
+        echo "${HOME}/.bashrc: loading from ${BASH_STATE_FILE}. If you need to reinitialize that file, run \`BASH_LOAD_STATE=0 bash -l\`" 1>&2
+        # shellcheck disable=SC1090
+        source "$BASH_STATE_FILE"
+        return
+    else
+        echo "${HOME}/.bashrc: ${BASH_STATE_FILE} exists but is not owned by you. Will try to write to it at the end of this script, but will probably fail. You should investigate." 1>&2
+    fi
+fi
+echo "${HOME}/.bashrc: loading full Bashrc. Will run \`source ~/bin/bash-dump-state >\"${BASH_STATE_FILE}\"\` afterward." 1>&2
+
+# Since we cache the result of loading ~/.bash_profile most of the time, make
+# sure to evaluate it when we want to regenerate ${BASH_STATE_FILE}.
+# shellcheck disable=SC1090,SC1091
+source ~/.bash_profile
+
+[ -f "$HOME/.common.sh" ] && source "$HOME/.common.sh"
 
 # Set umask to exclude group and other write permissions
 umask 022
@@ -23,6 +42,9 @@ shopt -s globstar
 
 # Enable extended glob patterns
 shopt -s extglob
+
+# Error if glob fails to match
+shopt -s failglob
 
 # make less more friendly for non-text input files, see lesspipe(1)
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
@@ -362,6 +384,19 @@ fi
 preexec_functions+=(refresh_tmux_env)
 
 # LOCAL SETTINGS
-if [ -f ~/.bashrc.local ]; then
-    . ~/.bashrc.local
-fi
+# shellcheck disable=SC1090,SC1091
+{
+    if [ -f ~/.bashrc.local ]; then
+        . ~/.bashrc.local
+    fi
+
+    # Load .bash-preexec.sh if Iterm2 Shell Integration doesn't load.
+    [[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
+    # Load Iterm2 Shell Integration - it also includes bash-preexec.
+    [[ -f ~/.iterm2_shell_integration.bash ]] && source ~/.iterm2_shell_integration.bash
+}
+
+echo "${HOME}/.bashrc: Running \`source ~/bin/bash-dump-state >\"${BASH_STATE_FILE}\"\` to save state." 1>&2
+mkdir -p "${BASH_STATE_FILE%/*}"
+# shellcheck disable=SC1090,SC1091
+source ~/bin/bash-dump-state >"${BASH_STATE_FILE}"

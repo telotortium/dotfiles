@@ -1,0 +1,78 @@
+# shellcheck type=bash
+# vim: ft=bash
+
+# Check if the script is being sourced - see
+# https://stackoverflow.com/a/34642589/207384
+if ! (return 0 2>/dev/null); then
+    echo -E "Error: This script must be sourced, not executed. Please use 'source bash-dump-state' or '. bash-dump-state'." 1>&2
+    exit 1
+fi
+
+__bash_dump_state_main () {
+    # Save verbose and xtrace to make it easier to debug.
+    echo -E '__bash_dump_state_debug_opts=$(set +o | grep -Ee "(verbose|xtrace)")'
+    # Settings
+    local set_o=$(set +o)
+    echo -E "${set_o}"
+    echo -E 'eval "$__bash_dump_state_debug_opts"'
+    # Turn extglob on and histexpand off for parsing some functions. This will
+    # be reset at the end.
+    echo -E 'shopt -s extglob'
+    echo -E 'set +o histexpand'
+    # Shell options
+    local shopt_p=$(shopt -p)
+    echo -E "${shopt_p}"
+    # Variables, excluding readonly variables
+    declare -p | awk '{
+        if ($2 ~ /.*r.*/) {
+            var=substr($3, 1, index($3, "=")-1);
+            printf("[[ -v %s ]] || ", var);
+            print; next;
+        }
+        print;
+    }'
+    # Shell functions
+    # - Remove all functions first, so that only defined functions exist below.
+    declare -F | sed "s/^declare /unset /"
+    # - Define saved shell functions. The following block is equivalent to just
+    #   `declare -f`, but that command occasionally prints output that caused
+    #   parse errors when the state file is sourced, because the output goes over
+    #   multiple lines. Use `eval` to ensure that the function definition stays
+    #   on one line in the state file.
+    local fnames=( $(declare -F | sed 's/^declare -f //') )
+    for fname in "${fnames[@]}"; do
+        local fdef=$(declare -fp "$fname")
+        echo -E "eval ${fdef@Q}"
+    done
+    # Aliases
+    echo -E 'unalias -a'  # Remove all aliases first
+    alias
+    # Completions
+    echo -E 'complete -r'  # Remove all completions first
+    complete -p
+    # # Ulimit (disabled)
+    # ulimit -a | sed 's/.*\(-[a-z]\)) \(.*\)/ulimit \1 \2/'
+    # Umask
+    umask -p
+    # Signals - used at least by bash-preexec.
+    trap -p
+    # Key bindings
+    local map
+    for map in emacs emacs-standard emacs-meta emacs-ctlx vi vi-move vi-command vi-insert; do
+        local bindings=$(bind -m "$map" -psv)
+        echo -E "bind -m ${map@Q} ${bindings@Q}"
+        # Shell command keybindings need to be handled specially.
+        local line
+        while read -r line; do
+            echo -E "bind -m ${map@Q} -x ${line@Q}"
+        done < <(bind -m "$map" -X)
+    done
+
+    # Reset verbose and xtrace to values from state file.
+    echo -E "${set_o}"
+    echo -E "${shopt_p}"
+    echo -E 'unset __bash_dump_state_debug_opts'
+}
+
+__bash_dump_state_main "$@"
+unset -f __bash_dump_state_main
