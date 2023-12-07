@@ -5,18 +5,6 @@
 
 set -eu -o pipefail
 
-# Check if repo has less than 2 commits (inspired by
-# https://stackoverflow.com/a/5492347/207384). If so, copy the
-# .pre-commit-config.yaml if not present already.
-if [[ "$(git rev-list -n 2 --all | wc -l)" -lt 2 ]]; then
-    # Copy default .pre-commit-config.yaml if it's not already present
-    if ! [[ -r .pre-commit-config.yaml ]]; then
-        cp -n ~/.config/git/template/.pre-commit-config.yaml \
-            .pre-commit-config.yaml
-        echo "Copied default .pre-commit-config.yaml" 1>&2
-    fi
-fi
-
 # start templated
 INSTALL_PYTHON=/opt/local/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11
 ARGS=(hook-impl --config=.pre-commit-config.yaml --hook-type=post-commit --skip-on-missing-config)
