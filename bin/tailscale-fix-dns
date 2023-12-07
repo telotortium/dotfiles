@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# Fix Tailscale DNS settings, which breaks resolution of DNS entries available
+# via GlobalProtect for Bytedance/TikTok. For more info see
+# ~/Documents/org/tiktok-org/roam/globalprotect_dns_byted_org_hostnames_not_found_when_tailscale_enabled.org
+
+service=State:/Network/Service/24B91250-2AED-4DDE-9329-77DA774B079A/DNS
+sudo scutil dns <<EOF
+get ${service}
+d.add SupplementalMatchDomains *
+d.add SupplementalMatchDomains * corgi-tyrannosaurus.ts.net. rirelan.gmail.com.beta.tailscale.net.
+set ${service}
+EOF

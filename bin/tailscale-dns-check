@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+set -eu -o pipefail
+
+if timeout 3 ping -c1 apricots.corgi-tyrannosaurus.ts.net &>/dev/null && \
+   timeout 3 curl --head https://arnold.tiktok-usts.org &>/dev/null; then
+   set +e
+   timeout 3 curl --head https://code.byted.org &>/dev/null
+   rv=$?
+   set -e
+   if (( $rv != 0 && $rv != 137 )); then
+      terminal-notifier -title 'Tailscale DNS broken' -message 'Run `tailscale-fix-dns`'
+      echo 'Tailscale DNS broken - Run `tailscale-fix-dns`' 1>&2
+      exit 1
+   fi
+fi
+exit 0
