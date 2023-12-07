@@ -1,2 +1,2 @@
 [core]
-#	fsmonitor = ~/.config/git/query-watchman
+	fsmonitor = ~/.config/git/query-watchman
