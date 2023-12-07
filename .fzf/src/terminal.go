@@ -2,6 +2,7 @@ package fzf
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math"
@@ -50,6 +51,7 @@ var whiteSuffix *regexp.Regexp
 var offsetComponentRegex *regexp.Regexp
 var offsetTrimCharsRegex *regexp.Regexp
 var activeTempFiles []string
+var passThroughRegex *regexp.Regexp
 
 const clearCode string = "\x1b[2J"
 
@@ -59,6 +61,13 @@ func init() {
 	offsetComponentRegex = regexp.MustCompile(`([+-][0-9]+)|(-?/[1-9][0-9]*)`)
 	offsetTrimCharsRegex = regexp.MustCompile(`[^0-9/+-]`)
 	activeTempFiles = []string{}
+
+	// Parts of the preview output that should be passed through to the terminal
+	// * https://github.com/tmux/tmux/wiki/FAQ#what-is-the-passthrough-escape-sequence-and-how-do-i-use-it
+	// * https://sw.kovidgoyal.net/kitty/graphics-protocol
+	// * https://en.wikipedia.org/wiki/Sixel
+	// * https://iterm2.com/documentation-images.html
+	passThroughRegex = regexp.MustCompile(`\x1bPtmux;\x1b\x1b.*?[^\x1b]\x1b\\|\x1b(_G|P[0-9;]*q).*?\x1b\\\r?|\x1b]1337;.*?\a`)
 }
 
 type jumpMode int
@@ -113,10 +122,13 @@ type previewer struct {
 }
 
 type previewed struct {
-	version  int64
-	numLines int
-	offset   int
-	filled   bool
+	version   int64
+	numLines  int
+	offset    int
+	filled    bool
+	image     bool
+	wipe      bool
+	wireframe bool
 }
 
 type eachLine struct {
@@ -143,6 +155,24 @@ type fitpad struct {
 var emptyLine = itemLine{}
 
 type labelPrinter func(tui.Window, int)
+
+type StatusItem struct {
+	Index int    `json:"index"`
+	Text  string `json:"text"`
+}
+
+type Status struct {
+	Reading    bool         `json:"reading"`
+	Progress   int          `json:"progress"`
+	Query      string       `json:"query"`
+	Position   int          `json:"position"`
+	Sort       bool         `json:"sort"`
+	TotalCount int          `json:"totalCount"`
+	MatchCount int          `json:"matchCount"`
+	Current    *StatusItem  `json:"current"`
+	Matches    []StatusItem `json:"matches"`
+	Selected   []StatusItem `json:"selected"`
+}
 
 // Terminal represents terminal input/output
 type Terminal struct {
@@ -206,7 +236,9 @@ type Terminal struct {
 	margin             [4]sizeSpec
 	padding            [4]sizeSpec
 	unicode            bool
+	listenAddr         *listenAddress
 	listenPort         *int
+	listenUnsafe       bool
 	borderShape        tui.BorderShape
 	cleanExit          bool
 	paused             bool
@@ -245,12 +277,14 @@ type Terminal struct {
 	sigstop            bool
 	startChan          chan fitpad
 	killChan           chan int
-	serverChan         chan []*action
+	serverInputChan    chan []*action
+	serverOutputChan   chan string
 	eventChan          chan tui.Event
 	slab               *util.Slab
 	theme              *tui.ColorTheme
 	tui                tui.Renderer
 	executing          *util.AtomicBool
+	termSize           tui.TermSize
 }
 
 type selectedItem struct {
@@ -281,6 +315,7 @@ const (
 	reqRefresh
 	reqReinit
 	reqFullRedraw
+	reqResize
 	reqRedrawBorderLabel
 	reqRedrawPreviewLabel
 	reqClose
@@ -352,6 +387,8 @@ const (
 	actPosition
 	actHalfPageUp
 	actHalfPageDown
+	actOffsetUp
+	actOffsetDown
 	actJump
 	actJumpAccept
 	actPrintQuery
@@ -398,7 +435,28 @@ const (
 	actUnbind
 	actRebind
 	actBecome
+	actResponse
 )
+
+func processExecution(action actionType) bool {
+	switch action {
+	case actTransformBorderLabel,
+		actTransformHeader,
+		actTransformPreviewLabel,
+		actTransformPrompt,
+		actTransformQuery,
+		actPreview,
+		actChangePreview,
+		actExecute,
+		actExecuteSilent,
+		actExecuteMulti,
+		actReload,
+		actReloadSync,
+		actBecome:
+		return true
+	}
+	return false
+}
 
 type placeholderFlags struct {
 	plus          bool
@@ -418,6 +476,7 @@ type searchRequest struct {
 type previewRequest struct {
 	template     string
 	pwindow      tui.Window
+	pwindowSize  tui.TermSize
 	scrollOffset int
 	list         []*Item
 }
@@ -498,6 +557,16 @@ func defaultKeymap() map[tui.Event][]*action {
 	add(tui.Mouse, actMouse)
 	add(tui.LeftClick, actIgnore)
 	add(tui.RightClick, actToggle)
+	add(tui.SLeftClick, actToggle)
+	add(tui.SRightClick, actToggle)
+
+	add(tui.ScrollUp, actUp)
+	add(tui.ScrollDown, actDown)
+	keymap[tui.SScrollUp.AsEvent()] = toActions(actToggle, actUp)
+	keymap[tui.SScrollDown.AsEvent()] = toActions(actToggle, actDown)
+
+	add(tui.PreviewScrollUp, actPreviewUp)
+	add(tui.PreviewScrollDown, actPreviewDown)
 	return keymap
 }
 
@@ -541,7 +610,7 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 	}
 	var previewBox *util.EventBox
 	// We need to start previewer if HTTP server is enabled even when --preview option is not specified
-	if len(opts.Preview.command) > 0 || hasPreviewAction(opts) || opts.ListenPort != nil {
+	if len(opts.Preview.command) > 0 || hasPreviewAction(opts) || opts.ListenAddr != nil {
 		previewBox = util.NewEventBox()
 	}
 	var renderer tui.Renderer
@@ -614,7 +683,8 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 		margin:             opts.Margin,
 		padding:            opts.Padding,
 		unicode:            opts.Unicode,
-		listenPort:         opts.ListenPort,
+		listenAddr:         opts.ListenAddr,
+		listenUnsafe:       opts.Unsafe,
 		borderShape:        opts.BorderShape,
 		borderWidth:        1,
 		borderLabel:        nil,
@@ -647,7 +717,7 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 		initialPreviewOpts: opts.Preview,
 		previewOpts:        opts.Preview,
 		previewer:          previewer{0, []string{}, 0, false, true, disabledState, "", []bool{}},
-		previewed:          previewed{0, 0, 0, false},
+		previewed:          previewed{0, 0, 0, false, false, false, false},
 		previewBox:         previewBox,
 		eventBox:           eventBox,
 		mutex:              sync.Mutex{},
@@ -657,8 +727,9 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 		theme:              opts.Theme,
 		startChan:          make(chan fitpad, 1),
 		killChan:           make(chan int),
-		serverChan:         make(chan []*action, 10),
-		eventChan:          make(chan tui.Event, 1),
+		serverInputChan:    make(chan []*action, 10),
+		serverOutputChan:   make(chan string),
+		eventChan:          make(chan tui.Event, 3), // load / zero|one | GetChar
 		tui:                renderer,
 		initFunc:           func() { renderer.Init() },
 		executing:          util.NewAtomicBool(false)}
@@ -702,8 +773,8 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 
 	_, t.hasLoadActions = t.keymap[tui.Load.AsEvent()]
 
-	if t.listenPort != nil {
-		err, port := startHttpServer(*t.listenPort, t.serverChan)
+	if t.listenAddr != nil {
+		err, port := startHttpServer(*t.listenAddr, t.serverInputChan, t.serverOutputChan)
 		if err != nil {
 			errorExit(err.Error())
 		}
@@ -781,7 +852,7 @@ func (t *Terminal) ansiLabelPrinter(str string, color *tui.ColorPair, fill bool)
 				window.CPrint(*color, str)
 			}
 		}
-		return printFn, len(text)
+		return printFn, length
 	}
 
 	// Printer that correctly handles ANSI color codes and tab characters
@@ -1260,10 +1331,6 @@ func (t *Terminal) resizeWindows(forcePreview bool) {
 				}
 				if previewOpts.hidden {
 					return
-				}
-				// Put scrollbar closer to the right border for consistent look
-				if t.borderShape.HasRight() {
-					width++
 				}
 				if previewOpts.position == posUp {
 					t.window = t.tui.NewWindow(
@@ -1893,11 +1960,21 @@ func (t *Terminal) renderPreviewSpinner() {
 }
 
 func (t *Terminal) renderPreviewArea(unchanged bool) {
-	if unchanged {
+	if t.previewed.wipe && t.previewed.version != t.previewer.version {
+		t.previewed.wipe = false
+		t.pwindow.Erase()
+	} else if unchanged {
 		t.pwindow.MoveAndClear(0, 0) // Clear scroll offset display
 	} else {
 		t.previewed.filled = false
-		t.pwindow.Erase()
+		// We don't erase the window here to avoid flickering during scroll.
+		// However, tcell renderer uses double-buffering technique and there's no
+		// flickering. So we just erase the window and make the rest of the code
+		// simpler.
+		if !t.pwindow.EraseMaybe() {
+			t.pwindow.DrawBorder()
+			t.pwindow.Move(0, 0)
+		}
 	}
 
 	height := t.pwindow.Height()
@@ -1927,28 +2004,119 @@ func (t *Terminal) renderPreviewArea(unchanged bool) {
 	t.renderPreviewScrollbar(headerLines, barLength, barStart)
 }
 
+func (t *Terminal) makeImageBorder(width int, top bool) string {
+	tl := "┌"
+	tr := "┐"
+	v := "╎"
+	h := "╌"
+	if !t.unicode {
+		tl = "+"
+		tr = "+"
+		h = "-"
+		v = "|"
+	}
+	repeat := util.Max(0, width-2)
+	if top {
+		return tl + strings.Repeat(h, repeat) + tr
+	}
+	return v + strings.Repeat(" ", repeat) + v
+}
+
 func (t *Terminal) renderPreviewText(height int, lines []string, lineNo int, unchanged bool) {
 	maxWidth := t.pwindow.Width()
 	var ansi *ansiState
 	spinnerRedraw := t.pwindow.Y() == 0
+	wiped := false
+	image := false
+	wireframe := false
+Loop:
 	for _, line := range lines {
 		var lbg tui.Color = -1
 		if ansi != nil {
 			ansi.lbg = -1
 		}
-		line = strings.TrimRight(line, "\r\n")
+
+		passThroughs := passThroughRegex.FindAllString(line, -1)
+		if passThroughs != nil {
+			line = passThroughRegex.ReplaceAllString(line, "")
+		}
+		line = strings.TrimLeft(strings.TrimRight(line, "\r\n"), "\r")
+
 		if lineNo >= height || t.pwindow.Y() == height-1 && t.pwindow.X() > 0 {
 			t.previewed.filled = true
 			t.previewer.scrollable = true
 			break
 		} else if lineNo >= 0 {
+			x := t.pwindow.X()
+			y := t.pwindow.Y()
 			if spinnerRedraw && lineNo > 0 {
 				spinnerRedraw = false
-				y := t.pwindow.Y()
-				x := t.pwindow.X()
 				t.renderPreviewSpinner()
 				t.pwindow.Move(y, x)
 			}
+			for idx, passThrough := range passThroughs {
+				// Handling Sixel/iTerm image
+				requiredLines := 0
+				isSixel := strings.HasPrefix(passThrough, "\x1bP")
+				isItermImage := strings.HasPrefix(passThrough, "\x1b]1337;")
+				isImage := isSixel || isItermImage
+				if isImage {
+					t.previewed.wipe = true
+					// NOTE: We don't have a good way to get the height of an iTerm image,
+					// so we assume that it requires the full height of the preview
+					// window.
+					requiredLines = height
+
+					if isSixel && t.termSize.PxHeight > 0 {
+						rows := strings.Count(passThrough, "-")
+						requiredLines = int(math.Ceil(float64(rows*6*t.termSize.Lines) / float64(t.termSize.PxHeight)))
+					}
+				}
+
+				// Render wireframe when the image cannot be displayed entirely
+				if requiredLines > 0 && y+requiredLines > height {
+					top := true
+					for ; y < height; y++ {
+						t.pwindow.MoveAndClear(y, 0)
+						t.pwindow.CFill(tui.ColPreview.Fg(), tui.ColPreview.Bg(), tui.AttrRegular, t.makeImageBorder(maxWidth, top))
+						top = false
+					}
+					wireframe = true
+					t.previewed.filled = true
+					t.previewer.scrollable = true
+					break Loop
+				}
+
+				// Clear previous wireframe or any other text
+				if (t.previewed.wireframe || isImage && !t.previewed.image) && !wiped {
+					wiped = true
+					for i := y + 1; i < height; i++ {
+						t.pwindow.MoveAndClear(i, 0)
+					}
+				}
+				image = image || isImage
+				if idx == 0 {
+					t.pwindow.MoveAndClear(y, x)
+				} else {
+					t.pwindow.Move(y, x)
+				}
+				t.tui.PassThrough(passThrough)
+
+				if requiredLines > 0 {
+					if y+requiredLines == height {
+						t.pwindow.Move(height-1, maxWidth-1)
+						t.previewed.filled = true
+						break Loop
+					} else {
+						t.pwindow.MoveAndClear(y+requiredLines, 0)
+					}
+				}
+			}
+
+			if len(passThroughs) > 0 && len(line) == 0 {
+				continue
+			}
+
 			var fillRet tui.FillReturn
 			prefixWidth := 0
 			_, _, ansi = extractColor(line, ansi, func(str string, ansi *ansiState) bool {
@@ -1989,6 +2157,8 @@ func (t *Terminal) renderPreviewText(height int, lines []string, lineNo int, unc
 		}
 		lineNo++
 	}
+	t.previewed.image = image
+	t.previewed.wireframe = wireframe
 }
 
 func (t *Terminal) renderPreviewScrollbar(yoff int, barLength int, barStart int) {
@@ -2036,7 +2206,7 @@ func (t *Terminal) printPreview() {
 	unchanged := (t.previewed.filled || numLines == t.previewed.numLines) &&
 		t.previewer.version == t.previewed.version &&
 		t.previewer.offset == t.previewed.offset
-	t.previewer.scrollable = t.previewer.offset > 0 || numLines > height
+	t.previewer.scrollable = t.previewer.offset > t.previewOpts.headerLines || numLines > height
 	t.renderPreviewArea(unchanged)
 	t.renderPreviewSpinner()
 	t.previewed.numLines = numLines
@@ -2522,6 +2692,19 @@ func (t *Terminal) cancelPreview() {
 	t.killPreview(exitCancel)
 }
 
+func (t *Terminal) pwindowSize() tui.TermSize {
+	if t.pwindow == nil {
+		return tui.TermSize{}
+	}
+	size := tui.TermSize{Lines: t.pwindow.Height(), Columns: t.pwindow.Width()}
+
+	if t.termSize.PxWidth > 0 {
+		size.PxWidth = size.Columns * t.termSize.PxWidth / t.termSize.Columns
+		size.PxHeight = size.Lines * t.termSize.PxHeight / t.termSize.Lines
+	}
+	return size
+}
+
 // Loop is called to start Terminal I/O
 func (t *Terminal) Loop() {
 	// prof := profile.Start(profile.ProfilePath("/tmp/"))
@@ -2573,12 +2756,13 @@ func (t *Terminal) Loop() {
 		go func() {
 			for {
 				<-resizeChan
-				t.reqBox.Set(reqFullRedraw, nil)
+				t.reqBox.Set(reqResize, nil)
 			}
 		}()
 
 		t.mutex.Lock()
 		t.initFunc()
+		t.termSize = t.tui.Size()
 		t.resizeWindows(false)
 		t.printPrompt()
 		t.printInfo()
@@ -2612,6 +2796,7 @@ func (t *Terminal) Loop() {
 				var items []*Item
 				var commandTemplate string
 				var pwindow tui.Window
+				var pwindowSize tui.TermSize
 				initialOffset := 0
 				t.previewBox.Wait(func(events *util.Events) {
 					for req, value := range *events {
@@ -2622,6 +2807,7 @@ func (t *Terminal) Loop() {
 							initialOffset = request.scrollOffset
 							items = request.list
 							pwindow = request.pwindow
+							pwindowSize = request.pwindowSize
 						}
 					}
 					events.Clear()
@@ -2633,14 +2819,15 @@ func (t *Terminal) Loop() {
 					command := t.replacePlaceholder(commandTemplate, false, string(query), items)
 					cmd := util.ExecCommand(command, true)
 					env := t.environ()
-					if pwindow != nil {
-						height := pwindow.Height()
-						lines := fmt.Sprintf("LINES=%d", height)
-						columns := fmt.Sprintf("COLUMNS=%d", pwindow.Width())
+					if pwindowSize.Lines > 0 {
+						lines := fmt.Sprintf("LINES=%d", pwindowSize.Lines)
+						columns := fmt.Sprintf("COLUMNS=%d", pwindowSize.Columns)
 						env = append(env, lines)
 						env = append(env, "FZF_PREVIEW_"+lines)
 						env = append(env, columns)
 						env = append(env, "FZF_PREVIEW_"+columns)
+						env = append(env, fmt.Sprintf("FZF_PREVIEW_TOP=%d", t.tui.Top()+pwindow.Top()))
+						env = append(env, fmt.Sprintf("FZF_PREVIEW_LEFT=%d", pwindow.Left()))
 					}
 					cmd.Env = env
 
@@ -2768,7 +2955,7 @@ func (t *Terminal) Loop() {
 		if len(command) > 0 && t.canPreview() {
 			_, list := t.buildPlusList(command, false)
 			t.cancelPreview()
-			t.previewBox.Set(reqPreviewEnqueue, previewRequest{command, t.pwindow, t.evaluateScrollOffset(), list})
+			t.previewBox.Set(reqPreviewEnqueue, previewRequest{command, t.pwindow, t.pwindowSize(), t.evaluateScrollOffset(), list})
 		}
 	}
 
@@ -2813,7 +3000,7 @@ func (t *Terminal) Loop() {
 							t.printInfo()
 						}
 						if onFocus, prs := t.keymap[tui.Focus.AsEvent()]; prs && focusChanged {
-							t.serverChan <- onFocus
+							t.serverInputChan <- onFocus
 						}
 						if focusChanged || version != t.version {
 							version = t.version
@@ -2836,7 +3023,10 @@ func (t *Terminal) Loop() {
 					case reqReinit:
 						t.tui.Resume(t.fullscreen, t.sigstop)
 						t.redraw()
-					case reqFullRedraw:
+					case reqResize, reqFullRedraw:
+						if req == reqResize {
+							t.termSize = t.tui.Size()
+						}
 						wasHidden := t.pwindow == nil
 						t.redraw()
 						if wasHidden && t.hasPreviewWindow() {
@@ -2925,8 +3115,18 @@ func (t *Terminal) Loop() {
 			select {
 			case event = <-t.eventChan:
 				needBarrier = !event.Is(tui.Load, tui.One, tui.Zero)
-			case actions = <-t.serverChan:
+			case serverActions := <-t.serverInputChan:
 				event = tui.Invalid.AsEvent()
+				if t.listenAddr == nil || t.listenAddr.IsLocal() || t.listenUnsafe {
+					actions = serverActions
+				} else {
+					for _, action := range serverActions {
+						if !processExecution(action.t) {
+							actions = append(actions, action)
+						}
+					}
+				}
+
 				needBarrier = false
 			}
 		}
@@ -3000,6 +3200,8 @@ func (t *Terminal) Loop() {
 		doAction = func(a *action) bool {
 			switch a.t {
 			case actIgnore:
+			case actResponse:
+				t.serverOutputChan <- t.dumpStatus(parseGetParams(a.a))
 			case actBecome:
 				valid, list := t.buildPlusList(a.a, false)
 				if valid {
@@ -3051,8 +3253,12 @@ func (t *Terminal) Loop() {
 						if valid {
 							t.cancelPreview()
 							t.previewBox.Set(reqPreviewEnqueue,
-								previewRequest{t.previewOpts.command, t.pwindow, t.evaluateScrollOffset(), list})
+								previewRequest{t.previewOpts.command, t.pwindow, t.pwindowSize(), t.evaluateScrollOffset(), list})
 						}
+					} else {
+						// Discard the preview content so that it won't accidentally appear
+						// when preview window is re-enabled and previewDelay is triggered
+						t.previewer.lines = nil
 					}
 				}
 			case actTogglePreviewWrap:
@@ -3107,6 +3313,7 @@ func (t *Terminal) Loop() {
 				}
 			case actBeginningOfLine:
 				t.cx = 0
+				t.xoffset = 0
 			case actBackwardChar:
 				if t.cx > 0 {
 					t.cx--
@@ -3355,6 +3562,25 @@ func (t *Terminal) Loop() {
 			case actHalfPageDown:
 				t.vmove(-(t.maxItems() / 2), false)
 				req(reqList)
+			case actOffsetUp, actOffsetDown:
+				diff := 1
+				if a.t == actOffsetDown {
+					diff = -1
+				}
+				if t.layout == layoutReverse {
+					diff *= -1
+				}
+				t.offset += diff
+				before := t.offset
+				t.constrain()
+				if before != t.offset {
+					t.offset = before
+					if t.layout == layoutReverse {
+						diff *= -1
+					}
+					t.vmove(diff, false)
+				}
+				req(reqList)
 			case actJump:
 				t.jumping = jumpEnabled
 				req(reqJump)
@@ -3444,13 +3670,23 @@ func (t *Terminal) Loop() {
 				// Scrolling
 				if me.S != 0 {
 					if t.window.Enclose(my, mx) && t.merger.Length() > 0 {
-						if t.multi > 0 && me.Mod {
-							toggle()
+						evt := tui.ScrollUp
+						if me.Mod {
+							evt = tui.SScrollUp
 						}
-						t.vmove(me.S, true)
-						req(reqList)
+						if me.S < 0 {
+							evt = tui.ScrollDown
+							if me.Mod {
+								evt = tui.SScrollDown
+							}
+						}
+						return doActions(actionsFor(evt))
 					} else if t.hasPreviewWindow() && t.pwindow.Enclose(my, mx) {
-						scrollPreviewBy(-me.S)
+						evt := tui.PreviewScrollUp
+						if me.S < 0 {
+							evt = tui.PreviewScrollDown
+						}
+						return doActions(actionsFor(evt))
 					}
 					break
 				}
@@ -3541,15 +3777,19 @@ func (t *Terminal) Loop() {
 						// Prompt
 						t.cx = mx + t.xoffset
 					} else if my >= min {
-						// List
-						if t.vset(t.offset+my-min) && t.multi > 0 && me.Mod {
-							toggle()
-						}
+						t.vset(t.offset + my - min)
 						req(reqList)
-						if me.Left {
-							return doActions(actionsFor(tui.LeftClick))
+						evt := tui.RightClick
+						if me.Mod {
+							evt = tui.SRightClick
 						}
-						return doActions(actionsFor(tui.RightClick))
+						if me.Left {
+							evt = tui.LeftClick
+							if me.Mod {
+								evt = tui.SLeftClick
+							}
+						}
+						return doActions(actionsFor(evt))
 					}
 				}
 			case actReload, actReloadSync:
@@ -3767,4 +4007,49 @@ func (t *Terminal) maxItems() int {
 		max++
 	}
 	return util.Max(max, 0)
+}
+
+func (t *Terminal) dumpItem(i *Item) StatusItem {
+	if i == nil {
+		return StatusItem{}
+	}
+	return StatusItem{
+		Index: int(i.Index()),
+		Text:  i.AsString(t.ansi),
+	}
+}
+
+func (t *Terminal) dumpStatus(params getParams) string {
+	selectedItems := t.sortSelected()
+	selected := make([]StatusItem, util.Max(0, util.Min(params.limit, len(selectedItems)-params.offset)))
+	for i := range selected {
+		selected[i] = t.dumpItem(selectedItems[i+params.offset].item)
+	}
+
+	matches := make([]StatusItem, util.Max(0, util.Min(params.limit, t.merger.Length()-params.offset)))
+	for i := range matches {
+		matches[i] = t.dumpItem(t.merger.Get(i + params.offset).item)
+	}
+
+	var current *StatusItem
+	currentItem := t.currentItem()
+	if currentItem != nil {
+		item := t.dumpItem(currentItem)
+		current = &item
+	}
+
+	dump := Status{
+		Reading:    t.reading,
+		Progress:   t.progress,
+		Query:      string(t.input),
+		Position:   t.cy,
+		Sort:       t.sort,
+		TotalCount: t.count,
+		MatchCount: t.merger.Length(),
+		Current:    current,
+		Matches:    matches,
+		Selected:   selected,
+	}
+	bytes, _ := json.Marshal(&dump) // TODO: Errors?
+	return string(bytes)
 }
