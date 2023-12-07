@@ -1,3 +1,6 @@
+# -*- mode: sh -*-
+# shellcheck shell=sh
+# shellcheck disable=SC1090,SC1091
 # ~/.profile: executed by the command interpreter for login shells.
 # This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login
 # exists.
@@ -26,9 +29,13 @@ fi
 # MacPorts variables
 if [ -f /opt/local/etc/macports/macports.conf ]; then
     if ! ( echo "$PATH" | grep -q "/usr/local/bin:/opt/local/bin" ); then
+        # ${variable//search/replace} doesn't work in Posix shell.
+        # shellcheck disable=SC2001
         PATH="$(echo "$PATH" | sed 's!/usr/local/bin!/usr/local/bin:/opt/local/bin!g')"
     fi
     if ! ( echo "$PATH" | grep -q "/usr/local/sbin:/opt/local/sbin" ); then
+        # ${variable//search/replace} doesn't work in Posix shell.
+        # shellcheck disable=SC2001
         PATH="$(echo "$PATH" | sed 's!/usr/local/sbin!/usr/local/sbin:/opt/local/sbin!g')"
     fi
     pathvarmunge MANPATH /opt/local/share/man
