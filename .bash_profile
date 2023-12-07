@@ -1,10 +1,22 @@
 # .bash_profile
+# shellcheck disable=SC1090,SC1091
 
 if [ -f ~/.profile ]; then
-    . ~/.profile
+    source ~/.profile
+fi
+if [ -e "$HOME/.nix-profile/etc/profile.d/nix.sh" ]; then
+    source "$HOME/.nix-profile/etc/profile.d/nix.sh"
 fi
 
 if [[ $- == *i* && -f ~/.bashrc ]]; then
-    . ~/.bashrc
+    # Prevent recursive includes of ~/.bashrc
+    while true; do
+        for src in "${BASH_SOURCE[@]}"; do
+            if [[ "${src}" = ~/.bashrc ]]; then
+                break 2
+            fi
+        done
+        source ~/.bashrc
+        break
+    done
 fi
-if [ -e "$HOME/.nix-profile/etc/profile.d/nix.sh" ]; then . "$HOME/.nix-profile/etc/profile.d/nix.sh"; fi # added by Nix installer
