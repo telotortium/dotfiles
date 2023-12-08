@@ -25,11 +25,15 @@
         co = checkout
         cp = cherry-pick
         cp-donate = "!f() { \
-            (( $# == 2 )) || { echo Usage: git cp-donate BRANCH CHERRY-PICK-ARGS; return 1; }; \
+            set -eu; \
+            if [ $# -lt 1 ]; then \
+                echo Usage: git cp-donate BRANCH \\[CHERRY-PICK-ARGS\\] 1>&2; \
+                return 1; \
+            fi; \
             branch=$1; shift; \
-            git checkout \"$branch\"; git pull; \
-            git cherry-pick \"$@\"; \
-            git push; git checkout -; git rebase \"$branch\"; \
+            git checkout --ignore-other-worktrees \"$branch\"; git pull; \
+            if [ $# -ge 2 ]; then git cherry-pick \"$@\"; fi; \
+            git push; git checkout --ignore-other-worktrees -; git rebase --autosquash \"$branch\"; \
         }; f"
         d = diff
         dc = diff --cached
