@@ -9,12 +9,6 @@
 
 [ -f "$HOME/.common.sh" ] && . "$HOME/.common.sh"
 
-if pstree -p $$ | grep -q '[m]osh-server'; then
-    export MOSH_CONNECTION=1
-else
-    export MOSH_CONNECTION=
-fi
-
 # Evaluate system PATH on OS X
 if [ -x /usr/libexec/path_helper ]; then
     # If MANPATH is not yet present in the environment, `path_helper` will not
@@ -154,6 +148,14 @@ if perl -Mlocal::lib -e1 2>/dev/null && [ -d "$HOME/local/perl5" ]; then
     eval "$(perl -I"$HOME/local/perl5" -Mlocal::lib)"
 fi
 
+# Export MOSH_CONNECTION variable, which can be used by later code to determine
+# if connection was made over Mosh.
+if pstree -p $$ | grep -q '[m]osh-server'; then
+    export MOSH_CONNECTION=1
+else
+    export MOSH_CONNECTION=
+fi
+
 # Set mosh escape key to be like SSH (requires recent version - introduced in
 # github.com/keithw/mosh commit f960a8).
 #
@@ -176,6 +178,12 @@ if [ -d "$HOME/misc/build/git-tools" ]; then
     pathvarmunge MANPATH "$HOME/misc/build/git-tools"
 fi
 
+# Visual Studio Code (VSCode)
+VSCODE_BIN_DIR="/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+if [ -d "${VSCODE_BIN_DIR}" ]; then
+    pathvarmunge PATH "${VSCODE_BIN_DIR}"
+fi
+
 # ASDF init
 if [ -f "/opt/local/share/asdf/asdf.sh" ]; then
     . "/opt/local/share/asdf/asdf.sh"
@@ -185,8 +193,3 @@ if [ -f "$HOME/.profile.local" ]; then
     . "$HOME/.profile.local"
 fi
 
-# Visual Studio Code (VSCode)
-VSCODE_BIN_DIR="/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
-if [ -d "${VSCODE_BIN_DIR}" ]; then
-    pathvarmunge PATH "${VSCODE_BIN_DIR}"
-fi
