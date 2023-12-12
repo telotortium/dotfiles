@@ -411,22 +411,27 @@ dbcmd ()
 
 if [ -n "$TMUX" ]; then
     function refresh_tmux_env {
-        while IFS= read -r line; do
-            if [ "$line" != "${line#-*}" ]; then
-                # Line starts with -, which means it's removed from the Tmux
-                # environment, so skip it.
-                continue
-            fi
-            var="${line%%=*}"
-            val="${line#*=}"
-            if [ "$(eval echo "\$$var")" != "$val" ]; then
-                echo "Setting $var to $val" 1>&2
-                export "$var=$val"
-            fi
-        done < <(tmux show-environment)
+        # Test again - in case we accidentally installed this function with
+        # a broken `$TMUX`, we can run `unset TMUX` and then errors from this
+        # function won't show anymore, without having to spawn a new shell.
+        if [ -n "$TMUX" ]; then
+            while IFS= read -r line; do
+                if [ "$line" != "${line#-*}" ]; then
+                    # Line starts with -, which means it's removed from the Tmux
+                    # environment, so skip it.
+                    continue
+                fi
+                var="${line%%=*}"
+                val="${line#*=}"
+                if [ "$(eval echo "\$$var")" != "$val" ]; then
+                    echo "Setting $var to $val" 1>&2
+                    export "$var=$val"
+                fi
+            done < <(tmux show-environment)
+        fi
     }
+    preexec_functions+=(refresh_tmux_env)
 fi
-preexec_functions+=(refresh_tmux_env)
 
 # LOCAL SETTINGS
 # shellcheck disable=SC1090,SC1091
