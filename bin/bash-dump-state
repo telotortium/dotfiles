@@ -9,28 +9,45 @@ if ! (return 0 2>/dev/null); then
 fi
 
 __bash_dump_state_main () {
-    # Save verbose and xtrace to make it easier to debug.
-    echo -E '__bash_dump_state_debug_opts=$(set +o | grep -Ee "(verbose|xtrace)")'
     # Settings
-    local set_o=$(set +o)
+    # First, disable `history` for this execution - we will restore its value
+    # at the very end.
+    local set_o=$(set +o | grep -v ' history$')
+    local set_o_history=$(set +o | grep ' history$')
+    echo -E 'set +o history'
+    # Save verbose and xtrace from Bash command line to assist in debugging
+    # state file restore.
+    echo -E '__bash_dump_state_debug_opts=$(set +o | grep -Ee "(verbose|xtrace)")'
+    # Restore most settings (except `history`) in state file to ensure
+    # following commands run correctly.
     echo -E "${set_o}"
+    # Restore verbose and xtrace from above for debugging.
     echo -E 'eval "$__bash_dump_state_debug_opts"'
-    # Turn extglob on and histexpand off for parsing some functions. This will
-    # be reset at the end.
-    echo -E 'shopt -s extglob'
-    echo -E 'set +o histexpand'
     # Shell options
     local shopt_p=$(shopt -p)
     echo -E "${shopt_p}"
-    # Variables, excluding readonly variables
-    declare -p | awk '{
-        if ($2 ~ /.*r.*/) {
+    # These settings need to be set during state restore - they will be
+    # restored to the values saved in the state file at the end.
+    # - extglob on: parse shell functions correctly.
+    # - histexpand off: parse shell functions correctly.
+    echo -E 'shopt -s extglob'
+    echo -E 'set +o histexpand'
+    # Variables, excluding local and readonly variables
+    awk '
+        BEGIN { local_mode=1; }
+        /^LOCALS END$/ { local_mode=0; next; }
+        {
             var=substr($3, 1, index($3, "=")-1);
-            printf("[[ -v %s ]] || ", var);
-            print; next;
+            if (local_mode) { locals[var] = 1; next; }
+            if (var == "_") { next; }
+            if (locals[var]) { next; }
+            if ($2 ~ /.*r.*/) {
+                printf("[[ -v %s ]] || ", var);
+                print; next;
+            }
+            print;
         }
-        print;
-    }'
+    ' <(local; echo LOCALS END) <(declare -p)
     # Shell functions
     # - Remove all functions first, so that only defined functions exist below.
     declare -F | sed "s/^declare /unset /"
@@ -72,6 +89,8 @@ __bash_dump_state_main () {
     echo -E "${set_o}"
     echo -E "${shopt_p}"
     echo -E 'unset __bash_dump_state_debug_opts'
+    # Restore history setting at very end.
+    echo -E "${set_o_history}"
 }
 
 __bash_dump_state_main "$@"
