@@ -94,6 +94,7 @@
         untrackedCache = true
         quotePath = false
         precomposeunicode = true
+        fsmonitor = true
 [diff]
         submodule = log
         colorMoved = default
