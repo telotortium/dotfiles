@@ -1,4 +1,4 @@
-#!/bin/sh
+# set ft=sh
 # Common POSIX shell-compatible functions.
 
 # command_on_path CMD

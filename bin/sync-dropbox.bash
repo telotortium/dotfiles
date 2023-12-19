@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+# set ft=bash
 # Template:
 #
 # Merge changes in $org_repo from Dropbox into repo, and then upload repo
