@@ -28,5 +28,3 @@ while true; do
     # fractional seconds) - see perldoc select.
     perl -e 'select undef, undef, undef, 0.25'
 done
-
-

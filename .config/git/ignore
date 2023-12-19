@@ -311,7 +311,7 @@ nb-configuration.xml
 .LSOverride
 
 # Icon must ends with two \r.
-Icon
+Icon
 
 # Thumbnails
 ._*
@@ -564,5 +564,3 @@ Session.vim
 **/IntegrationServer/WmRepository4/
 **/IntegrationServer/XAStore/
 **/IntegrationServer/packages/Wm*/
-
-
