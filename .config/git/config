@@ -32,7 +32,7 @@
             fi; \
             branch=$1; shift; \
             git checkout --ignore-other-worktrees \"$branch\"; git pull; \
-            if [ $# -ge 2 ]; then git cherry-pick \"$@\"; fi; \
+            if [ $# -ge 1 ]; then git cherry-pick \"$@\"; fi; \
             git push; git checkout --ignore-other-worktrees -; git rebase --autosquash \"$branch\"; \
         }; f"
         d = diff
