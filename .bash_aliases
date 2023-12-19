@@ -313,7 +313,12 @@ refind () {
 }
 
 # Aliases for removing certain files quickly
-alias clean='rm -f \#* *~ .*~ *.bak .*.bak  *.tmp .*.tmp core a.out'
+function clean {
+    (
+        shopt -u failglob
+        rm -f -- \#* *~ .*~ *.bak .*.bak  *.tmp .*.tmp core a.out
+    )
+}
 alias rmtree='rm -r'
 
 # Some useful aliases.
