@@ -314,7 +314,6 @@ refind () {
 
 # Aliases for removing certain files quickly
 alias clean='rm -f \#* *~ .*~ *.bak .*.bak  *.tmp .*.tmp core a.out'
-alias pbsclean='rm -f *.out *.chk *.err *.debug *.pbs '
 alias rmtree='rm -r'
 
 # Some useful aliases.
