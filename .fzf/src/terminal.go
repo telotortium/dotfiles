@@ -343,6 +343,7 @@ const (
 	actAbort
 	actAccept
 	actAcceptNonEmpty
+	actAcceptOrPrintQuery
 	actBackwardChar
 	actBackwardDeleteChar
 	actBackwardDeleteCharEOF
@@ -729,7 +730,7 @@ func NewTerminal(opts *Options, eventBox *util.EventBox) *Terminal {
 		killChan:           make(chan int),
 		serverInputChan:    make(chan []*action, 10),
 		serverOutputChan:   make(chan string),
-		eventChan:          make(chan tui.Event, 1),
+		eventChan:          make(chan tui.Event, 3), // load / zero|one | GetChar
 		tui:                renderer,
 		initFunc:           func() { renderer.Init() },
 		executing:          util.NewAtomicBool(false)}
@@ -3496,6 +3497,12 @@ func (t *Terminal) Loop() {
 			case actAcceptNonEmpty:
 				if len(t.selected) > 0 || t.merger.Length() > 0 || !t.reading && t.count == 0 {
 					req(reqClose)
+				}
+			case actAcceptOrPrintQuery:
+				if len(t.selected) > 0 || t.merger.Length() > 0 {
+					req(reqClose)
+				} else {
+					req(reqPrintQuery)
 				}
 			case actClearScreen:
 				req(reqFullRedraw)

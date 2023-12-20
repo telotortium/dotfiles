@@ -1,6 +1,20 @@
 CHANGELOG
 =========
 
+0.44.2
+------
+- Added `accept-or-print-query` action that acts like `accept` but prints the
+  current query when there's no match for the query
+  ```sh
+  # You can make CTRL-R paste the current query when there's no match
+  export FZF_CTRL_R_OPTS='--bind enter:accept-or-print-query'
+  ```
+  - Note that this new action isn't fundamentally different from the following `become` binding. `become` is apparently more versatile but it's not available on Windows.
+    ```sh
+    export FZF_CTRL_R_OPTS='--bind "enter:become:if [[ -n {} ]]; then echo {}; else echo {q}; fi"'
+    ```
+- Bug fixes
+
 0.44.1
 ------
 - Fixed crash when preview window is hidden on `focus` event
