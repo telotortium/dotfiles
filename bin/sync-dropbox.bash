@@ -154,7 +154,7 @@ git diff -z --name-only "$git_base_commit" | { \
     # Use Perl because MacOS grep doesn't support ASCII NUL-separated input.
     # `\0` needed in regex because lines end with that, not `\n`, so `/$/`
     # doesn't work.
-    perl -0 -ne 'print unless /gcal.*\.org/ || /\.org_archive\0/'
+    perl -0 -ne 'print unless /gcal.*\.org/ || /\.org_archive\0/ || /roam\/anki_articles\//'
   } | {
     if [ "$local_mode" -eq 1 ]; then
         rsync --progress --delete -0 --files-from=/dev/stdin \
