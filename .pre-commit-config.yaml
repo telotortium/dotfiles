@@ -19,3 +19,9 @@ repos:
           name: Checks consistency of Doom version between .doom.d and doom.emacs.d.
           language: script
           entry: .doom-commit-consistency-check.sh
+        - id: submodule-updated-check
+          name: Checks that submodules are initialized and up-to-date.
+          language: script
+          entry: .submodule-updated-check.sh
+          always_run: true
+          stages: [post-checkout, post-merge, post-rewrite, manual]
