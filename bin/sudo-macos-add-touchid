@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+if grep -q pam_tid /etc/pam.d/sudo; then
+    echo "pam_tid already in /etc/pam.d/sudo" 1>&2
+    exit 0
+fi
 sudo ed /etc/pam.d/sudo <<'EOF'
 /pam_smartcard
 .t.
