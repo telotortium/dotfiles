@@ -18,7 +18,7 @@ if [[ "$(git rev-list -n 2 --all | wc -l)" -lt 1 ]]; then
 fi
 
 # start templated
-INSTALL_PYTHON=/opt/local/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11
+INSTALL_PYTHON=
 ARGS=(hook-impl --config=.pre-commit-config.yaml --hook-type=pre-commit --skip-on-missing-config)
 # end templated
 
@@ -35,10 +35,23 @@ filter_out_passed_skipped () {
     )
 }
 
-if [ -x "$INSTALL_PYTHON" ]; then
+# 1. If INSTALL_PYTHON is already set, use that.
+# 2. Otherwise, use `pre-commit` CLI command if available.
+# 3. Otherwise, re-exec this script using python3 on PATH. If that succeeds,
+#    rewrite this script to set that python3 as INSTALL_PYTHON.
+if [ -x "$INSTALL_PYTHON" ] && "$INSTALL_PYTHON" -mpre_commit -V &>/dev/null; then
     "$INSTALL_PYTHON" -mpre_commit "${ARGS[@]}" | filter_out_passed_skipped
 elif command -v pre-commit > /dev/null; then
     pre-commit "${ARGS[@]}" | filter_out_passed_skipped
+elif [ -z "$INSTALL_PYTHON" ]; then
+    sed_script='s!^INSTALL_PYTHON=.*$!'$(printf 'INSTALL_PYTHON=%q' "$(which python3)")'!'
+    set +e
+    sed -e "$sed_script" < "$0" | "$SHELL" -s "$@"
+    rv=$?
+    set -e
+    if [ "$rv" -eq 0 ] && [ -f "$0" ] && ! [ -L "$0" ]; then
+        sed -i .orig -e "$sed_script" "$0"
+    fi
 else
     echo '`pre-commit` not found.  Did you forget to activate your virtualenv?' 1>&2
     exit 1
