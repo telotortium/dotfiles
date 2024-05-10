@@ -40,6 +40,7 @@ __bash_dump_state_main () {
             var=substr($3, 1, index($3, "=")-1);
             if (local_mode) { locals[var] = 1; next; }
             if (var == "_") { next; }
+            if (var == "TERM") { next; }
             if (locals[var]) { next; }
             if ($2 ~ /.*r.*/) {
                 printf("[[ -v %s ]] || ", var);
