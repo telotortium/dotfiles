@@ -35,6 +35,7 @@
             if [ $# -ge 1 ]; then git cherry-pick \"$@\"; fi; \
             git push; git checkout --ignore-other-worktrees -; git rebase --autosquash \"$branch\"; \
         }; f"
+        cl = shallow-clone
         d = diff
         dc = diff --cached
         dft = difftool
@@ -83,6 +84,8 @@
         recent = branch --sort=-committerdate --format='%(color:blue bold)%(align:20,left)%(refname:short)%(end) %(color:red)%(align:35,middle)%(objectname:short) %(color:white)%(committerdate:iso)%(end) %(color:normal no-bold)%(subject)'
         reflg = reflog --date=relative
         root = rev-parse --show-toplevel
+        clone-shallow = shallow-clone
+        shallow-clone = clone --depth=1
         untracked = ls-files --others --exclude-standard
 [user]
         name = Robert Irelan
