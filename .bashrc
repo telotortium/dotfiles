@@ -350,7 +350,7 @@ _direnv_install() {
     _direnv_hook() {
       local previous_exit_status=$?;
       trap -- '' SIGINT;
-      eval "$("/opt/local/bin/direnv" export bash)";
+      eval "$(direnv export bash)";
       trap - SIGINT;
       return $previous_exit_status;
     };
