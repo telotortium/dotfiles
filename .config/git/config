@@ -21,6 +21,7 @@
                 fi; \
             done; \
         }; f"
+        branch-upstream = rev-parse --abbrev-ref --symbolic-full-name @{u}
         brt = "!git for-each-ref refs/heads --color=always --sort -committerdate --format='%(HEAD)%(color:reset);%(color:yellow)%(refname:short)%(color:reset);%(contents:subject);%(color:green)(%(committerdate:relative))%(color:blue);<%(authorname)>' | column -t -s ';'"
         co = checkout
         cp = cherry-pick
@@ -75,18 +76,36 @@
                 git log -p \"$range\" --graph --pretty=format:'%Cred%h%Creset %C(yellow)%an%d%Creset %s %Cgreen(%ar)%Creset' --date=relative; \
         }; f"
         pc = push-create
+        push-allowed = "!f() { \
+            branch=$(git symbolic-ref --short HEAD); \
+            [[ -n \"$(git upstream-branch 2>/dev/null)\" ]] && [[ \"$(git config --get branch.\"$branch\".pushRemote)\" != no_push ]];  \
+        }; f"
         push-create = "!f () { \
             local_branch=$(git name-rev --name-only HEAD); \
             remote=$(git remote show); \
             git push --set-upstream \"$remote\" \"$local_branch\"; \
         }; f"
         pushfwl = push --force-with-lease --force-if-includes
+        rebase-master = "!f() { \
+            set -e; set -xv; \
+            base=${1:-master}; \
+            branch=$(git symbolic-ref --short HEAD); \
+            stashed=$({ git stash | grep -q 'No local changes to save'; } || echo 1); \
+            git checkout \"$base\"; \
+            git pull; \
+            if git push-allowed; then git pushfwl; fi; \
+            git checkout \"$branch\"; \
+            if false && [[ -n \"$(git upstream-branch 2>/dev/null)\" ]]; then git pull; fi; \
+            git rebase --onto \"$base\" $(git merge-base HEAD \"$base\"); \
+            [[ -n \"$stashed\" ]] && git stash pop; \
+        }; f"
         recent = branch --sort=-committerdate --format='%(color:blue bold)%(align:20,left)%(refname:short)%(end) %(color:red)%(align:35,middle)%(objectname:short) %(color:white)%(committerdate:iso)%(end) %(color:normal no-bold)%(subject)'
         reflg = reflog --date=relative
         root = rev-parse --show-toplevel
         clone-shallow = shallow-clone
         shallow-clone = clone --depth=1
         untracked = ls-files --others --exclude-standard
+        upstream-branch = rev-parse --abbrev-ref --symbolic-full-name @{u}
 [user]
         name = Robert Irelan
         email = rirelan@gmail.com
