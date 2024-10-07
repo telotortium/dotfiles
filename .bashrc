@@ -374,6 +374,13 @@ if [ -f /opt/local/etc/profile.d/bash_completion.sh ]; then
     # shellcheck disable=SC1090,SC1091
     source /opt/local/etc/profile.d/bash_completion.sh
 fi
+# Homebrew bash-completion
+if [[ -d /usr/local/etc/bash_completion.d ]]; then
+    for f in /usr/local/etc/bash_completion.d/*; do
+        # shellcheck disable=SC1090,SC1091
+        source "$f"
+    done
+fi
 
 command_on_path sshrc && complete -F _ssh sshrc
 
