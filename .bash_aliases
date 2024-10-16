@@ -402,6 +402,11 @@ git_bounce () {
 # Declares `config_bounce`
 eval "$(declare -f git_bounce | sed -e 's/git/config/g')"
 
+git-cd () {
+  cd "$(git rev-parse --show-toplevel)/${1:-}"
+}
+alias gitcd=git-cd
+
 # MacOS aliases
 if [ $(uname) = "Darwin" ]; then
     alias vlc="/Applications/VLC.app/Contents/MacOS/VLC"
