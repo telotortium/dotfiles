@@ -315,7 +315,7 @@ refind () {
 # Aliases for removing certain files quickly
 function clean {
     (
-        shopt -u failglob
+        shopt -u failglob; shopt -s nullglob
         rm -f -- \#* *~ .*~ *.bak .*.bak  *.tmp .*.tmp core a.out
     )
 }
