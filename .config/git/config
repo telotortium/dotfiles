@@ -154,6 +154,8 @@
       textconv = exiftool
 [diff "pdf"]
       textconv = pdftotext-stdout
+[diff "json"]
+      textconv = gron
 [difftool]
         prompt = false
 [difftool "difftastic"]

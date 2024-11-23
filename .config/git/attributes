@@ -31,3 +31,5 @@
 *.gif   diff=exif
 
 *.scpt  diff=scpt
+
+*.json diff=json
