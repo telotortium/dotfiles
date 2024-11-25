@@ -13,11 +13,10 @@
             current=$(git branch --show-current); \
             trap \"git checkout $current\" ERR EXIT; \
             for branch in $(git branch | grep -v '^ \\*'); do \
-                set -e; git checkout \"$branch\"; \
-                upstream=$(git rev-parse --abbrev-ref \"${branch}@{upstream}\" 2>/dev/null) || continue; \
-                git checkout \"$current\"; \
-                if git ls-remote --exit-code --heads ${upstream/\\// } >/dev/null 2>&1; then \
-                    git branch -d \"${branch}\"; \
+                set -e; \
+                remote=$(git config --get --local \"branch.${branch}.remote\" 2>/dev/null) || continue; \
+                if ! git ls-remote --exit-code --heads \"${remote}\" \"${branch}\" >/dev/null 2>&1; then \
+                    echo \"Deleting ${branch}\"; git branch -D \"${branch}\"; \
                 fi; \
             done; \
         }; f"
