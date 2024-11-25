@@ -24,7 +24,7 @@
         brt = "!git for-each-ref refs/heads --color=always --sort -committerdate --format='%(HEAD)%(color:reset);%(color:yellow)%(refname:short)%(color:reset);%(contents:subject);%(color:green)(%(committerdate:relative))%(color:blue);<%(authorname)>' | column -t -s ';'"
         # git-cd (cd relative to Git repo/workspace root) defined in ~/.bash_aliases
         clean-merged-branches = "!f() { \
-            gh pr list --limit 1000 --state merged --author '@me' --json headRefName -q '.[].headRefName' | while read branch; do \
+            gh pr list --limit 1000 --state all --author '@me' --json state,number,headRefName -q '[group_by(.headRefName)[] | select(all(.state == \"MERGED\" or .state == \"CLOSED\")) | .[0].headRefName].[]' | while read branch; do \
                 if git show-ref --verify --quiet \"refs/heads/$branch\"; then \
                     echo \"Deleting local branch $branch...\"; \
                     git branch -D \"$branch\"; \
