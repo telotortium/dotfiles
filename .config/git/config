@@ -31,6 +31,7 @@
                 fi; \
             done; \
         }; f"
+        cb = current-branch
         co = checkout
         cp = cherry-pick
         cp-donate = "!f() { \
@@ -45,6 +46,7 @@
             git push; git checkout --ignore-other-worktrees -; git rebase --autosquash \"$branch\"; \
         }; f"
         cl = shallow-clone
+        current-branch = branch --show-current
         d = diff
         dc = diff --cached
         dft = difftool
