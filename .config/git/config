@@ -107,10 +107,11 @@
             base=${1:-master}; \
             branch=$(git symbolic-ref --short HEAD); \
             stashed=$({ git stash | grep -q 'No local changes to save'; } || echo 1); \
-            git checkout \"$base\"; \
+            worktree_for_branch=$(git worktree-for-branch \"$base\"); \
+            if [[ -n \"$worktree_for_branch\" ]]; then cd \"$worktree_for_branch\"; else git checkout \"$base\"; fi; \
             git pull; \
             if git push-allowed; then git pushfwl; fi; \
-            git checkout \"$branch\"; \
+            if [[ -n \"$worktree_for_branch\" ]]; then cd -; else git checkout -; fi; \
             if false && [[ -n \"$(git upstream-branch 2>/dev/null)\" ]]; then git pull; fi; \
             git rebase --onto \"$base\" $(git merge-base HEAD \"$base\"); \
             [[ -n \"$stashed\" ]] && git stash pop; \
@@ -122,6 +123,13 @@
         shallow-clone = clone --depth=1
         untracked = ls-files --others --exclude-standard
         upstream-branch = rev-parse --abbrev-ref --symbolic-full-name @{u}
+        worktree-for-branch = "!f() { \
+            (( $# == 1 )) || { echo Usage: git worktree-for-branch BRANCH; return 1; }; \
+            branch=$1; \
+            worktree_info=$(git worktree list --porcelain); \
+            branch_in_worktree=$(printf '%s' \"$worktree_info\" | grep -B 2 '^branch refs/heads/'\"$branch\"'$' || true); \
+            if [[ -n \"$branch_in_worktree\" ]]; then sed -nE 's/^worktree (.*)$/\\1/p' <<< \"$branch_in_worktree\"; else exit 1; fi; \
+        }; f"
 [user]
         name = Robert Irelan
         email = rirelan@gmail.com
