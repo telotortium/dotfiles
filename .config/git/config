@@ -86,6 +86,10 @@
                 git log -p \"$range\" --graph --pretty=format:'%Cred%h%Creset %C(yellow)%an%d%Creset %s %Cgreen(%ar)%Creset' --date=relative; \
         }; f"
         pc = push-create
+        pr-current = "!gh pr view --json number -q .number"
+        pr-checks = "!f() { \
+            gh pr checks \"$(git pr-current)\" | less; \
+        }; f"
         push-allowed = "!f() { \
             branch=$(git symbolic-ref --short HEAD); \
             [[ -n \"$(git upstream-branch 2>/dev/null)\" ]] && [[ \"$(git config --get branch.\"$branch\".pushRemote)\" != no_push ]];  \
