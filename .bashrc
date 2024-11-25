@@ -266,21 +266,28 @@ unset bash_prompt_setup
 # <http://gnu-bash.2382.n7.nabble.com/edit-and-execute-command-is-appropriately-named-weird-td3617.html> (retrieved 2013-01-14).
 __bind_edit_in_editor()
 {
-        typeset p
-        local TMPF=/tmp/readline-buffer.$$.$RANDOM
+        local p=${READLINE_POINT} TMPF=/tmp/readline-buffer.$$.$RANDOM
 
-        p=${READLINE_POINT}
-        rm -f $TMPF
         tput bold
+        echo Current command below. Will execute edited command after editor closes.
         printf "%s\n" "$READLINE_LINE" | tee "$TMPF"
+        cp -f "$TMPF" "$TMPF.backup"
         tput sgr0
-        # ${FCEDIT} args must be double-quoted because it uses `eval`
-        ${FCEDIT} -E \
-            -c "'source ~/.vim/plugged/vim-bracketed-paste/plugin/bracketed-paste.vim'" \
-            "$(printf '%q' "$TMPF")" \
-            && READLINE_LINE=$(< "$TMPF")
-        rm -f $TMPF
+        ${FCEDIT} "$TMPF" && READLINE_LINE=$(< "$TMPF")
+        if cmp "$TMPF" "$TMPF.backup" &>/dev/null; then
+            rm -f "$TMPF" "$TMPF.backup"
+            return 0
+        fi
+        rm -f "$TMPF" "$TMPF.backup"
         READLINE_POINT=$p # or p or ${#READLINE_LINE} or ...
+
+        # Execute the edited command with eval to ensure BASH_COMMAND is set correctly.
+        # Need to save the command to history manually, since we're using `eval`.
+        printf '%s\n' "$READLINE_LINE" 1>&2
+        builtin history -s "$READLINE_LINE"
+        eval "$READLINE_LINE"
+        # Unset READLINE_LINE, since we've just executed the command.
+        READLINE_LINE=""
 }
 bind -m vi -x '"v":__bind_edit_in_editor'
 bind -m emacs -x '"\C-x\C-e":__bind_edit_in_editor'
