@@ -1,4 +1,5 @@
 [alias]
+        amend = commit --amend --reuse-message=HEAD
         ap = add -p
         # Bisect only merge commits:
         # https://interrupt.memfault.com/blog/git-bisect#choosing-the-correct-types-of-commits
