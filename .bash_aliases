@@ -435,45 +435,53 @@ alias mail="ec -u -e '(call-interactively (quote rmail))'"
 
 # Commands to use fzf to select and open editors based on the output of rg.
 # tab opens the file without closing fzf; enter opens the file and closes fzf.
+#
+# Use `execute` here - I used to use `execute-silent`, but that will prevent
+# keystrokes being drawn correctly with fzf 0.57 - it used to work with fzf
+# 0.44, but no longer.
+#
+# If I don't want the selected line to appear when pressing Enter, I could use
+# `become` instead of `execute` only for `enter` (not for `tab`). However,
+# for now I prefer seeing what I selected.
 rg-code () {
-    local fzf_cmd='execute-silent(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); code --goto "$1:$2:$3" </dev/tty >/dev/tty)'
+    local fzf_cmd='execute(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); code --goto "$1:$2:$3" </dev/tty >/dev/tty)'
     rg --smart-case --vimgrep --color ansi "$@" \
-        | fzf-tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
+        | fzf --tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }
 rg-vim () {
-    local fzf_cmd='execute-silent(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); vim -c "$2" -c "norm 0" -c "norm $(( $3 - 1 ))l" "$1" </dev/tty >/dev/tty)'
+    local fzf_cmd='execute(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); vim -c "$2" -c "norm 0" -c "norm $(( $3 - 1 ))l" "$1" </dev/tty >/dev/tty)'
     rg --smart-case --vimgrep --color ansi "$@" \
-        | fzf-tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
+        | fzf --tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }
 rg-gvim () {
-    local fzf_cmd='execute-silent(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); "$(if [ "$(uname)" = "Darwin" ]; then echo mvim; else echo gvim; fi)" -c "$2" -c "norm 0" -c "norm $(( $3 - 1 ))l" "$1" </dev/tty >/dev/tty)'
+    local fzf_cmd='execute(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); "$(if [ "$(uname)" = "Darwin" ]; then echo mvim; else echo gvim; fi)" -c "$2" -c "norm 0" -c "norm $(( $3 - 1 ))l" "$1" </dev/tty >/dev/tty)'
     rg --smart-case --vimgrep --color ansi "$@" \
-        | fzf-tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
+        | fzf --tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }
 rg-ec () {
-    local fzf_cmd='execute-silent(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); emacsclient -n "$(printf "\\x2b")$2:$3" "$1" </dev/tty >/dev/tty)'
+    local fzf_cmd='execute(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); emacsclient -n "$(printf "\\x2b")$2:$3" "$1" </dev/tty >/dev/tty)'
     rg --smart-case --vimgrep --color ansi "$@" \
-        | fzf-tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
+        | fzf --tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }
 fd-code () {
-    local fzf_cmd='execute-silent(code {} </dev/tty >/dev/tty)'
+    local fzf_cmd='execute(code {} </dev/tty >/dev/tty)'
     fd --color always "$@" \
-        | fzf-tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
+        | fzf --tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }
 fd-vim () {
-    local fzf_cmd='execute-silent(vim {} </dev/tty >/dev/tty)'
+    local fzf_cmd='execute(vim {} </dev/tty >/dev/tty)'
     fd --color always "$@" \
-        | fzf-tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
+        | fzf --tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }
 fd-gvim () {
-    local fzf_cmd='execute-silent("$(if [ "$(uname)" = "Darwin" ]; then echo mvim; else echo gvim; fi)" {} </dev/tty >/dev/tty)'
+    local fzf_cmd='execute("$(if [ "$(uname)" = "Darwin" ]; then echo mvim; else echo gvim; fi)" {} </dev/tty >/dev/tty)'
     fd --color always "$@" \
-        | fzf-tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
+        | fzf --tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }
 fd-ec () {
-    local fzf_cmd='execute-silent(emacsclient -n {} </dev/tty >/dev/tty)'
+    local fzf_cmd='execute(emacsclient -n {} </dev/tty >/dev/tty)'
     fd --color always "$@" \
-        | fzf-tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
+        | fzf --tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }
 
 rga-fzf() {
