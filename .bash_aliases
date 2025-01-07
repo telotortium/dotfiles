@@ -209,6 +209,7 @@ if [[ -z "${DISPLAY:-}" ]] || [[ -n "${SSH_CONNECTION:-}" ]]; then
 fi
 
 # Easy access to editor
+alias e="\$VISUAL"  # Escape `$` to not expand until used.
 alias edit="\$VISUAL"  # Escape `$` to not expand until used.
 
 # Functions to make use of the directory stack easier
