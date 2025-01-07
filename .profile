@@ -53,7 +53,8 @@ pathvarmunge PATH "$HOME/bin"
 # Make sure that `gvim` doesn't fork, since a lot of programs that use
 # `$EDITOR` wait for it to exit before proceeding.
 if command_on_path gvim; then
-    export EDITOR="gvim --nofork"
+    # `+:` ensures that other arguments are read as file names, not commands.
+    export EDITOR="gvim --nofork --remote-tab-silent +:"
     export ALTERNATE_EDITOR=vim
 elif command_on_path vim; then
     export EDITOR=vim
