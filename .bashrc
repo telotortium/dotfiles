@@ -445,6 +445,19 @@ if [ -n "$TMUX" ]; then
     preexec_functions+=(refresh_tmux_env)
 fi
 
+if [[ "$(uname -s)" = "Darwin" ]]; then
+    function colorfgbg_from_system_appearance {
+        if [[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" = "Dark" ]]; then
+          # Dark mode
+          export COLORFGBG="15;0"
+        else
+          # Light Mode
+          export COLORFGBG="0;15"
+        fi
+    }
+    preexec_functions+=(colorfgbg_from_system_appearance)
+fi
+
 # LOCAL SETTINGS
 # shellcheck disable=SC1090,SC1091
 {
