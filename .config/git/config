@@ -205,6 +205,9 @@
         autoSquash = true
 [rerere]
         enabled = true
+[ssh]
+        # Speed up detection of SSH variant - we always use OpenSSH on Unix-like
+        variant = ssh
 [status]
         submoduleSummary = true
 [multidiff]
