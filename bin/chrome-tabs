@@ -1,0 +1,66 @@
+#!/usr/bin/env osascript -l JavaScript
+//
+// Print out titles and URLs for all Chrome tabs. Use `--help` to see full usage
+
+ObjC.import("Foundation");
+
+// Helper function to write to standard output using the Objective‑C bridge.
+function printStdout(text) {
+  var data = $.NSString.alloc.initWithUTF8String((text + "\n")).dataUsingEncoding($.NSUTF8StringEncoding);
+  $.NSFileHandle.fileHandleWithStandardOutput.writeData(data);
+}
+
+function run(argv) {
+  // If -h or --help is provided, print the help message and exit.
+  for (var i = 0; i < argv.length; i++) {
+    if (argv[i] === "-h" || argv[i] === "--help") {
+      printStdout("Usage: chrome-tabs [options]\n\nOutputs a Markdown list of open Google Chrome tabs grouped by window.\n\nOptions:\n  -h, --help    Show this help message and exit.");
+      return;
+    }
+  }
+
+  // Helper function to escape markdown text for link titles.
+  function escapeMarkdownText(text) {
+    return text.replace(/\\/g, '\\\\').replace(/\[/g, '\\[').replace(/\]/g, '\\]');
+  }
+
+  // Helper function to escape markdown text for URLs.
+  function escapeMarkdownURL(url) {
+    return url.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+  }
+
+  // Helper function to format a markdown link.
+  // If the URL contains spaces or parentheses, it wraps the URL in angle brackets.
+  function formatMarkdownLink(title, url) {
+    var escapedTitle = escapeMarkdownText(title);
+    if (/[ \(\)]/.test(url)) {
+      return '[' + escapedTitle + '](<' + url + '>)';
+    } else {
+      return '[' + escapedTitle + '](' + escapeMarkdownURL(url) + ')';
+    }
+  }
+
+  // Get a reference to Google Chrome and enable standard additions.
+  var chrome = Application("Google Chrome");
+  chrome.includeStandardAdditions = true;
+
+  var output = "";
+  var windows = chrome.windows();
+
+  // Iterate over each window.
+  windows.forEach(function(win, winIndex) {
+    var windowIdentifier = "Window " + (winIndex + 1);
+    output += "- " + windowIdentifier + "\n";
+
+    var tabs = win.tabs();
+    tabs.forEach(function(tab) {
+      var title = tab.title();
+      var url = tab.url();
+      var markdownLink = formatMarkdownLink(title, url);
+      output += "  - " + markdownLink + "\n";
+    });
+  });
+
+  // Write the Markdown output to standard output.
+  printStdout(output);
+}
