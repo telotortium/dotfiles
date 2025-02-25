@@ -393,6 +393,20 @@ command_on_path sshrc && complete -F _ssh sshrc
 
 # shellcheck disable=SC1090,SC1091
 source ~/.bash-history-sqlite/bash-profile.stub
+# Redefine to filter by shell session
+dbhistory() {
+    local OPTIND; OPTIND=1  # Reset OPTIND to allow getopts to work when this function is called multiple times.
+    local same_session; same_session="OR"
+    local opt
+    while getopts s opt; do
+        case "$opt" in
+            s) same_session="AND" ;;
+            *) echo "Usage: [-s (restrict to commands from same session)]"; return 1 ;;
+        esac
+    done
+    shift $((OPTIND - 1))
+    sqlite3 -separator '#' "${HISTDB}" "select command_id, command from command where 1=1 ${same_session} shellsession = '${HISTSESSION}' order by command_id DESC;" | awk -F'#' '/^[0-9]+#/ {printf "%8s    %s\n", $1, substr($0,index($0,FS)+1); next} { print $0; }'
+}
 # Use bash-history-sqlite database for history search instead of builtin
 # history, since the latter gets truncated every so often.
 __fzf_history_bash_history_sqlite__() {
