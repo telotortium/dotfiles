@@ -145,7 +145,7 @@
 [color]
         ui = true
 [core]
-        pager = less -R
+        pager = delta
         autocrlf = input
         untrackedCache = true
         quotePath = false
@@ -183,7 +183,7 @@
 [help]
         autocorrect = 1
 [interactive]
-        diffFilter = diff-highlight
+        diffFilter = delta --color-only
 [man]
         viewer = mostman
 [man "mostman"]
@@ -191,10 +191,7 @@
 [color "diff"]
         whitespace = red reverse
 [pager]
-        diff = diff-highlight | less
         difftool = true
-        show = diff-highlight | less
-        log = diff-highlight | less
 [pull]
         rebase = merges
 [push]
@@ -231,3 +228,7 @@
 	smudge = git-lfs smudge -- %f
 	process = git-lfs filter-process
 	required = true
+[delta]
+        hyperlinks = true
+        hyperlinks-file-link-format = "vscode://file/{path}:{line}"
+        navigate = true    # use n and N to move between diff sections
