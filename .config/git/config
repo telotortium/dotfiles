@@ -124,6 +124,7 @@
         root = rev-parse --show-toplevel
         clone-shallow = shallow-clone
         shallow-clone = clone --depth=1
+        sw = switch
         untracked = ls-files --others --exclude-standard
         upstream-branch = rev-parse --abbrev-ref --symbolic-full-name @{u}
         worktree-for-branch = "!f() { \
