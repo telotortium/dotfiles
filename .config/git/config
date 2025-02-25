@@ -157,6 +157,10 @@
         quotePath = false
         precomposeunicode = true
         fsmonitor = true
+        # Disable global excludes file - this has caused issues for me in other
+        # Git repositories. Instead, look at template/.gitignore for a global
+        # file to initialize new repositories with.
+        excludesFile = /dev/null
 [diff]
         submodule = log
         colorMoved = default
