@@ -404,7 +404,7 @@ git_bounce () {
 eval "$(declare -f git_bounce | sed -e 's/git/config/g')"
 
 git-cd () {
-  cd "$(git rev-parse --show-toplevel)/${1:-}"
+    cd "$(git rev-parse --show-toplevel)/${1:-}"
 }
 alias gitcd=git-cd
 
