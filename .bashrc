@@ -482,9 +482,11 @@ if [[ "$(uname -s)" = "Darwin" ]]; then
         if [[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" = "Dark" ]]; then
           # Dark mode
           export COLORFGBG="15;0"
+          export BAT_THEME="Monokai Extended"
         else
           # Light Mode
           export COLORFGBG="0;15"
+          export BAT_THEME="Monokai Extended Light"
         fi
     }
     preexec_functions+=(colorfgbg_from_system_appearance)
