@@ -520,3 +520,61 @@ rga-fzf-ocr() {
     echo "opening $file" &&
     "$(command_on_path xdg-open && echo xdg-open || echo open)" "$file"
 }
+
+# q and qv from https://github.com/davidgasquez/dotfiles/blob/bb9df4a369dbaef95ca0c35642de491c7dd41269/shell/zshrc#L50-L99
+# via https://simonwillison.net/2024/Dec/19/q-and-qv-zsh-functions/.
+function q() (
+    set -eu -o pipefail
+    local usage="USAGE: q ARTICLE_URL QUESTION"
+    local url="${1?${usage}}"
+    local question="${2?${usage}}"
+
+    # Fetch the URL content through Jina
+    local content=$(curl -s "https://r.jina.ai/$url")
+
+    # Check if the content was retrieved successfully
+    if [ -z "$content" ]; then
+        echo "Failed to retrieve content from the URL."
+        return 1
+    fi
+
+    system="
+    You are a helpful assistant that can answer questions about the content.
+    Reply concisely, in a few sentences.
+
+    The content:
+    ${content}
+      "
+
+    # Use llm with the fetched content as a system prompt
+    llm prompt "$question" -s "$system"
+)
+
+function qv() (
+    set -eu -o pipefail
+
+    local usage="USAGE: qv VIDEO_URL QUESTION"
+    local url="${1?${usage}}"
+    local question="${2?${usage}}"
+
+    # Fetch the URL content through Jina
+    local subtitle_url=$(yt-dlp -q --skip-download --convert-subs srt --write-sub --sub-langs "en" --write-auto-sub --print "requested_subtitles.en.url" "$url")
+    local content=$(curl -s "$subtitle_url" | sed '/^$/d' | grep -v '^[0-9]*$' | grep -v '\-->' | sed 's/<[^>]*>//g' | tr '\n' ' ')
+
+    # Check if the content was retrieved successfully
+    if [ -z "$content" ]; then
+        echo "Failed to retrieve content from the URL."
+        return 1
+    fi
+
+    system="
+You are a helpful assistant that can answer questions about YouTube videos.
+Reply concisely, in a few sentences.
+
+The content:
+${content}
+"
+
+    # Use llm with the fetched content as a system prompt
+    llm prompt "$question" -s "$system"
+)
