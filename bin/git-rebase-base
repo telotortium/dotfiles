@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+
+pre-commit-disable () {
+    local rv; rv=0
+    local root; root=$(command git rev-parse --show-toplevel) || return $?
+    local conf; conf="${root}/.pre-commit-config.yaml" || return $?
+    (
+      set -eu -o pipefail
+      command mv -n "$conf" "${conf}.bak"
+      PRE_COMMIT_ALLOW_NO_CONFIG=1 command "$@"
+    ) || rv=$?
+    if [[ -f "${conf}.bak" ]]; then
+      command mv -n "${conf}.bak" "$conf" || return $?
+    fi
+    return $rv
+}
+
+# A helper function to print messages
+__grb_log() {
+  echo "[INFO] $*"
+}
+
+# A function to get the PR number associated with the current branch
+__grb_get_current_pr_number() {
+  # Returns the PR number if one is found, or empty if not
+  gh pr view --json number --jq '.number' 2>/dev/null || true
+}
+
+# A function to get the base branch of a given PR
+__grb_get_pr_base_branch() {
+  local pr_number=$1
+  gh pr view "$pr_number" --json baseRefName --jq '.baseRefName'
+}
+
+# A recursive function that:
+# - Determines the PR base
+# - If base is master, updates master and rebases current branch
+# - If base is another branch (which presumably is another PR),
+#   recursively rebases that parent PR, then rebases the current PR branch
+__grb_rebase_pr_branch() {
+  local current_branch
+  current_branch=$(git branch --show-current)
+  local -a rebase_args=( )
+  local top_level=""
+  for arg in "$@"; do
+    case $arg in
+      -h|--help)
+        cat <<'EOF'
+Usage: git rebase-base [-i]
+Rebase the current branch on the base branch of the associated PR.
+
+-i: Interactive mode. If the rebase fails, you can resolve conflicts and continue the rebase.
+EOF
+        return 0
+        ;;
+      -i)
+        rebase_args+=("--interactive")
+        ;;
+      --top-level)
+        top_level=1
+        ;;
+      *)
+        rebase_args+=("$arg")
+        ;;
+    esac
+  done
+
+  if [[ -n "$top_level" ]]; then
+    git fetch --all --prune
+  fi
+
+  local pr_number
+  pr_number=$(__grb_get_current_pr_number)
+
+  local base_branch
+  if [[ -z "$pr_number" ]]; then
+    # No PR found for this branch.
+    # In this scenario, we assume the base is master (as requested).
+    # If you want to be more careful, you could add checks here.
+    base_branch="master"
+  else
+    base_branch=$(__grb_get_pr_base_branch "$pr_number")
+  fi
+
+  if [[ "$base_branch" = "master" ]]; then
+    # Base is master, just rebase on master
+    __grb_log "Base branch is master. Rebase $current_branch onto master."
+    git branch -f "$base_branch" origin/"$base_branch"
+    git rebase --autosquash --autostash "${rebase_args[@]}" master
+    [[ -n "$pr_number" ]] && pre-commit-disable git push --force-with-lease
+    __grb_log "Successfully rebased $current_branch on master."
+  else
+    # Base is another branch, likely another PR
+    # We need to recursively rebase the parent branch first
+    __grb_log "Base branch is $base_branch (not master). Rebase the parent PR first."
+
+    # Store current branch to return to it later
+    local original_branch="$current_branch"
+
+    # Check if base_branch exists locally; if not, fetch it
+    if ! git rev-parse --verify "$base_branch" &>/dev/null; then
+      __grb_log "Base branch $base_branch not found locally, attempting to fetch."
+      git fetch origin "$base_branch":"$base_branch" || true
+    fi
+
+    # Switch to the parent branch and run this function recursively
+    git checkout "$base_branch"
+    __grb_rebase_pr_branch  "${rebase_args[@]}" # This will handle the parent PR
+
+    # Once the parent is rebased, return to the original branch
+    git checkout "$original_branch"
+    git rebase --autosquash --autostash "${rebase_args[@]}" "$base_branch"
+    pre-commit-disable git push --force-with-lease
+    __grb_log "Successfully rebased $original_branch on $base_branch."
+  fi
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0:-}" ]]; then
+  # Running as a script
+  set -euo pipefail
+
+  if (( BASH_VERSINFO[0] < 4 )); then
+    echo "$0: This script requires Bash version 4 or later (shell: $BASH)." >&2
+    exit 1
+  fi
+  __grb_rebase_pr_branch --top-level "$@"
+fi

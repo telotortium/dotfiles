@@ -407,15 +407,8 @@ git-cd () {
     cd "$(git rev-parse --show-toplevel)/${1:-}"
 }
 alias gitcd=git-cd
-pre-commit-disable () {
-    local opts; opts=$(set +o)
-    set -eu -o pipefail
-    trap 'eval "$opts"; [[ -n "${conf:-}" ]] && mv -n "${conf}.bak" "$conf"' RETURN
-    local root; root=$(git rev-parse --show-toplevel)
-    local conf; conf="${root}/.pre-commit-config.yaml"
-    mv -n "$conf" "${conf}.bak"
-    PRE_COMMIT_ALLOW_NO_CONFIG=1 "$@"
-}
+source ~/bin/git-rebase-base  # Provide git-rebase-base
+
 
 # MacOS aliases
 if [ $(uname) = "Darwin" ]; then
