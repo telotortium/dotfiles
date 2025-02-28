@@ -94,6 +94,7 @@
                 git log -p \"$range\" --graph --pretty=format:'%Cred%h%Creset %C(yellow)%an%d%Creset %s %Cgreen(%ar)%Creset' --date=relative; \
         }; f"
         pc = push-create
+        pf = pushfwl
         pr-current = "!gh pr view --json number -q .number"
         pr-checks = "!f() { \
             gh pr checks \"$(git pr-current)\" | less; \
