@@ -425,7 +425,13 @@ try:
 except ValueError:
     pass
 c = conn.cursor()
-c.execute(f"""select command_id, command from command where shellsession {"=" if same_session else "!="} ? order by command_id DESC""", (os.environ["HISTSESSION"],))
+c.execute(f"""
+    SELECT MAX(command_id) AS command_id, command
+    FROM command
+    WHERE shellsession {"=" if same_session else "!="} ?
+    GROUP BY command
+    ORDER BY command_id DESC
+""", (os.environ["HISTSESSION"],))
 width = 0
 for row in c:
     # Set width of formatted integers. Since we are descending in command_id
