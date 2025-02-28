@@ -54,7 +54,7 @@ pathvarmunge PATH "$HOME/bin"
 # `$EDITOR` wait for it to exit before proceeding.
 if command_on_path gvim; then
     # `+:` ensures that other arguments are read as file names, not commands.
-    export EDITOR="gvim --nofork --remote-tab-silent +:"
+    export EDITOR="gvim --nofork --remote-tab-wait-silent +:"
     export ALTERNATE_EDITOR=vim
 elif command_on_path vim; then
     export EDITOR=vim
