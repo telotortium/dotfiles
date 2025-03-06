@@ -50,9 +50,24 @@ pathvarmunge PATH "$HOME/winbin"
 pathvarmunge PATH "$HOME/bin"
 
 # Default editor
-# Make sure that `gvim` doesn't fork, since a lot of programs that use
-# `$EDITOR` wait for it to exit before proceeding.
-if command_on_path gvim; then
+#
+# If running in VSCode, use the cursor editor if CURSOR_TRACE_ID is set,
+# otherwise use the VSCode editor.
+#
+# Otherwise, if `gvim` is available, use it.
+#
+# Otherwise, use `vim`.
+if [[ "${TERM_PROGRAM:-}" == "vscode" ]]; then
+    if [[ -n "${CURSOR_TRACE_ID:-}" ]]; then
+        export EDITOR="cursor --wait"
+    else
+        export EDITOR="code --wait"
+    fi
+    export ALTERNATE_EDITOR=vim
+    export GIT_EDITOR=vim
+elif command_on_path gvim; then
+    # Make sure that `gvim` doesn't fork, since a lot of programs that use
+    # `$EDITOR` wait for it to exit before proceeding.
     # `+:` ensures that other arguments are read as file names, not commands.
     export EDITOR="gvim --nofork --remote-tab-wait-silent +:"
     export ALTERNATE_EDITOR=vim
