@@ -145,17 +145,6 @@ else
 fi
 unset _vim
 
-# Run emacsclient in the background. Run the command using `eval` so that the
-# "$@" variable is expanded in the output of `jobs`.
-function ec {
-    cmd="command $(printf '%q' "${EMACSCLIENT:-emacsclient}") -n"
-    while [ -n "$1" ]; do
-        cmd="$cmd $(printf ' %q' "$1")"
-        shift
-    done
-    eval "$cmd"
-}
-
 # Connect to Vim server to edit file if present, else start server.
 vc () {
     local VIM_SERVERNAME=${VIM_SERVERNAME:-VIM}
@@ -208,9 +197,42 @@ if [[ -z "${DISPLAY:-}" ]] || [[ -n "${SSH_CONNECTION:-}" ]]; then
     }
 fi
 
-# Easy access to editor
-alias e="\$VISUAL"  # Escape `$` to not expand until used.
-alias edit="\$VISUAL"  # Escape `$` to not expand until used.
+# General alias for launching an editor based on the value of $VISUAL, using Bash builtins for lowercase conversion
+function e {
+    # If VISUAL is not set, default to launching emacsagent
+    if [ -z "$VISUAL" ]; then
+         local visual_bin="emacsagent"
+    else
+         # Extract the first word from $VISUAL
+         local visual_bin="${VISUAL%% *}"
+    fi
+    # Use Bash parameter expansion to convert to lowercase (requires Bash 4+)
+    local lower_visual="${visual_bin,,}"
+    local cmd=""
+    if [[ "$lower_visual" == *"gvim" || "$lower_visual" == *"mvim" || "$lower_visual" == *"macvim" ]]; then
+         # For gvim, mvim, or macvim, launch without forking and open in remote tab mode
+         cmd="$visual_bin --remote-tab-silent +:"
+    elif [[ "$lower_visual" == *"code" ]]; then
+         # For VS Code, open without waiting for the file to close.
+         cmd="$visual_bin"
+    elif [[ "$lower_visual" == *"cursor" ]]; then
+         # For Cursor, open without waiting for the file to close.
+         cmd="$visual_bin"
+    else
+         # Fallback: use emacsagent (or emacsclient) in non-blocking mode
+         cmd="${EMACSCLIENT:-emacsclient} -n"
+    fi
+
+    # Append any arguments passed to the alias, properly quoted
+    for arg in "$@"; do
+         cmd="$cmd $(printf '%q' "$arg")"
+    done
+    # Use `command` to ensure that any aliases are expanded.
+    eval "command $cmd"
+}
+alias edit="e"
+alias ec="VISUAL=emacsclient e"
+
 
 # Functions to make use of the directory stack easier
 # Go backwards in stack
