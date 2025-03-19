@@ -593,3 +593,72 @@ ${content}
     # Use llm with the fetched content as a system prompt
     llm prompt "$question" -s "$system"
 )
+
+# bwatch - like `watch` but has access to shell functions and aliases.
+# [Made using ChatGPT]
+# (https://chatgpt.com/share/e/67db4dd8-4364-800e-9391-01b954348d02)
+bwatch() {
+  local interval=2
+
+  # Process options.
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -n|--interval)
+        if [[ -n "$2" && "$2" != -* ]]; then
+          interval="$2"
+          shift 2
+        else
+          echo "Error: -n requires a numerical argument" >&2
+          return 1
+        fi
+        ;;
+      -h|--help)
+        echo "Usage: bwatch [-n interval] command [args...]"
+        return 0
+        ;;
+      --)
+        shift
+        break
+        ;;
+      -*)
+        echo "Unknown option: $1" >&2
+        return 1
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
+
+  if [[ $# -eq 0 ]]; then
+    echo "Usage: bwatch [-n interval] command [args...]"
+    return 1
+  fi
+
+  # Combine remaining arguments into a single command string.
+  # This passes the command verbatim to eval.
+  local cmd_str="$*"
+
+  # Record the start time.
+  local start_epoch
+  start_epoch=$(date +%s)
+  local start_time
+  start_time=$(date '+%Y-%m-%d %H:%M:%S')
+
+  # Main loop: clear the screen, show header, run the command in a subshell, then sleep.
+  while true; do
+    clear
+    local now
+    now=$(date '+%Y-%m-%d %H:%M:%S')
+    local elapsed=$(( $(date +%s) - start_epoch ))
+    echo "Every ${interval} seconds: $cmd_str"
+    echo "Start: $start_time   Now: $now   Elapsed: ${elapsed} sec"
+    echo "------------------------------------------------------------"
+    # Run the command in a subshell so that it runs with your shell functions/aliases.
+    ( eval "$cmd_str" )
+    local exit_code=$?
+    echo "------------------------------------------------------------"
+    echo "Exit code: $exit_code"
+    sleep "$interval"
+  done
+}
