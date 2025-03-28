@@ -9,6 +9,23 @@
 
 [ -f "$HOME/.common.sh" ] && . "$HOME/.common.sh"
 
+# Set shell prefix and package manager
+__shell_path=$(command -v "$SHELL")
+shell_prefix="${__shell_path%/bin/*}"
+unset __shell_path
+pkg_manager=""
+if [ -f "${shell_prefix}/bin/brew" ]; then
+    pkg_manager="homebrew"
+elif [ -f "${shell_prefix}/bin/port" ]; then
+    pkg_manager="macports"
+elif [ -f "${shell_prefix}/bin/nix" ]; then
+    pkg_manager="nix"
+elif [ -f "${shell_prefix}/bin/apt" ]; then
+    pkg_manager="apt"
+elif [ -f "${shell_prefix}/bin/yum" ]; then
+    pkg_manager="yum"
+fi
+
 # Evaluate system PATH on OS X
 if [ -x /usr/libexec/path_helper ]; then
     # If MANPATH is not yet present in the environment, `path_helper` will not
@@ -21,22 +38,32 @@ if [ -x /usr/libexec/path_helper ]; then
 fi
 
 # MacPorts variables
-if [ -f /opt/local/etc/macports/macports.conf ]; then
-    if ! ( echo "$PATH" | grep -q "/usr/local/bin:/opt/local/bin" ); then
+if [ "$pkg_manager" = "macports" ]; then
+    if ! ( echo "$PATH" | grep -q "/usr/local/bin:${shell_prefix}/bin" ); then
         # ${variable//search/replace} doesn't work in Posix shell.
         # shellcheck disable=SC2001
-        PATH="$(echo "$PATH" | sed 's!/usr/local/bin!/usr/local/bin:/opt/local/bin!g')"
+        PATH="$(echo "$PATH" | sed "s!/usr/local/bin!/usr/local/bin:${shell_prefix}/bin!g")"
     fi
-    if ! ( echo "$PATH" | grep -q "/usr/local/sbin:/opt/local/sbin" ); then
+    if ! ( echo "$PATH" | grep -q "/usr/local/sbin:${shell_prefix}/sbin" ); then
         # ${variable//search/replace} doesn't work in Posix shell.
         # shellcheck disable=SC2001
-        PATH="$(echo "$PATH" | sed 's!/usr/local/sbin!/usr/local/sbin:/opt/local/sbin!g')"
+        PATH="$(echo "$PATH" | sed "s!/usr/local/sbin!/usr/local/sbin:${shell_prefix}/sbin!g")"
     fi
-    pathvarmunge MANPATH /opt/local/share/man
+    pathvarmunge MANPATH "$shell_prefix/share/man"
+    pathvarmunge INFOPATH "$shell_prefix/share/info"
 
     # Fix spurious "Warning: The macOS 11.1 SDK does not appear to be installed."
     # from Macports on 11.1
     export SYSTEM_VERSION_COMPAT=0
+fi
+
+# Homebrew variables
+if [ "$pkg_manager" = "homebrew" ]; then
+    pathvarmunge PATH "$shell_prefix/bin"
+    # Ensure MANPATH is in front.
+    MANPATH="$shell_prefix/share/man:$MANPATH"
+    pathvarmunge MANPATH "$shell_prefix/share/man"
+    pathvarmunge INFOPATH "$shell_prefix/share/info"
 fi
 
 # User specific environment and startup programs
