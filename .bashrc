@@ -299,13 +299,6 @@ if [ -f ~/.bash_aliases ]; then
     source ~/.bash_aliases
 fi
 
-# enable programmable completion features (you don't need to enable
-# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
-# sources /etc/bash.bashrc).
-if [ -f /etc/bash_completion ]; then
-    # shellcheck disable=SC1090,SC1091
-    source /etc/bash_completion
-fi
 if command_on_path register-python-argcomplete-3.9 && \
     command_on_path pipx; then
     eval "$(register-python-argcomplete-3.9 pipx)"
@@ -373,17 +366,26 @@ _direnv_install
 unset -f _direnv_install
 # END eval "$(direnv hook bash)"
 
+# Enable Bash completion for Homebrew, Macports, and Linux system-wide Bash completion.
+if [ -f /etc/bash_completion ]; then
+    # shellcheck disable=SC1090,SC1091
+    source /etc/bash_completion
+fi
 # Macports bash-completion
 if [ -f /opt/local/etc/profile.d/bash_completion.sh ]; then
     # shellcheck disable=SC1090,SC1091
     source /opt/local/etc/profile.d/bash_completion.sh
 fi
 # Homebrew bash-completion
-if [[ -d /usr/local/etc/bash_completion.d ]]; then
-    for f in /usr/local/etc/bash_completion.d/*; do
+shell_path=$(command -v "$SHELL")
+brew_path="${shell_path%/bin/*}/bin/brew"
+
+if [[ -x "$brew_path" ]]; then
+    brew_prefix=$("$brew_path" --prefix)
+    if [[ -d "$brew_prefix/etc/bash_completion.d" ]]; then
         # shellcheck disable=SC1090,SC1091
-        source "$f"
-    done
+        source "$brew_prefix/etc/profile.d/bash_completion.sh"
+    fi
 fi
 
 command_on_path sshrc && complete -F _ssh sshrc
