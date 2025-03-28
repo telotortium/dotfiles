@@ -44,9 +44,6 @@ shopt -s globstar
 # Enable extended glob patterns
 shopt -s extglob
 
-# Error if glob fails to match
-shopt -s failglob
-
 # make less more friendly for non-text input files, see lesspipe(1)
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
@@ -498,17 +495,30 @@ if [[ "$(uname -s)" = "Darwin" ]]; then
     preexec_functions+=(colorfgbg_from_system_appearance)
 fi
 
-# LOCAL SETTINGS
+# Function to save current shell options and disable failglob
+save_shell_options() {
+    _saved_shopt=$(shopt -p failglob)
+    shopt -u failglob
+}
+
+# Function to restore shell options and set failglob before command execution
+restore_shell_options() {
+    eval "$_saved_shopt"
+    unset _saved_shopt
+    shopt -s failglob
+}
+precmd_functions+=(save_shell_options)
+preexec_functions+=(restore_shell_options)
+
 # shellcheck disable=SC1090,SC1091
 {
-    if [ -f ~/.bashrc.local ]; then
-        . ~/.bashrc.local
-    fi
-
     # Load .bash-preexec.sh if Iterm2 Shell Integration doesn't load.
     [[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
     # Load Iterm2 Shell Integration - it also includes bash-preexec.
     [[ -f ~/.iterm2_shell_integration.bash ]] && source ~/.iterm2_shell_integration.bash
+
+    # LOCAL SETTINGS
+    [[ -f ~/.bashrc.local ]] && . ~/.bashrc.local
 }
 
 echo "${HOME}/.bashrc: Running \`source ~/bin/bash-dump-state >\"${BASH_STATE_FILE}\"\` to save state." 1>&2
