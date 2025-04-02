@@ -410,7 +410,7 @@ dbhistory() {
 # history, since the latter gets truncated every so often.
 __fzf_history_bash_history_sqlite__() {
   local output opts script
-  opts="--height ${FZF_TMUX_HEIGHT:-40%} --bind=ctrl-z:ignore $FZF_DEFAULT_OPTS -n2..,.. --tiebreak=index --bind=ctrl-r:toggle-sort $FZF_CTRL_R_OPTS +m --read0"
+  opts="--height ${FZF_TMUX_HEIGHT:-40%} --bind=ctrl-z:ignore $FZF_DEFAULT_OPTS -n2..,.. --tiebreak=index \"--bind=ctrl-r:toggle-sort,ctrl-d:execute(echo {} | awk '{print \$1}' | sqlite3 ${HISTDB} 'delete from command where command_id = '\"\$(cat)\"';'; echo Deleted command {}; sleep 0.5)+exclude\" $FZF_CTRL_R_OPTS +m --read0"
   # This is a Python script, not a shell expression.
   # shellcheck disable=SC2016
   script='
