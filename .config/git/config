@@ -52,7 +52,7 @@
         dc = diff --cached
         dft = difftool
         fetchall = fetch --all --prune
-        fixup = "!f() { commit=$(git lg \"$@\" --color=always | fzf --ansi --height=40% --min-height=10 --layout=reverse | awk '{print $2}'); git commit --fixup=\"$commit\"; }; f"
+        fixup = "!f() { if [[ $# -eq 0 ]]; then commit=$(git lg --color=always | fzf --ansi --height=40% --min-height=10 --layout=reverse | awk '{print $2}'); git rebase --interactive \"$commit\"; else git commit --fixup \"$@\"; fi; }; f"
         frm = "!f() { git ls-files -z \"$@\" | xargs -r -0 -n1 git rm -f && rm -f \"$@\"; }; f"
         gcm = "!f() { . ~/.config/git/gcm.sh; gcm \"$@\"; }; f"
         # helpconfig prints the man page section of `git-config` for only the
