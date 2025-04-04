@@ -50,6 +50,9 @@
 # Override global ignore of bin for my bin scripts
 !/bin/
 
+# NixOS - ignore nix-build result
+result
+
 ## Emacs.gitignore
 # -*- mode: gitignore; -*-
 *~
