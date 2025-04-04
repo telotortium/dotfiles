@@ -13,17 +13,21 @@ __MY_BASHRC_SOURCED=1
 
 BASH_LOAD_STATE=${BASH_LOAD_STATE:-1}
 BASH_STATE_FILE=${BASH_STATE_FILE:-"/tmp/bash-load-state-${USER}-${EUID}"}
-if [[ "${BASH_LOAD_STATE:-0}" -ne 0 ]] && [[ -r "${BASH_STATE_FILE}" ]]; then
-    if [[ -O "${BASH_STATE_FILE}" ]]; then
-        echo "${HOME}/.bashrc: loading from ${BASH_STATE_FILE}. If you need to reinitialize that file, run \`BASH_LOAD_STATE=0 bash -l\`" 1>&2
-        # shellcheck disable=SC1090
-        source "$BASH_STATE_FILE"
-        return
-    else
-        echo "${HOME}/.bashrc: ${BASH_STATE_FILE} exists but is not owned by you. Will try to write to it at the end of this script, but will probably fail. You should investigate." 1>&2
+if [[ -n "${IN_NIX_SHELL}" ]]; then
+    echo "${HOME}/.bashrc: in Nix shell - not loading from ${BASH_STATE_FILE}" 1>&2
+else
+    if [[ "${BASH_LOAD_STATE:-0}" -ne 0 ]] && [[ -r "${BASH_STATE_FILE}" ]]; then
+        if [[ -O "${BASH_STATE_FILE}" ]]; then
+            echo "${HOME}/.bashrc: loading from ${BASH_STATE_FILE}. If you need to reinitialize that file, run \`BASH_LOAD_STATE=0 bash -l\`" 1>&2
+            # shellcheck disable=SC1090
+            source "$BASH_STATE_FILE"
+            return
+        else
+            echo "${HOME}/.bashrc: ${BASH_STATE_FILE} exists but is not owned by you. Will try to write to it at the end of this script, but will probably fail. You should investigate." 1>&2
+        fi
     fi
+    echo "${HOME}/.bashrc: loading full Bashrc. Will run \`source ~/bin/bash-dump-state >\"${BASH_STATE_FILE}\"\` afterward." 1>&2
 fi
-echo "${HOME}/.bashrc: loading full Bashrc. Will run \`source ~/bin/bash-dump-state >\"${BASH_STATE_FILE}\"\` afterward." 1>&2
 
 # Since we cache the result of loading ~/.bash_profile most of the time, make
 # sure to evaluate it when we want to regenerate ${BASH_STATE_FILE}.
@@ -603,7 +607,9 @@ nvm() {
     [[ -f ~/.bashrc.local ]] && . ~/.bashrc.local
 }
 
-echo "${HOME}/.bashrc: Running \`source ~/bin/bash-dump-state >\"${BASH_STATE_FILE}\"\` to save state." 1>&2
-mkdir -p "${BASH_STATE_FILE%/*}"
-# shellcheck disable=SC1090,SC1091
-source ~/bin/bash-dump-state >"${BASH_STATE_FILE}"
+if [[ -z "${IN_NIX_SHELL}" ]]; then
+    echo "${HOME}/.bashrc: Running \`source ~/bin/bash-dump-state >\"${BASH_STATE_FILE}\"\` to save state." 1>&2
+    mkdir -p "${BASH_STATE_FILE%/*}"
+    # shellcheck disable=SC1090,SC1091
+    source ~/bin/bash-dump-state >"${BASH_STATE_FILE}"
+fi
