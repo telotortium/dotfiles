@@ -130,7 +130,9 @@
         recent = branch --sort=-committerdate --format='%(color:blue bold)%(align:20,left)%(refname:short)%(end) %(color:red)%(align:35,middle)%(objectname:short) %(color:white)%(committerdate:iso)%(end) %(color:normal no-bold)%(subject)'
         reflg = reflog --date=relative
         regen-commit-msg = "!f() { if ! git diff --quiet --exit-code; then echo Commit or stage uncommitted changes first 1>&2; return 1; fi; git reset --soft 'HEAD~1'; git commit; }; f"
+        reword = commit --amend --only
         root = rev-parse --show-toplevel
+        rw = reword
         clone-shallow = shallow-clone
         shallow-clone = clone --depth=1
         st = status
