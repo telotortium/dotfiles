@@ -230,6 +230,47 @@ function e {
     # Use `command` to ensure that any aliases are expanded.
     eval "command $cmd"
 }
+function vscode_cmd_name {
+    if [[ "${TERM_PROGRAM:-}" == "vscode" ]] && [[ -n "${CURSOR_TRACE_ID:-}" ]]; then
+        echo "cursor"
+    else
+        echo "code"
+    fi
+}
+function code {
+    if [[ "${TERM_PROGRAM:-}" == "vscode" ]] && [[ -n "${CURSOR_TRACE_ID:-}" ]]; then
+        # Prompt to make sure we want to open in Code when running under Cursor.
+        read -p "Are you sure you want to open this file in Code? (y/n) " -n 1 -r
+        if ! [[ $REPLY =~ ^[Yy]$ ]]; then
+            return 1
+        fi
+    fi
+    if [[ $# -eq 1 ]] && [[ -d "$1" ]]; then
+        # Prompt to make sure we want to open directory.
+        read -p "Are you sure you want to open this directory in Code? (y/n) " -n 1 -r
+        if ! [[ $REPLY =~ ^[Yy]$ ]]; then
+            return 1
+        fi
+    fi
+    command code "$@"
+}
+function cursor {
+    if [[ "${TERM_PROGRAM:-}" == "vscode" ]] && [[ -z "${CURSOR_TRACE_ID:-}" ]]; then
+        # Prompt to make sure we want to open in Code when running under Cursor.
+        read -p "Are you sure you want to open this file in Cursor? (y/n) " -n 1 -r
+        if ! [[ $REPLY =~ ^[Yy]$ ]]; then
+            return 1
+        fi
+    fi
+    if [[ $# -eq 1 ]] && [[ -d "$1" ]]; then
+        # Prompt to make sure we want to open directory.
+        read -p "Are you sure you want to open this directory in Cursor? (y/n) " -n 1 -r
+        if ! [[ $REPLY =~ ^[Yy]$ ]]; then
+            return 1
+        fi
+    fi
+    command cursor "$@"
+}
 alias edit="e"
 alias ec="VISUAL=emacsclient e"
 
