@@ -227,8 +227,7 @@ function e {
     for arg in "$@"; do
          cmd="$cmd $(printf '%q' "$arg")"
     done
-    # Use `command` to ensure that any aliases are expanded.
-    eval "command $cmd"
+    eval "$cmd"
 }
 function vscode_cmd_name {
     if [[ "${TERM_PROGRAM:-}" == "vscode" ]] && [[ -n "${CURSOR_TRACE_ID:-}" ]]; then
