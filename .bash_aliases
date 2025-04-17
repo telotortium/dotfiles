@@ -509,7 +509,7 @@ alias mail="ec -u -e '(call-interactively (quote rmail))'"
 # `become` instead of `execute` only for `enter` (not for `tab`). However,
 # for now I prefer seeing what I selected.
 rg-code () {
-    local fzf_cmd='execute(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); code --goto "$1:$2:$3" </dev/tty >/dev/tty)'
+    local fzf_cmd='execute(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); '"$(vscode_cmd_name)"' --goto "$1:$2:$3" </dev/tty >/dev/tty)'
     rg --smart-case --vimgrep --color ansi "$@" \
         | fzf --tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }
@@ -529,7 +529,7 @@ rg-ec () {
         | fzf --tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }
 fd-code () {
-    local fzf_cmd='execute(code {} </dev/tty >/dev/tty)'
+    local fzf_cmd='execute(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); '"$(vscode_cmd_name)"' {} </dev/tty >/dev/tty)'
     fd --color always "$@" \
         | fzf --tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }
