@@ -224,9 +224,10 @@ if [ -d "${VSCODE_BIN_DIR}" ]; then
     pathvarmunge PATH "${VSCODE_BIN_DIR}"
 fi
 
-# ASDF init
-if [ -f "/opt/local/share/asdf/asdf.sh" ]; then
-    . "/opt/local/share/asdf/asdf.sh"
+# ASDF init (v0.16+)
+if command_on_path asdf; then
+    export ASDF_DATA_DIR="$HOME/.asdf"
+    pathvarmunge PATH "$ASDF_DATA_DIR/shims"
 fi
 
 if [ -f "$HOME/.profile.local" ]; then
