@@ -7,7 +7,15 @@
 # see /usr/share/doc/bash/examples/startup-files for examples.
 # the files are located in the bash-doc package.
 
-[ -f "$HOME/.common.sh" ] && . "$HOME/.common.sh"
+# Include guard
+if [ -n "${__MY_PROFILE_SOURCED:-}" ]; then
+    return
+fi
+__MY_PROFILE_SOURCED=1
+
+if [ -f ~/.common.sh ]; then
+    . ~/.common.sh
+fi
 
 # Set shell prefix and package manager
 __shell_path=$(command -v "$SHELL")

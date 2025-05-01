@@ -5,6 +5,12 @@
 # If not running interactively, don't do anything
 [ -z "${PS1:-}" ] && return
 
+# Include guard
+if [ -n "${__MY_BASHRC_SOURCED:-}" ]; then
+    return
+fi
+__MY_BASHRC_SOURCED=1
+
 BASH_LOAD_STATE=${BASH_LOAD_STATE:-1}
 BASH_STATE_FILE=${BASH_STATE_FILE:-"/tmp/bash-load-state-${USER}-${EUID}"}
 if [[ "${BASH_LOAD_STATE:-0}" -ne 0 ]] && [[ -r "${BASH_STATE_FILE}" ]]; then

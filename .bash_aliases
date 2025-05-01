@@ -1,4 +1,11 @@
 # -*- mode: sh -*-
+
+# Include guard
+if [ -n "${__MY_BASH_ALIASES_SOURCED:-}" ]; then
+    return
+fi
+__MY_BASH_ALIASES_SOURCED=1
+
 # Page following command with color - works with most GNU tools and others
 # like them.
 cless () {
