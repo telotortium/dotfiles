@@ -315,6 +315,11 @@ fi
 HISTCONTROL=ignorespace:erasedups
 # Don't truncate history
 HISTSIZE=-1; unset HISTFILESIZE
+# Unset HISTIGNORE, since we're using BASH_HISTORY_SQLITE_IGNORE instead.
+# HISTIGNORE stops commands from having preexec commands run for them if
+# they match the patterns in HISTIGNORE.
+BASH_HISTORY_SQLITE_IGNORE="${HISTIGNORE:-"&:ls:ls:mutt:[bf]g:exit:exec:exec *"}"
+unset HISTIGNORE
 # Set HISTTIMEFORMAT
 HISTTIMEFORMAT="[%F %T %z] "
 # Store multi-line command lines correctly

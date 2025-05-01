@@ -132,7 +132,6 @@ else
     export FCEDIT="vi"
 fi
 export VISUAL="$EDITOR"
-export HISTIGNORE="&:ls:ls:mutt:[bf]g:exit:exec:exec *"
 
 export PAGER=less
 # Take default LESS value from https://github.com/sharkdp/bat documentation.
