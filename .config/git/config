@@ -110,6 +110,7 @@
             git push --set-upstream \"$remote\" \"$local_branch\"; \
         }; f"
         pushfwl = push --force-with-lease --force-if-includes
+        rbb = rebase-base
         rbc = rebase --continue
         rbi = "!f() { if [[ $# -eq 0 ]]; then commit=$(git lg --color=always | fzf --ansi --height=40% --min-height=10 --layout=reverse | awk '{print $2}'); git rebase --interactive \"$commit\"; else git rebase --interactive \"$@\"; fi; }; f"
         rbs = rebase --skip
