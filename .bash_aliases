@@ -225,19 +225,16 @@ function e {
     # Use Bash parameter expansion to convert to lowercase (requires Bash 4+)
     local lower_visual="${visual_bin,,}"
     local cmd=""
-    if [[ "$lower_visual" == *"gvim" || "$lower_visual" == *"mvim" || "$lower_visual" == *"macvim" ]]; then
-         # For gvim, mvim, or macvim, launch without forking and open in remote tab mode
-         cmd="$visual_bin --remote-tab-silent +:"
-    elif [[ "$lower_visual" == *"code" ]]; then
-         # For VS Code, open without waiting for the file to close.
-         cmd="$visual_bin"
-    elif [[ "$lower_visual" == *"cursor" ]]; then
-         # For Cursor, open without waiting for the file to close.
-         cmd="$visual_bin"
-    else
-         # Fallback: use emacsagent (or emacsclient) in non-blocking mode
-         cmd="${EMACSCLIENT:-emacsclient} -n"
-    fi
+    case "$lower_visual" in
+    *gvim|*mvim|*macvim)
+        # For gvim, mvim, or macvim, launch without forking and open in remote tab mode
+        cmd="$visual_bin --remote-tab-silent +:" ;;
+    *code|*cursor|*windsurf)
+        cmd="$visual_bin" ;;
+    *)
+        # Fallback: use emacsagent (or emacsclient) in non-blocking mode
+        cmd="${EMACSCLIENT:-emacsclient} -n" ;;
+    esac
 
     # Append any arguments passed to the alias, properly quoted
     for arg in "$@"; do
@@ -248,13 +245,16 @@ function e {
 function vscode_cmd_name {
     if [[ "${TERM_PROGRAM:-}" == "vscode" ]] && [[ -n "${CURSOR_TRACE_ID:-}" ]]; then
         echo "cursor"
+    elif [[ "${TERM_PROGRAM:-}" == "vscode" ]] && [[ "${__CFBundleIdentifier:-}" == com.exafunction.windsurf ]]; then
+        echo "windsurf"
     else
         echo "code"
     fi
 }
 function code {
-    if [[ "${TERM_PROGRAM:-}" == "vscode" ]] && [[ -n "${CURSOR_TRACE_ID:-}" ]]; then
-        # Prompt to make sure we want to open in Code when running under Cursor.
+    if [[ "${TERM_PROGRAM:-}" == "vscode" ]] && [[ "$(vscode_cmd_name)" != code ]]; then
+        # Prompt to make sure we want to open in Code when running under Cursor
+        # or Windsurf.
         read -p "Are you sure you want to open this file in Code? (y/n) " -n 1 -r
         if ! [[ $REPLY =~ ^[Yy]$ ]]; then
             return 1
@@ -270,7 +270,8 @@ function code {
     command code "$@"
 }
 function cursor {
-    if [[ "${TERM_PROGRAM:-}" == "vscode" ]] && [[ -z "${CURSOR_TRACE_ID:-}" ]]; then
+    # shellcheck disable=SC2237
+    if [[ "${TERM_PROGRAM:-}" == "vscode" ]] && [[ "$(vscode_cmd_name)" != cursor ]]; then
         # Prompt to make sure we want to open in Code when running under Cursor.
         read -p "Are you sure you want to open this file in Cursor? (y/n) " -n 1 -r
         if ! [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -285,6 +286,23 @@ function cursor {
         fi
     fi
     command cursor "$@"
+}
+function windsurf {
+    if [[ "${TERM_PROGRAM:-}" == "vscode" ]] && [[ "$(vscode_cmd_name)" != windsurf ]]; then
+        # Prompt to make sure we want to open in Code when running under Windsurf.
+        read -p "Are you sure you want to open this file in Windsurf? (y/n) " -n 1 -r
+        if ! [[ $REPLY =~ ^[Yy]$ ]]; then
+            return 1
+        fi
+    fi
+    if [[ $# -eq 1 ]] && [[ -d "$1" ]]; then
+        # Prompt to make sure we want to open directory.
+        read -p "Are you sure you want to open this directory in Windsurf? (y/n) " -n 1 -r
+        if ! [[ $REPLY =~ ^[Yy]$ ]]; then
+            return 1
+        fi
+    fi
+    command windsurf "$@"
 }
 alias edit="e"
 alias ec="VISUAL=emacsclient e"

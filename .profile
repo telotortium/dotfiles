@@ -86,14 +86,16 @@ pathvarmunge PATH "$HOME/bin"
 
 # Default editor
 #
-# If running in VSCode, use the cursor editor if CURSOR_TRACE_ID is set,
-# otherwise use the VSCode editor.
+# If running in VSCode-like editors, detect the specific program we're running
+# under, falling back to `code` for Visual Studio Code.
 #
 # Otherwise, if `gvim` is available, use it.
 #
 # Otherwise, use `vim`.
 if [ "${TERM_PROGRAM:-}" = "vscode" ]; then
-    if [ -n "${CURSOR_TRACE_ID:-}" ]; then
+    if  [ "${__CFBundleIdentifier:-}" = "com.exafunction.windsurf" ]; then
+        export EDITOR="windsurf --wait"
+    elif [ -n "${CURSOR_TRACE_ID:-}" ]; then
         export EDITOR="cursor --wait"
     else
         export EDITOR="code --wait"
