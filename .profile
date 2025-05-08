@@ -1,5 +1,5 @@
 # -*- mode: sh -*-
-# shellcheck shell=sh
+# shellcheck shell=dash
 # shellcheck disable=SC1090,SC1091
 # ~/.profile: executed by the command interpreter for login shells.
 # This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login
@@ -92,8 +92,8 @@ pathvarmunge PATH "$HOME/bin"
 # Otherwise, if `gvim` is available, use it.
 #
 # Otherwise, use `vim`.
-if [[ "${TERM_PROGRAM:-}" == "vscode" ]]; then
-    if [[ -n "${CURSOR_TRACE_ID:-}" ]]; then
+if [ "${TERM_PROGRAM:-}" = "vscode" ]; then
+    if [ -n "${CURSOR_TRACE_ID:-}" ]; then
         export EDITOR="cursor --wait"
     else
         export EDITOR="code --wait"
