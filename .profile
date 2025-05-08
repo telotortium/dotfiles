@@ -191,7 +191,14 @@ pathvarmunge PATH "$GOPATH/bin"
 . "$HOME/.cargo/env"
 
 # Nix
-pathvarmunge PATH "$HOME/.nix-profile/bin"
+if [ -f ~/.nix-profile/etc/profile.d/hm-session-vars.sh ]; then
+    . ~/.nix-profile/etc/profile.d/hm-session-vars.sh
+fi
+# On macOS, these variables are put at the end by the default nix-darwin
+# install, so `pathvarmunge` keeps them there. Explicitly move them to the
+# front.
+PATH="${HOME}/.nix-profile/bin:/nix/var/nix/profiles/default/bin:${PATH}"
+MANPATH="${HOME}/.nix-profile/share/man:/nix/var/nix/profiles/default/share/man:${MANPATH}"
 
 # Perl local::lib - don't try to load it if it isn't installed
 if perl -Mlocal::lib -e1 2>/dev/null && [ -d "$HOME/local/perl5" ]; then
