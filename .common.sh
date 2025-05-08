@@ -20,23 +20,40 @@ command_on_path () {
     } >/dev/null 2>&1
 }
 
+# Quote a string for use by eval.
+shell_quote() {
+  # $1 = the raw string
+  # prints the safely-quoted version to stdout
+  # Use `\x27` in awk to print single quotes around string.
+  printf '%s' "$1" \
+    | sed "s/'/'\\\\''/g" \
+    | awk '{ printf("\x27%s\x27", $0); }'
+}
+
 # pathvarmunge VAR DIR [AFTER]
 # Add DIR to pathlike-variable VAR if not already present. If AFTER="after",
 # add it to the end, else to the beginning.
 # Based on pathmunge function present in Fedora/RHEL (among other systems), but
 # generalized to set any type of variable.
 pathvarmunge () {
-    typeset "var=$1"
-    typeset "varval=$(eval "printf '%q' \"\$${var}\"")"
-    typeset "dir=$2"
-    typeset "after=$3"
-    if [ -z "$varval" -o "$varval" = "''" ]; then
-       eval "$var=$(printf '%q' "$dir")"
-    elif ! echo "$varval" | egrep -q "(^|:)$dir($|:)" ; then
+    eval "var=$(shell_quote "$1")"
+    eval "dir=$(shell_quote "$2")"
+    eval "after=$(shell_quote "$3")"
+    # If VAR is currently empty, just set it to DIR and return.
+    # shellcheck disable=SC2154
+    if [ -z "$(eval "echo \${${var}+x}")" ]; then
+        eval "$var=$(shell_quote "$dir")"
+        return 0
+    fi
+    # Quoting is correct to set `varval` to the value of the variable whose
+    # name is stored in `var`.
+    eval varval="$( eval shell_quote "\"\$${var}\"" )"
+    # shellcheck disable=SC2154
+    if ! echo "$varval" | grep -Eq "(^|:)$dir($|:)" ; then
        if [ "$after" = "after" ] ; then
-           eval "$var=$(printf '%q' "$varval:$dir")"
+           eval "$var=$(shell_quote "$varval:$dir")"
        else
-           eval "$var=$(printf '%q' "$dir:$varval")"
+           eval "$var=$(shell_quote "$dir:$varval")"
        fi
     fi
 }
