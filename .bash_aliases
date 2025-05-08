@@ -9,7 +9,16 @@ __MY_BASH_ALIASES_SOURCED=1
 # Page following command with color - works with most GNU tools and others
 # like them.
 cless () {
-    "$@" --color=always | less
+    args=()
+    prog="$1"
+    shift;
+    case "$(basename "$prog")" in
+    jq)
+        args+=( -C ) ;;
+    *)
+        args+=( --color=always ) ;;
+    esac
+    "$prog" "${args[@]}" "$@" | less -R
 }
 alias cpg=cless  # Not sure which spelling will be more useful.
 
