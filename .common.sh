@@ -1,4 +1,5 @@
-# set ft=sh
+# -*- mode: sh -*-
+# shellcheck shell=dash
 # Common POSIX shell-compatible functions.
 
 # command_on_path CMD
@@ -61,7 +62,8 @@ pathvarmunge () {
 # source_if_exists FILE [ARGS...]
 # Source FILE if it exists, passing ARGS if given.
 source_if_exists () {
-    [ -f "$1" ] && source "$@"
+    # shellcheck disable=SC1090
+    [ -f "$1" ] && . "$@"
 }
 
 # Set proxy environment variables
@@ -70,8 +72,15 @@ source_if_exists () {
 # by SSH, for example).
 proxy_setup () {
     export http_proxy="socks5://${1}"
-    export {https,ftp,rsync,all}_proxy=$http_proxy
-    export {HTTP,HTTPS,FTP,RSYNC,ALL}_PROXY=$http_proxy
+    export https_proxy="$http_proxy"
+    export ftp_proxy="$http_proxy"
+    export rsync_proxy="$http_proxy"
+    export all_proxy="$http_proxy"
+    export HTTP_PROXY="$http_proxy"
+    export HTTPS_PROXY="$http_proxy"
+    export FTP_PROXY="$http_proxy"
+    export RSYNC_PROXY="$http_proxy"
+    export ALL_PROXY="$http_proxy"
     export no_proxy="127.0.0.1,localhost,.localdomain.com"
-    export NO_PROXY=$no_proxy
+    export NO_PROXY="$no_proxy"
 }
