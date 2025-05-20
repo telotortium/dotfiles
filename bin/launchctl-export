@@ -1,0 +1,122 @@
+#!/bin/zsh
+# launchctl-export - print environment exported to GUI apps by launchd
+#
+# macOS used to support `launchctl export`, a subcommand that would export the
+# environment provided by launchctl to apps launched by it, either via
+# LaunchAgent or by opening apps the normal way. This was removed in macOS
+# 10.10.
+#
+# This script creates a temporary LaunchAgent to dump the environment and
+# outputs it to standard output. This script attempts to clean up the
+# LaunchAgent it creates no matter whether it exits successfully,
+# unsuccessfully, or with a signal. Even if the LaunchAgent is left around,
+# however, it will never execute on its own due to setting `RunAtLoad=false` in
+# the plist.
+
+# Magic to enable `-h`/`--help` for script help.
+SCRIPT_PATH=${(%):-%x}
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  awk '
+    NR == 1 && /^#!/ { next }             # Skip shebang
+    /^#/ { sub(/^# ?/, ""); print; next } # Strip "# " and print
+    { exit }                              # Stop at first non-comment line
+  ' "${SCRIPT_PATH}"
+  exit 0
+fi
+
+# trap_exit: remove launchctl job and other temp files on exit. Properly exit
+# with the exit code of the most recently run command or by reraising the
+# received signal.
+trap_exit () {
+  rv=$?
+  set -xv
+  label="${label:-ENV_GUI_MACOS_NO_LABEL_${RANDOM}}"
+  if launchctl list | grep -q "${label}"; then
+    launchctl bootout "${domain:-}" "${plist:-}"
+  fi
+  rm -f "{tmp:-}" "${plist:-}"
+  if (( $rv > 128 )); then
+    trap - EXIT INT PIPE TERM
+    kill -"$(( rv - 128 ))" $$
+  fi
+  exit "$rv"
+  set +xv
+}
+
+# main body of script goes here.
+main () {
+  set -eu -o pipefail
+  # The variables here are intentionally not set to `local` so that they're
+  # accessible in `trap_exit`.
+  # We make a temp file to hold the environment variables output from the
+  # launchd job, and extract its suffix (everything after the last `.`) to
+  # randomly and uniquely label the launchd job.
+  tmp=$(mktemp)
+  suffix="${tmp##*.}"
+  label="io.github.telotortium.launchctl-export-${suffix}"
+  plist="$HOME/Library/LaunchAgents/${label}.plist"
+  domain="gui/$(id -u)"
+  trap 'trap_exit' EXIT INT PIPE TERM
+
+  # Write the temporary launchagent.
+  mkdir -p "${plist%/*}"
+  cat <<EOF >"$plist"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>${label}</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-c</string>
+    <string>declare -x | grep -Ev '^(OLDPWD|PWD|XPC_SERVICE_NAME|SHLVL)=' | sed 's/^/export /' &gt; "\$0"</string>
+    <string>${tmp}</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/</string>
+  <key>RunAtLoad</key>
+  <false/>
+</dict>
+</plist>
+EOF
+
+  # Load the job - it still needs to be manually started
+  launchctl bootstrap "$domain" "$plist"
+
+  # Start the job
+  launchctl start "$label"
+
+  # Wait until it stops running
+  for _i in {0..100}; do
+    # capture the JSON from `launchctl list`
+    info=$(launchctl list "$label" 2>/dev/null) || break
+
+    # extract the PID field
+    pid=$(printf '%s\n' "$info" | sed -nE 's/.*"PID"[[:space:]]*=[[:space:]]*([0-9]+);.*/\1/p')
+
+    if [[ -z "$pid" ]]; then
+      # no PID → job is no longer running
+      rv=$(printf '%s\n' "$info" | sed -nE 's/.*"LastExitStatus"[[:space:]]*=[[:space:]]*([0-9]+);.*/\1/p')
+      break
+    fi
+
+    # still running
+    sleep 0.2
+  done
+  if (( _i == 100 )); then
+    echo "Waited too many times for launchd job termination." 1>&2
+    return 1
+  fi
+  if (( rv != 0 )); then
+    echo "launchd job exit with failure: status = $rv." 1>&2
+    return 1
+  fi
+  # The launchagent performs all the post-processing needed, so just cat the
+  # output.
+  cat "${tmp}"
+}
+
+main "$@"
+exit $?
