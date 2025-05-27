@@ -24,6 +24,10 @@
         branch-upstream = rev-parse --abbrev-ref --symbolic-full-name @{u}
         brt = "!git for-each-ref refs/heads --color=always --sort -committerdate --format='%(HEAD)%(color:reset);%(color:yellow)%(refname:short)%(color:reset);%(contents:subject);%(color:green)(%(committerdate:relative))%(color:blue);<%(authorname)>' | column -t -s ';'"
         # git-cd (cd relative to Git repo/workspace root) defined in ~/.bash_aliases
+        check-uncommitted-changes = "!f() { \
+            git update-index -q --refresh && git diff-index --quiet HEAD --; \
+        }; f"
+
         clean-merged-branches = "!f() { \
             gh pr list --limit 1000 --state all --author '@me' --json state,number,headRefName -q '[group_by(.headRefName)[] | select(all(.state == \"MERGED\" or .state == \"CLOSED\")) | .[0].headRefName].[]' | while read branch; do \
                 if git show-ref --verify --quiet \"refs/heads/$branch\"; then \
@@ -53,7 +57,7 @@
         dc = diff --cached
         dft = difftool
         fetchall = fetch --all --prune
-        fixup = "!f() { if [[ $# -eq 0 ]]; then commit=$(git lg --color=always | fzf --ansi --height=40% --min-height=10 --layout=reverse | awk '{print $2}'); git rebase --interactive \"$commit\"; else git commit --fixup \"$@\"; fi; }; f"
+        fixup = "!f() { if [[ $# -eq 0 ]]; then commit=$(git lg --color=always | fzf --ansi --height=40% --min-height=10 --layout=reverse | awk '{print $2}'); if git check-uncommitted-changes; then git rebase --interactive \"$commit\"; else git commit --fixup=\"$commit\"; fi; else git commit --fixup \"$@\"; fi; }; f"
         frm = "!f() { git ls-files -z \"$@\" | xargs -r -0 -n1 git rm -f && rm -f \"$@\"; }; f"
         gcm = "!f() { . ~/.config/git/gcm.sh; gcm \"$@\"; }; f"
         # helpconfig prints the man page section of `git-config` for only the
