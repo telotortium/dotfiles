@@ -171,6 +171,8 @@
 [merge]
         conflictStyle = zdiff3
         tool = vimdiff
+[checkout]
+        workers = 16
 [credential]
         helper = cache
 [color]
