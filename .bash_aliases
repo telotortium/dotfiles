@@ -238,9 +238,12 @@ function e {
 
     # Append any arguments passed to the alias, properly quoted
     for arg in "$@"; do
-         cmd="$cmd $(printf '%q' "$arg")"
+         cmd="command $cmd $(printf '%q' "$arg")"
     done
     eval "$cmd"
+}
+function edit {
+    $EDTIOR "$@"
 }
 function vscode_cmd_name {
     if [[ "${TERM_PROGRAM:-}" == "vscode" ]] && [[ -n "${CURSOR_TRACE_ID:-}" ]]; then
@@ -304,7 +307,6 @@ function windsurf {
     fi
     command windsurf "$@"
 }
-alias edit="e"
 alias ec="VISUAL=emacsclient e"
 
 
