@@ -555,7 +555,7 @@ rg-vim () {
         | fzf --tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }
 rg-gvim () {
-    local fzf_cmd='execute(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); "$(if [ "$(uname)" = "Darwin" ]; then echo mvim; else echo gvim; fi)" -c "$2" -c "norm 0" -c "norm $(( $3 - 1 ))l" "$1" </dev/tty >/dev/tty)'
+    local fzf_cmd='execute(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); "$(if [ "$(uname)" = "Darwin" ]; then echo mvim; else echo gvim; fi)" -c "$2" -c "norm 0" -c "norm $(( $3 - 1 ))l" --nofork --remote-tab-wait-silent +: "$1" </dev/tty >/dev/tty)'
     rg --smart-case --vimgrep --color ansi "$@" \
         | fzf --tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }
@@ -575,7 +575,7 @@ fd-vim () {
         | fzf --tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }
 fd-gvim () {
-    local fzf_cmd='execute("$(if [ "$(uname)" = "Darwin" ]; then echo mvim; else echo gvim; fi)" {} </dev/tty >/dev/tty)'
+    local fzf_cmd='execute("$(if [ "$(uname)" = "Darwin" ]; then echo mvim; else echo gvim; fi)" --nofork --remote-tab-wait-silent +: {} </dev/tty >/dev/tty)'
     fd --color always "$@" \
         | fzf --tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }
