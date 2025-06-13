@@ -270,7 +270,7 @@ function code {
             return 1
         fi
     fi
-    command code "$@"
+    command code --reuse-window "$@"
 }
 function cursor {
     # shellcheck disable=SC2237
@@ -288,7 +288,7 @@ function cursor {
             return 1
         fi
     fi
-    command cursor "$@"
+    command cursor --reuse-window "$@"
 }
 function windsurf {
     if [[ "${TERM_PROGRAM:-}" == "vscode" ]] && [[ "$(vscode_cmd_name)" != windsurf ]]; then
@@ -305,7 +305,7 @@ function windsurf {
             return 1
         fi
     fi
-    command windsurf "$@"
+    command windsurf --reuse-window "$@"
 }
 alias ec="VISUAL=emacsclient e"
 
@@ -545,7 +545,7 @@ alias mail="ec -u -e '(call-interactively (quote rmail))'"
 # `become` instead of `execute` only for `enter` (not for `tab`). However,
 # for now I prefer seeing what I selected.
 rg-code () {
-    local fzf_cmd='execute(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); '"$(vscode_cmd_name)"' --goto "$1:$2:$3" </dev/tty >/dev/tty)'
+    local fzf_cmd='execute(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); '"$(vscode_cmd_name)"' --reuse-window --goto "$1:$2:$3" </dev/tty >/dev/tty)'
     rg --smart-case --vimgrep --color ansi "$@" \
         | fzf --tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }
@@ -565,7 +565,7 @@ rg-ec () {
         | fzf --tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }
 fd-code () {
-    local fzf_cmd='execute(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); '"$(vscode_cmd_name)"' {} </dev/tty >/dev/tty)'
+    local fzf_cmd='execute(IFS=$(printf "\\n") set $(echo {} | sed -E -e "s/^(.*):([0-9][0-9]*):([0-9][0-9]*):.*/\\1\\n\\2\\n\\3/"); '"$(vscode_cmd_name)"' --reuse-window {} </dev/tty >/dev/tty)'
     fd --color always "$@" \
         | fzf --tmux --ansi --bind="tab:${fzf_cmd},enter:${fzf_cmd}+accept"
 }

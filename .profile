@@ -94,11 +94,11 @@ pathvarmunge PATH "$HOME/bin"
 # Otherwise, use `vim`.
 if [ "${TERM_PROGRAM:-}" = "vscode" ]; then
     if  [ "${__CFBundleIdentifier:-}" = "com.exafunction.windsurf" ]; then
-        export EDITOR="windsurf --wait"
+        export EDITOR="windsurf --wait --reuse-window"
     elif [ -n "${CURSOR_TRACE_ID:-}" ]; then
-        export EDITOR="cursor --wait"
+        export EDITOR="cursor --wait --reuse-window"
     else
-        export EDITOR="code --wait"
+        export EDITOR="code --wait --reuse-window"
     fi
     export ALTERNATE_EDITOR=vim
     export GIT_EDITOR=vim
