@@ -32,7 +32,25 @@
             gh pr list --limit 1000 --state all --author '@me' --json state,number,headRefName -q '[group_by(.headRefName)[] | select(all(.state == \"MERGED\" or .state == \"CLOSED\")) | .[0].headRefName].[]' | while read branch; do \
                 if git show-ref --verify --quiet \"refs/heads/$branch\"; then \
                     echo \"Deleting local branch $branch...\"; \
-                    git branch -D \"$branch\"; \
+                    worktree=$(git worktree list --porcelain -z | \
+                        BRANCH=\"refs/heads/$branch\" perl -0ne ' \
+                            if (/^worktree (.*?)\\0/) { $worktree=$1; next; }; \
+                            if (/^branch @{[quotemeta($ENV{\"BRANCH\"})]}\\0/) { printf qq{%s\\nX}, $worktree; exit; \
+                        }'); \
+                    worktree=${worktree%??}; \
+                    if [ -n \"$worktree\" ] && cd \"$worktree\"; then \
+                        direnv reload >/dev/null 2>&1 || true; \
+                        if [ \"${VIRTUAL_ENV:-}\" = openai-* ]; then \
+                            VENV_DELETE=\"${VIRTUAL_ENV}\"; \
+                        fi; \
+                        git checkout --detach HEAD; \
+                        cd \"$OLDPWD\"; \
+                        if git worktree remove \"$worktree\"; then \
+                            [ -n \"${VENV_DELETE:-}\" ] && rm -rf \"${VENV_DELETE}\"; git branch -D \"$branch\"; \
+                        fi; \
+                    else \
+                        git branch -D \"$branch\"; \
+                    fi; \
                 fi; \
             done; \
         }; f"
