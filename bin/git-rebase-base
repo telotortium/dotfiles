@@ -85,8 +85,8 @@ EOF
   if [[ "$base_branch" = "master" ]]; then
     # Base is master, just rebase on master
     __grb_log "Base branch is master. Rebase $current_branch onto master."
-    git branch -f "$base_branch" origin/"$base_branch"
-    git rebase --autosquash --autostash "${rebase_args[@]}" master
+    #git branch -f "$base_branch" origin/"$base_branch"
+    git rebase --autosquash --autostash "${rebase_args[@]}" origin/master
     [[ -n "$pr_number" ]] && pre-commit-disable git push --force-with-lease
     __grb_log "Successfully rebased $current_branch on master."
   else
