@@ -738,3 +738,13 @@ bwatch() {
     sleep "$interval"
   done
 }
+
+alias pn="pnpm"
+pf() {
+  if [ $# -lt 2 ]; then
+    echo "Usage: pf <project> <command> [args...]"
+    return 1
+  fi
+  project=$1; shift
+  pnpm --filter="$project" "$@"
+}
