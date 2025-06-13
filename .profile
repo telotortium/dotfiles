@@ -102,6 +102,13 @@ if [ "${TERM_PROGRAM:-}" = "vscode" ]; then
     fi
     export ALTERNATE_EDITOR=vim
     export GIT_EDITOR=vim
+elif command_on_path mvim; then
+    # Make sure that `mvim` doesn't fork, since a lot of programs that use
+    # `$EDITOR` wait for it to exit before proceeding.
+    # `+:` ensures that other arguments are read as file names, not commands.
+    export EDITOR="mvim --nofork --remote-tab-wait-silent +:"
+    export ALTERNATE_EDITOR=vim
+    export GIT_EDITOR=vim
 elif command_on_path gvim; then
     # Make sure that `gvim` doesn't fork, since a lot of programs that use
     # `$EDITOR` wait for it to exit before proceeding.
