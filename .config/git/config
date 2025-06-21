@@ -136,6 +136,7 @@
         rbc = rebase --continue
         rbi = "!f() { if [[ $# -eq 0 ]]; then commit=$(git lg --color=always | fzf --ansi --height=40% --min-height=10 --layout=reverse | awk '{print $2}'); git rebase --interactive \"$commit\"; else git rebase --interactive \"$@\"; fi; }; f"
         rbs = rebase --skip
+        rdf = "!f() { set -eo pipefail; cd \"$GIT_PREFIX\";  ~/.config/git/git-rdf \"$@\"; }; f"
         rebase-master = "!f() { \
             set -e; set -xv; \
             base=${1:-master}; \
@@ -159,10 +160,11 @@
         clone-shallow = shallow-clone
         shallow-clone = clone --depth=1
         st = status
+        staged = "!f() { set -eo pipefail; cd \"$GIT_PREFIX\";  git diff --cached --name-only \"$@\" | git rdf \"$@\"; }; f"
         sw = switch
-        unmerged = diff --name-only --diff-filter=U --relative
-        unstaged = diff --name-only --diff-filter=u --relative
-        untracked = ls-files --others --exclude-standard
+        unmerged = "!f() { set -eo pipefail; cd \"$GIT_PREFIX\";  git diff --name-only --diff-filter=U \"$@\" | git rdf \"$@\"; }; f"
+        unstaged = "!f() { set -eo pipefail; cd \"$GIT_PREFIX\";  git diff --name-only \"$@\" | git rdf \"$@\"; }; f"
+        untracked = "!f() { set -eo pipefail; cd \"$GIT_PREFIX\";  git ls-files --others --exclude-standard \"$@\" | git rdf \"$@\"; }; f"
         upstream-branch = rev-parse --abbrev-ref --symbolic-full-name @{u}
         worktree-for-branch = "!f() { \
             (( $# == 1 )) || { echo Usage: git worktree-for-branch BRANCH; return 1; }; \

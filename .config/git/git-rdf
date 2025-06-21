@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+
+git_rdf() {
+  # 1) Detect -z before any "--"
+  nul=0
+  for arg in "$@"; do
+    case "$arg" in
+      --) break ;;
+      -z) nul=1 ;;
+    esac
+  done
+
+  # Print the root of the main worktree in this repository.
+  # One extra trailing newline is always added to the output so that the
+  # shell prompt always starts on a new line. You can use this shell trick
+  # to get the root without a trailing newline (from
+  # https://www.etalabs.net/sh_tricks.html).
+  #
+  # ```
+  # root=$(cmd; printf X)
+  # root=${root%??}
+  # ```
+  prefix=$(git rev-parse --show-prefix; printf X) || exit 1
+  prefix=${prefix%??}       # Strip one trailing newline safely
+  # 2) Figure out your PWD relative to the Git root, as a prefix without trailing slash
+  prefix=${prefix%/}        # e.g. "api/terraform/world"
+
+  # 3) Precount how many segments are in that prefix
+  segs=0
+  tmp=$prefix
+  [ -n "$tmp" ] && \
+  while :; do
+    segs=$((segs + 1))
+    # strip first segment
+    case "$tmp" in
+      */*) tmp=${tmp#*/} ;;
+      *)    break       ;;
+    esac
+  done
+
+  # 4) Re‐base each path minimally from standard input
+  cat | {
+    if [ "$nul" -eq 1 ]; then
+      # NUL-split
+      while IFS= read -r -d '' file; do
+        # strip minimal common segments between prefix and file
+        pf=$prefix
+        ff=$file
+        common=0
+
+        # compare first segments until they diverge
+        while [ "$pf" ] && [ "$ff" ]; do
+          p1=${pf%%/*}
+          f1=${ff%%/*}
+          [ "$p1" = "$f1" ] || break
+          common=$((common+1))
+          # drop that segment
+          pf=${pf#*/}
+          ff=${ff#*/}
+        done
+
+        ups=$((segs - common))
+        # build "../" repeated ups times
+        up=""
+        i=0
+        while [ "$i" -lt "$ups" ]; do
+          up="../$up"
+          i=$((i+1))
+        done
+
+        # ff is now the “remainder” path under the common point
+        printf '%s\0' "${up}${ff}"
+      done
+    else
+      # newline-split
+      while IFS= read -r file; do
+        pf=$prefix
+        ff=$file
+        common=0
+
+        while [ "$pf" ] && [ "$ff" ]; do
+          p1=${pf%%/*}
+          f1=${ff%%/*}
+          [ "$p1" = "$f1" ] || break
+          common=$((common+1))
+          pf=${pf#*/}
+          ff=${ff#*/}
+        done
+
+        ups=$((segs - common))
+        up=""
+        i=0
+        while [ "$i" -lt "$ups" ]; do
+          up="../$up"
+          i=$((i+1))
+        done
+
+        printf '%s\n' "${up}${ff}"
+      done
+    fi
+  }
+}
+
+# invoke
+git_rdf "$@"
