@@ -289,5 +289,5 @@
 	required = true
 [delta]
         hyperlinks = true
-        hyperlinks-file-link-format = "vscode://file/{path}:{line}"
+        hyperlinks-file-link-format = "mvim://open?url=file://{path}&line={line}"
         navigate = true    # use n and N to move between diff sections
