@@ -255,6 +255,12 @@ if command_on_path asdf; then
     pathvarmunge PATH "$ASDF_DATA_DIR/shims"
 fi
 
+# Kubernetes Krew
+KREW_ROOT="${KREW_ROOT:-"$HOME/.krew"}"
+if [ -d "${KREW_ROOT}/bin" ]; then
+    pathvarmunge PATH "${KREW_ROOT}/bin"
+fi
+
 if [ -f "$HOME/.profile.local" ]; then
     . "$HOME/.profile.local"
 fi
