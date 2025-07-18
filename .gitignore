@@ -184,3 +184,11 @@ tags
 /.cursor
 /.vscode
 /.windsurf
+
+# Secrets
+/.cloudflare-secrets.txt
+/.config/secrets/
+/.config/secrets/
+/.profile.secret
+/.ssh/**
+!/.ssh/config
