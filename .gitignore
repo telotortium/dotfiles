@@ -1,3 +1,5 @@
+.CFUserTextEncoding
+.DS_Store
 /.Trash/**
 /crontab-local-backup
 
@@ -34,6 +36,9 @@
 /.testlog
 /.viminfo
 /.vt_locations
+/.zsh_history
+/.zsh_sessions/
+
 
 # Emacs caches
 /.emacs.d/cask
@@ -103,7 +108,11 @@ flycheck_*.el
 # network security
 /network-security.data
 
+# .local is usually an install directory for other packages, so no permanent configs and the like to track.
+/.local/
 
+# misc/build is where I download Git repos/build tarballs. Nothing permanent there.
+/misc/build/
 
 ## Vim.gitignore
 # Swap
@@ -125,3 +134,53 @@ Sessionx.vim
 tags
 # Persistent undo
 [._]*.un~
+
+# Cache
+/.cache/
+/.kube/cache/
+/.kube/http-cache/
+
+# Programming language/package manager installs
+# - Actionlint (Github Actions)
+/.actionlint.d/
+# - Java
+/.gradle/
+# - Kubernetes Krew
+/.krew/
+# - Go
+/go/
+# - Node.JS / Javascript
+/.node_repl_history
+/.npm/
+/.nvm/
+# - Python
+/.virtualenvs/
+# - Rust
+/.cargo/
+/.rustup/
+# - Swift
+/.swiftpm/
+# - Terraform
+/.terraform.versions/
+/.terraform.d/
+
+# Cloud (Azure/AWS/GCP/OCI)
+/.aws/**
+!/.aws/config
+/.azure/**
+!/.azure/config
+
+# Codex
+/.codex/**
+!/.codex/config.toml
+!/.codex/instructions.md
+
+# Containers/VMs
+/.colima/
+/.docker/
+
+# Editors
+/.codeium
+/.cursor
+/.vscode
+/.windsurf
