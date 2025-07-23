@@ -11,7 +11,7 @@ ARGS=(hook-impl --config=.pre-commit-config.yaml --hook-type=prepare-commit-msg 
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ARGS+=(--hook-dir "$HERE" -- "$@")
-if [ -t /dev/tty ]; then OUT=/dev/tty; else OUT=/dev/stdout; fi
+if [[ -t 1 && -w /dev/tty ]]; then OUT=/dev/tty; else OUT=/dev/stdout; fi
 
 filter_out_passed_skipped () {
     (
