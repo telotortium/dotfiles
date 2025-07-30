@@ -118,10 +118,13 @@
         }; f"
         pc = push-create
         pf = pushfwl
-        pr-current = "!gh pr view --json number -q .number"
         pr-checks = "!f() { \
             gh pr checks \"$(git pr-current)\" | less; \
         }; f"
+        pr-current = "!gh pr view --json number -q .number"
+        pr-merge = "!gh pr comment $(git pr-current) --body /merge"
+        pr-merge-skip-tests = "!gh pr comment $(git pr-current) --body /merge-skip-tests"
+        pr-retry-failed = "!gh pr-retry-failed"
         push-allowed = "!f() { \
             branch=$(git symbolic-ref --short HEAD); \
             [[ -n \"$(git upstream-branch 2>/dev/null)\" ]] && [[ \"$(git config --get branch.\"$branch\".pushRemote)\" != no_push ]];  \
