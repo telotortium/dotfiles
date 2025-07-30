@@ -194,6 +194,7 @@
         name = Robert Irelan
         email = rirelan@gmail.com
 [merge]
+        autoStash = true
         conflictStyle = zdiff3
         tool = vimdiff
 [checkout]
@@ -263,6 +264,7 @@
 [init]
         templatedir = ~/.config/git/template
 [rebase]
+        autoStash = true
         autoSquash = true
 [rerere]
         enabled = true
