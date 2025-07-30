@@ -57,4 +57,4 @@ base_url = "https://conductor.arcee.ai/v1"
 env_key = "ARCEEAI_API_KEY"
 
 [history]
-save_history = "save-all"
+persistence = "save-all"
