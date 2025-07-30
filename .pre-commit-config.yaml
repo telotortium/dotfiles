@@ -13,12 +13,16 @@ repos:
     -   id: check-yaml
     -   id: end-of-file-fixer
         exclude: |
-          ^\.config/karabiner/karabiner.json
-          \.patch$
+            (?x)(
+                ^\.config/karabiner/karabiner\.json$|
+                \.patch$
+            )
     -   id: trailing-whitespace
         exclude: |
-          ^\.config/karabiner/karabiner.json
-          \.patch$
+            (?x)(
+                ^\.config/karabiner/karabiner\.json$|
+                \.patch$
+            )
 -   repo: local
     hooks:
         - id: doom-commit-consistency-check
