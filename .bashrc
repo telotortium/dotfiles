@@ -523,6 +523,11 @@ restore_shell_options() {
 precmd_functions+=(save_shell_options)
 preexec_functions+=(restore_shell_options)
 
+# NVM
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && source "$NVM_DIR/bash_completion"
+
 # shellcheck disable=SC1090,SC1091
 {
     # Load .bash-preexec.sh if Iterm2 Shell Integration doesn't load.
