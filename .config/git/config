@@ -162,6 +162,7 @@
         rw = reword
         clone-shallow = shallow-clone
         shallow-clone = clone --depth=1
+        squash-all = "!f() { base=\"${1?Must pass base branch as first argument}\"; shift; git reset \"$(git merge-base \"$base\" HEAD)\"; git add -A; git commit \"$@\"; }; f"
         st = status
         staged = "!f() { set -eo pipefail; cd \"$GIT_PREFIX\";  git diff --cached --name-only \"$@\" | git rdf \"$@\"; }; f"
         sw = switch
