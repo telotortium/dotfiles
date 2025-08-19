@@ -217,9 +217,9 @@ bash_prompt_setup() {
     # If this is an xterm set the title to user@host:dir
     case "$TERM" in
     xterm*|rxvt*|screen*|putty*|*-256color)
-        precmd_xterm_title () {
-            printf "\033]0;%s: %s\007" "${USER}@${HOSTNAME}" "${__pwd_escaped}"
-        }
+        eval $'precmd_xterm_title () {
+            printf "\\033]0;%s: %s\\007" "${USER}@${HOSTNAME}" "'"${__pwd_escaped}"'"
+        }'
         precmd_functions+=(precmd_xterm_title)
         ;;
     esac
