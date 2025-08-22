@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+source ~/.bash_profile
+# Faster equivalent of
+# `prefix=$(basename "$(echo "$EDITOR" | awk '{print $1}')")
+prefix="${EDITOR%% *}"
+prefix="${prefix##*/}"
+session="${prefix}-$(pwd | md5)"
+exec tmux new-session -e CODE_SHELL="${BASH_SOURCE[0]}" -A -s "$session"

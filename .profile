@@ -92,7 +92,7 @@ pathvarmunge PATH "$HOME/bin"
 # Otherwise, if `gvim` is available, use it.
 #
 # Otherwise, use `vim`.
-if [ "${TERM_PROGRAM:-}" = "vscode" ]; then
+if [ "${TERM_PROGRAM:-}" = "vscode" ] || [ -n "${CODE_SHELL:-}" ]; then
     if  [ "${__CFBundleIdentifier:-}" = "com.exafunction.windsurf" ]; then
         export EDITOR="windsurf --wait --reuse-window"
     elif [ -n "${CURSOR_TRACE_ID:-}" ]; then
