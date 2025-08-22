@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Load profile files to figure out the right EDITOR
-# EDITOR=$("$SHELL" -l -c "printf '%s\\n' \"\$EDITOR\"")
+source ~/.bash_profile
 
 # Faster equivalent of
 # `prefix=$(basename "$(echo "$EDITOR" | awk '{print $1}')")
