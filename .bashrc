@@ -496,13 +496,17 @@ fi
 if [[ "$(uname -s)" = "Darwin" ]]; then
     function colorfgbg_from_system_appearance {
         if [[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" = "Dark" ]]; then
-          # Dark mode
-          export COLORFGBG="15;0"
-          export BAT_THEME="Monokai Extended"
+            # Dark mode
+            export COLORFGBG="15;0"
+            export BAT_THEME="Monokai Extended"
         else
-          # Light Mode
-          export COLORFGBG="0;15"
-          export BAT_THEME="Monokai Extended Light"
+            # Light Mode
+            export COLORFGBG="0;15"
+            export BAT_THEME="Monokai Extended Light"
+        fi
+        if [[ -n "$TMUX" ]]; then
+            tmux set-environment COLORFGBG "$COLORFGBG"
+            tmux set-environment BAT_THEME "$BAT_THEME"
         fi
     }
     preexec_functions+=(colorfgbg_from_system_appearance)
