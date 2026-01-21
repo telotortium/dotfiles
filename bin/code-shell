@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
-source ~/.bash_profile
+# Load profile files to figure out the right EDITOR
+# EDITOR=$("$SHELL" -l -c "printf '%s\\n' \"\$EDITOR\"")
+
 # Faster equivalent of
 # `prefix=$(basename "$(echo "$EDITOR" | awk '{print $1}')")
 prefix="${EDITOR%% *}"
 prefix="${prefix##*/}"
-session="${prefix}-$(pwd | md5)"
+session="${prefix}-$(printf '%s\x00%s' "$(pwd)" "${__CFBundleIdentifier:-}" | md5)"
 exec tmux new-session -e CODE_SHELL="${BASH_SOURCE[0]}" -A -s "$session"
