@@ -186,6 +186,9 @@ tags
 /.vscode
 /.windsurf
 
+# Karabiner
+/.config/karabiner/automatic_backups/
+
 # Secrets
 /.cloudflare-secrets.txt
 /.config/secrets/
