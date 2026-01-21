@@ -145,6 +145,7 @@ tags
 /.actionlint.d/
 # - Java
 /.gradle/
+/.m2/
 # - Kubernetes Krew
 /.krew/
 # - Go
