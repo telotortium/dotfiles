@@ -29,14 +29,25 @@ put() {
   printf "$esc"
 }
 
-put "\033]52;c;!\a" # KiTTY always appends to the clipboard, so clear it first
-#https://sw.kovidgoyal.net/kitty/protocol-extensions.html#pasting-to-clipboard
-
-# copy via OSC 52
 buf=$( cat "$@" )
 len=$( printf %s "$buf" | wc -c ) max=74994
-test $len -gt $max && echo "$0: input is $(( len - max )) bytes too long" >&2
-put "\033]52;c;$( printf %s "$buf" | head -c $max | base64 | tr -d '\r\n' )\a"
+
+# Prefer pbcopy if available; fall back to OSC 52 if missing or fails.
+copied=0
+if command -v pbcopy >/dev/null 2>&1; then
+  if printf %s "$buf" | pbcopy; then
+    copied=1
+  fi
+fi
+
+if test $copied -eq 0; then
+  put "\033]52;c;!\a" # KiTTY always appends; clear first
+  # https://sw.kovidgoyal.net/kitty/protocol-extensions.html#pasting-to-clipboard
+
+  # copy via OSC 52
+  test $len -gt $max && echo "$0: input is $(( len - max )) bytes too long" >&2
+  put "\033]52;c;$( printf %s "$buf" | head -c $max | base64 | tr -d '\r\n' )\a"
+fi
 
 # also copy to tmux
 test -n "$TMUX" && tmux set-buffer "$buf" ||:
