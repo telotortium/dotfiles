@@ -33,3 +33,5 @@
 *.scpt  diff=scpt
 
 *.json diff=json
+
+*.hcl text
