@@ -167,9 +167,9 @@
         st = status
         staged = "!f() { set -eo pipefail; cd \"$GIT_PREFIX\";  git diff --cached --name-only \"$@\" | git rdf \"$@\"; }; f"
         sw = switch
-        unmerged = "!f() { set -eo pipefail; cd \"$GIT_PREFIX\";  git diff --name-only --diff-filter=U \"$@\" | git rdf \"$@\"; }; f"
-        unstaged = "!f() { set -eo pipefail; cd \"$GIT_PREFIX\";  git diff --name-only \"$@\" | git rdf \"$@\"; }; f"
-        untracked = "!f() { set -eo pipefail; cd \"$GIT_PREFIX\";  git ls-files --others --exclude-standard \"$@\" | git rdf \"$@\"; }; f"
+        unmerged = "!f() { set -eo pipefail; cd \"$GIT_PREFIX\"; git diff --name-only --diff-filter=U \"$@\" | git rdf \"$@\"; }; f"
+        unstaged = "!f() { set -eo pipefail; cd \"$GIT_PREFIX\"; git diff --name-only \"$@\" | git rdf \"$@\"; }; f"
+    untracked = "!f() { set -eo pipefail; cd \"$GIT_PREFIX\"; cdup=$(git rev-parse --show-cdup; printf X); cdup=${cdup%??}; if [ -n \"$cdup\" ]; then set -- \"$@\" -- \"$cdup\"; fi; git ls-files --others --exclude-standard \"$@\"; }; f"
         upstream-branch = rev-parse --abbrev-ref --symbolic-full-name @{u}
         worktree-for-branch = "!f() { \
             (( $# == 1 )) || { echo Usage: git worktree-for-branch BRANCH; return 1; }; \
