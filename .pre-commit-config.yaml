@@ -15,13 +15,15 @@ repos:
         exclude: |
             (?x)(
                 ^\.config/karabiner/karabiner\.json$|
-                \.patch$
+                \.patch$|
+                ^Applications/
             )
     -   id: trailing-whitespace
         exclude: |
             (?x)(
                 ^\.config/karabiner/karabiner\.json$|
-                \.patch$
+                \.patch$|
+                ^Applications/
             )
 -   repo: local
     hooks:

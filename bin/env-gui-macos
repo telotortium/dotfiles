@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+ENV_GUI_MACOS_OUTPUT=$(mktemp)
+export ENV_GUI_MACOS_OUTPUT
+trap 'rm -f \"$ENV_GUI_MACOS_OUTPUT\"' EXIT HUP INT TERM
+/usr/bin/env -i /usr/bin/open -j -n -W -a ~/Applications/env-gui-macos.app --env "ENV_GUI_MACOS_OUTPUT=$ENV_GUI_MACOS_OUTPUT"
+while read -r -d '' line; do
+    case "$line" in
+    __CFBundleIdentifier=*|XPC_SERVICE_NAME=*|ENV_GUI_MACOS_OUTPUT=*)
+        continue ;;
+    esac
+    printf '%q\n' "$line"
+done < <(cat "$ENV_GUI_MACOS_OUTPUT" | sort -z)
