@@ -1,7 +1,9 @@
 # Setup fzf
 # ---------
-if [[ ! "$PATH" == *${HOME}/.fzf/bin* ]]; then
-  PATH="${PATH:+${PATH}:}${HOME}/.fzf/bin"
+if [[ ! "$PATH" == */Users/robert/.fzf/bin* ]]; then
+  PATH="${PATH:+${PATH}:}/Users/robert/.fzf/bin"
 fi
 
-source <(fzf --zsh)
+# Replace `source <(fzf --zsh)`
+source ~/.fzf/shell/key-bindings.zsh
+source ~/.fzf/shell/completion.zsh
