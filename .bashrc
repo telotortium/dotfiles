@@ -529,9 +529,14 @@ preexec_functions+=(restore_shell_options)
 
 # FNM (fast Node manager) + nvm-compatible wrapper
 if command -v fnm >/dev/null 2>&1; then
-    eval "$(fnm env --use-on-cd)"
+    eval "$(fnm env --use-on-cd --shell bash)"
 fi
 nvm() {
+    local _nvm_compat_cmds="use install uninstall ls list ls-remote current"
+    if [ "$#" -eq 0 ] || [ "$1" = "help" ] || [ "$1" = "--help" ]; then
+        echo "nvm compatibility (fnm-backed). Supported subcommands: ${_nvm_compat_cmds}" >&2
+        return 1
+    fi
     case "$1" in
         use)
             shift
@@ -564,6 +569,7 @@ nvm() {
             ;;
         *)
             echo "nvm: unsupported subcommand '$1' (using fnm)" >&2
+            echo "Supported subcommands: ${_nvm_compat_cmds}" >&2
             echo "Try: fnm $*" >&2
             return 1
             ;;
