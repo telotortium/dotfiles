@@ -58,3 +58,15 @@ env_key = "ARCEEAI_API_KEY"
 
 [history]
 persistence = "save-all"
+
+[notice.model_migrations]
+"gpt-5.1-codex-max" = "codex-auto-balanced"
+
+[features]
+unified_exec = true
+shell_snapshot = true
+steer = true
+
+[mcp_servers.playwright]
+args = ["@playwright/mcp@latest"]
+command = "npx"
