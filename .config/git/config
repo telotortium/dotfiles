@@ -139,7 +139,7 @@
         rbc = rebase --continue
         rbi = "!f() { if [[ $# -eq 0 ]]; then commit=$(git lg --color=always | fzf --ansi --height=40% --min-height=10 --layout=reverse | awk '{print $2}'); git rebase --interactive \"$commit\"; else git rebase --interactive \"$@\"; fi; }; f"
         rbs = rebase --skip
-        rdf = "!f() { set -eo pipefail; cd \"$GIT_PREFIX\";  ~/.config/git/git-rdf \"$@\"; }; f"
+        rdf = "!f() { set -eo pipefail; ~/.config/git/git-rdf \"$@\"; }; f"
         rebase-master = "!f() { \
             set -e; set -xv; \
             base=${1:-master}; \
@@ -165,11 +165,11 @@
         squash-all = "!f() { base=\"${1?Must pass base branch as first argument}\"; shift; git reset \"$(git merge-base \"$base\" HEAD)\"; git add -A; git commit \"$@\"; }; f"
         sb = status -sb
         st = status
-        staged = "!f() { set -eo pipefail; cd \"$GIT_PREFIX\";  git diff --cached --name-only \"$@\" | git rdf \"$@\"; }; f"
+        staged = "!f() { set -eo pipefail; git diff --cached --name-only \"$@\" | ~/.config/git/git-rdf \"$@\"; }; f"
         sw = switch
-        unmerged = "!f() { set -eo pipefail; cd \"$GIT_PREFIX\"; git diff --name-only --diff-filter=U \"$@\" | git rdf \"$@\"; }; f"
-        unstaged = "!f() { set -eo pipefail; cd \"$GIT_PREFIX\"; git diff --name-only \"$@\" | git rdf \"$@\"; }; f"
-    untracked = "!f() { set -eo pipefail; cd \"$GIT_PREFIX\"; cdup=$(git rev-parse --show-cdup; printf X); cdup=${cdup%??}; if [ -n \"$cdup\" ]; then set -- \"$@\" -- \"$cdup\"; fi; git ls-files --others --exclude-standard \"$@\"; }; f"
+        unmerged = "!f() { set -eo pipefail; git diff --name-only --diff-filter=U \"$@\" | ~/.config/git/git-rdf \"$@\"; }; f"
+        unstaged = "!f() { set -eo pipefail; git diff --name-only \"$@\" | ~/.config/git/git-rdf \"$@\"; }; f"
+        untracked = "!f() { set -eo pipefail; git ls-files --others --exclude-standard \"$@\" | ~/.config/git/git-rdf \"$@\"; }; f"
         upstream-branch = rev-parse --abbrev-ref --symbolic-full-name @{u}
         worktree-for-branch = "!f() { \
             (( $# == 1 )) || { echo Usage: git worktree-for-branch BRANCH; return 1; }; \

@@ -10,18 +10,23 @@ git_rdf() {
     esac
   done
 
-  # Print the root of the main worktree in this repository.
-  # One extra trailing newline is always added to the output so that the
-  # shell prompt always starts on a new line. You can use this shell trick
-  # to get the root without a trailing newline (from
-  # https://www.etalabs.net/sh_tricks.html).
-  #
-  # ```
-  # root=$(cmd; printf X)
-  # root=${root%??}
-  # ```
-  prefix=$(git rev-parse --show-prefix; printf X) || exit 1
-  prefix=${prefix%??}       # Strip one trailing newline safely
+  # Prefer the prefix Git computed for the current worktree, because aliases
+  # can run with CWD at the repo root.
+  prefix=${GIT_PREFIX-}
+  if [ -z "$prefix" ]; then
+    # Print the root of the main worktree in this repository.
+    # One extra trailing newline is always added to the output so that the
+    # shell prompt always starts on a new line. You can use this shell trick
+    # to get the root without a trailing newline (from
+    # https://www.etalabs.net/sh_tricks.html).
+    #
+    # ```
+    # root=$(cmd; printf X)
+    # root=${root%??}
+    # ```
+    prefix=$(git rev-parse --show-prefix; printf X) || exit 1
+    prefix=${prefix%??}       # Strip one trailing newline safely
+  fi
   # 2) Figure out your PWD relative to the Git root, as a prefix without trailing slash
   prefix=${prefix%/}        # e.g. "api/terraform/world"
 
