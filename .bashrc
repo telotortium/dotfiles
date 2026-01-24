@@ -435,19 +435,35 @@ try:
 except ValueError:
     pass
 c = conn.cursor()
-c.execute(f"""
-    SELECT MAX(command_id) AS command_id, command
-    FROM command
-    WHERE shellsession {"=" if same_session else "!="} ?
-    GROUP BY command
-    ORDER BY command_id DESC
-""", (os.environ["HISTSESSION"],))
-width = 0
-for row in c:
-    # Set width of formatted integers. Since we are descending in command_id
-    # order, the first row always has the maximum width.
-    if width == 0:
-        width = len(str(row[0]))
+cols = {row[1] for row in c.execute("PRAGMA table_info(command)")}
+if "ended" in cols and "started" in cols:
+    order_expr = "COALESCE(ended, started, command_id)"
+elif "started" in cols:
+    order_expr = "COALESCE(started, command_id)"
+else:
+    order_expr = "command_id"
+query = f"""
+    SELECT command_id, command
+    FROM (
+        SELECT
+            command_id,
+            command,
+            started,
+            ended,
+            ROW_NUMBER() OVER (
+                PARTITION BY command
+                ORDER BY {order_expr} DESC, command_id DESC
+            ) AS rn
+        FROM command
+        WHERE shellsession {"=" if same_session else "!="} ?
+    )
+    WHERE rn = 1
+    ORDER BY {order_expr} DESC, command_id DESC
+"""
+c.execute(query, (os.environ["HISTSESSION"],))
+rows = c.fetchall()
+width = max((len(str(row[0])) for row in rows), default=0)
+for row in rows:
     print(f"""{"*" if same_session else " "}{row[0]:{width}}\t{row[1]}""", end="\0")
 conn.close()'
   output=$(
