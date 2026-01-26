@@ -1,9 +1,18 @@
+model = "gpt-5.2-codex"
+model_supports_reasoning_summaries = true
+model_provider = "openai"
+model_reasoning_effort = "medium"
 disable_response_storage = false
 flex_mode = false
-model_reasoning_effort = "high"
 approval_policy = "never"
 sandbox_mode = "workspace-write"
 network_access = true
+
+[tui]
+notifications = true
+
+[sandbox_workspace_write]
+writable_roots = ["/tmp", "/Users/robert/.pyenv/shims"]
 
 [model_providers.openai]
 name = "OpenAI"
