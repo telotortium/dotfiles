@@ -70,3 +70,6 @@ connectors = true
 [mcp_servers.playwright]
 args = ["@playwright/mcp@latest"]
 command = "npx"
+
+[projects."/Users/robert"]
+trust_level = "trusted"
