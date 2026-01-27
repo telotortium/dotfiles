@@ -64,6 +64,7 @@ persistence = "save-all"
 unified_exec = true
 shell_snapshot = true
 steer = true
+rmcp_client = true
 
 [mcp_servers.playwright]
 args = ["@playwright/mcp@latest"]
