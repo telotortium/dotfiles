@@ -1,4 +1,4 @@
-model = "gpt-5.4"
+model = "gpt-5.5"
 model_supports_reasoning_summaries = true
 model_provider = "openai"
 model_reasoning_effort = "high"
