@@ -293,11 +293,25 @@ __bind_edit_in_editor()
 
         # Execute the edited command with eval to ensure BASH_COMMAND is set correctly.
         # Need to save the command to history manually, since we're using `eval`.
-        printf '%s\n' "$READLINE_LINE" 1>&2
-        builtin history -s "$READLINE_LINE"
-        eval "$READLINE_LINE"
+        local command_to_run=$READLINE_LINE
+        printf '%s\n' "$command_to_run" 1>&2
+        builtin history -s "$command_to_run"
+
+        # Commands run from bind -x are not reliably seen by bash-preexec, so
+        # add an explicit row to HISTDB around the eval.
+        local hist_row_id="" hist_ret
+        if declare -F __histdb_insert_command >/dev/null 2>&1; then
+            hist_row_id="$(__histdb_insert_command "$command_to_run" "$PWD" "${HISTSESSION:-}" "${LOGINSESSION:-}")"
+        fi
+
+        eval "$command_to_run"
+        hist_ret=$?
+        if [[ -n "$hist_row_id" ]] && declare -F __histdb_finish_command >/dev/null 2>&1; then
+            __histdb_finish_command "$hist_row_id" "$hist_ret"
+        fi
         # Unset READLINE_LINE, since we've just executed the command.
         READLINE_LINE=""
+        return "$hist_ret"
 }
 bind -m vi -x '"v":__bind_edit_in_editor'
 bind -m emacs -x '"\C-x\C-e":__bind_edit_in_editor'
