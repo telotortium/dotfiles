@@ -206,6 +206,8 @@
 [color]
         ui = true
 [core]
+        # Works better with Markdown heading markers, which also use `#`
+        commentChar = ";"
         pager = delta
         autocrlf = input
         untrackedCache = true
