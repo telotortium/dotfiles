@@ -39,24 +39,17 @@
                     },
                     {
                         "description": "Change Left Cmd+Right Cmd+Esc to caps lock",
+                        "enabled": false,
                         "manipulators": [
                             {
                                 "from": {
-                                    "key_code": "escape",
                                     "simultaneous": [
-                                        {
-                                            "key_code": "left_command"
-                                        },
-                                        {
-                                            "key_code": "right_command"
-                                        }
+                                        { "key_code": "escape" },
+                                        { "key_code": "left_command" },
+                                        { "key_code": "right_command" }
                                     ]
                                 },
-                                "to": [
-                                    {
-                                        "key_code": "escape"
-                                    }
-                                ],
+                                "to": [{ "key_code": "caps_lock" }],
                                 "type": "basic"
                             }
                         ]
