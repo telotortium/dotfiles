@@ -11,6 +11,11 @@ if [ -n "${__MY_BASHRC_SOURCED:-}" ]; then
 fi
 __MY_BASHRC_SOURCED=1
 
+# Virtualenv activators rewriting a multiline PS1 interact badly with the
+# iTerm/bash-preexec prompt stack below. Keep PS1 owned by this file and render
+# the active environment from VIRTUAL_ENV instead.
+export VIRTUAL_ENV_DISABLE_PROMPT=1
+
 BASH_LOAD_STATE=${BASH_LOAD_STATE:-1}
 BASH_STATE_FILE=${BASH_STATE_FILE:-"/tmp/bash-load-state-${USER}-${EUID}"}
 if [[ -n "${IN_NIX_SHELL}" ]]; then
@@ -213,6 +218,14 @@ bash_prompt_setup() {
         fi;
         printf "%s" "${__pwd}";)'
 
+    # Render the active virtualenv in the prompt without letting activation
+    # scripts mutate PS1 directly.
+    # shellcheck disable=SC2016
+    local __venv_prefix_escaped='$(if [ -n "${VIRTUAL_ENV:-}" ]; then
+        __venv_prompt="${VIRTUAL_ENV_PROMPT:-$(basename "$VIRTUAL_ENV")}";
+        printf "(%s) " "${__venv_prompt}";
+    fi)'
+
     unset PS1 PS2
 
     if [ "$TERM" = "dumb" ]; then
@@ -244,7 +257,7 @@ bash_prompt_setup() {
         # This expression should be eval'd in the prompt, not here.
         # shellcheck disable=SC2016
         local exit_status_cmd='$(test "$__PROMPT_EXIT_STATUS" = 0 && printf %s "'${G}'" || printf %s "'${BR}'")'
-        PS1="${1}[${2}\\u${3}@${4}\\h${5}]${6} ${7}${__pwd_escaped}${8}"$'\n'
+        PS1="${1}${__venv_prefix_escaped}[${2}\\u${3}@${4}\\h${5}]${6} ${7}${__pwd_escaped}${8}"$'\n'
         # Second line of prompt - start with `:` and end with `;` to allow
         # copying commands straight from the shell and re-executing them
         # without having to edit them. The `$`/`#` prompt is preceded by
