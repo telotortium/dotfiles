@@ -748,3 +748,10 @@ pf() {
   project=$1; shift
   pnpm --filter="$project" "$@"
 }
+
+# Did last command succeed?
+# Meant for interactive use when trying to queue up a list of commands. E.g.
+#
+#     git push --force-with-lease
+#     ok && git checkout -b foo  # Only run if `git push --force-with-least` ok
+ok() { (( $? == 0 )) }
