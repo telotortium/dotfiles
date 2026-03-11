@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HN Vibe Expander Settings</title>
+    <link rel="stylesheet" href="options.css">
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <p class="eyebrow">Chrome Extension Settings</p>
+        <h1>HN Vibe Expander</h1>
+        <p class="lede">
+          Expand Hacker News comments shorter than 50 words into longer, more thoughtful versions.
+          Cached expansions stay local to this browser profile and expire automatically.
+        </p>
+      </header>
+
+      <section class="card">
+        <form id="settings-form">
+          <label class="field">
+            <span>OpenAI API key</span>
+            <input id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-...">
+          </label>
+
+          <label class="field">
+            <span>Model</span>
+            <input id="model" type="text" autocomplete="off" spellcheck="false" placeholder="gpt-4.1-mini">
+            <small>Default: <code>gpt-4.1-mini</code> for a fast, low-cost response.</small>
+          </label>
+
+          <label class="field">
+            <span>Cache lifetime (days)</span>
+            <input id="cache-ttl-days" type="number" min="1" max="30" step="1">
+            <small>One week is the default and matches the short shelf life of most HN threads.</small>
+          </label>
+
+          <div class="actions">
+            <button class="primary" type="submit">Save settings</button>
+            <button id="clear-cache" class="secondary" type="button">Clear cached expansions</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Cache status</h2>
+        <p id="cache-summary">Loading cache details...</p>
+        <p class="muted">
+          API keys and cached comments are stored with <code>chrome.storage.local</code> inside your Chrome profile.
+        </p>
+      </section>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+    </main>
+
+    <script src="options.js"></script>
+  </body>
+</html>
