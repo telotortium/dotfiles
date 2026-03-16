@@ -19,3 +19,7 @@ if [[ -f ~/.bashrc ]]; then
 fi
 
 test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
+
+if [[ $- = *i* ]] && [[ -n "${CODEX_SHELL}" ]] && [[ -z "${CODE_SHELL}" ]]; then
+    code-shell
+fi
