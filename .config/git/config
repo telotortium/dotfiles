@@ -43,7 +43,7 @@
                         if [ \"${VIRTUAL_ENV:-}\" = openai-* ]; then \
                             VENV_DELETE=\"${VIRTUAL_ENV}\"; \
                         fi; \
-                        git checkout --detach HEAD; \
+                        git -c core.hooksPath=/dev/null checkout --detach HEAD; \
                         cd \"$OLDPWD\"; \
                         if git worktree remove \"$worktree\"; then \
                             [ -n \"${VENV_DELETE:-}\" ] && rm -rf \"${VENV_DELETE}\"; git branch -D \"$branch\"; \
