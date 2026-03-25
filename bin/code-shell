@@ -2,10 +2,18 @@
 
 # Load profile files to figure out the right EDITOR
 source ~/.bash_profile
-
 # Faster equivalent of
 # `prefix=$(basename "$(echo "$EDITOR" | awk '{print $1}')")
 prefix="${EDITOR%% *}"
 prefix="${prefix##*/}"
 session="${prefix}-$(printf '%s\x00%s' "$(pwd)" "${__CFBundleIdentifier:-}" | md5)"
-exec tmux new-session -e CODE_SHELL="${BASH_SOURCE[0]}" -A -s "$session"
+
+tmux_term="${TERM:-xterm-256color}"
+if [[ "${__CFBundleIdentifier:-}" = com.openai.codex* ]] && [[ "$tmux_term" = xterm-256color ]]; then
+    # Codex's pane terminal leaks some terminal capability probes and replies
+    # when tmux takes the full xterm-256color detection path, so use a more
+    # conservative outer TERM only for tmux clients launched from Codex.
+    tmux_term="${CODE_SHELL_TMUX_TERM:-xterm}"
+fi
+
+exec env TERM="$tmux_term" tmux new-session -e CODE_SHELL="${BASH_SOURCE[0]}" -A -s "$session"
