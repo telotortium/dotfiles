@@ -1,7 +1,7 @@
-model = "gpt-5.2-codex"
+model = "gpt-5.4"
 model_supports_reasoning_summaries = true
 model_provider = "openai"
-model_reasoning_effort = "medium"
+model_reasoning_effort = "high"
 disable_response_storage = false
 flex_mode = false
 approval_policy = "never"
