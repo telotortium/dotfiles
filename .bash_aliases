@@ -502,7 +502,9 @@ git_bounce () {
 eval "$(declare -f git_bounce | sed -e 's/git/config/g')"
 
 git-cd () {
-    cd "$(git rev-parse --show-toplevel)/${1:-}"
+    p="$(git rev-parse --show-toplevel)/${1:-}"
+    cd "$(git rev-parse --show-toplevel)/${1:-}" || return $?
+    if ! [[ -t 1 ]]; then printf '%s\n' "$p"; fi
 }
 alias gitcd=git-cd
 source ~/bin/git-rebase-base  # Provide git-rebase-base
