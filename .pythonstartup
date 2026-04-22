@@ -9,7 +9,9 @@ Load functions that are of use in the interactive interpreter.
 from __future__ import division
 
 # Basic modules
-import os, sys
+import os, os.path, subprocess, sys
+if sys.version_info[0] == 3:
+    import pathlib
 
 # Use Python as a calculator
 from math import *
