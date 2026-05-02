@@ -35,7 +35,7 @@ len=$( printf %s "$buf" | wc -c ) max=74994
 # Prefer pbcopy if available; fall back to OSC 52 if missing or fails.
 copied=0
 if command -v pbcopy >/dev/null 2>&1; then
-  if printf %s "$buf" | pbcopy; then
+  if printf %s "$buf" | env LANG=en_US.UTF-8 LC_CTYPE=en_US.UTF-8 pbcopy; then
     copied=1
   fi
 fi
