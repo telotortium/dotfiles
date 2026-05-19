@@ -21,6 +21,9 @@ else
             echo "${HOME}/.bashrc: loading from ${BASH_STATE_FILE}. If you need to reinitialize that file, run \`BASH_LOAD_STATE=0 bash -l\`" 1>&2
             # shellcheck disable=SC1090
             source "$BASH_STATE_FILE"
+            # The cached state can contain stale iTerm prompt variables, which
+            # makes __iterm2_prompt_command restore a plain PS1.
+            unset ITERM_ORIG_PS1 ITERM_PREV_PS1
             return
         else
             echo "${HOME}/.bashrc: ${BASH_STATE_FILE} exists but is not owned by you. Will try to write to it at the end of this script, but will probably fail. You should investigate." 1>&2
