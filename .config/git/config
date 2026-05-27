@@ -9,6 +9,7 @@
                 git rev-list \"$rev^2\" --not \"$rev^\"; \
             done | xargs git bisect skip; \
         }; f"
+        br = branch
         branch-cleanup-deleted-remotes = "!f() { \
             set -xv; \
             current=$(git branch --show-current); \
