@@ -128,6 +128,7 @@
         pr-merge-skip-tests = "!gh pr comment $(git pr-current) --body /merge-skip-tests"
         pr-new = new-pr
         pr-retry-failed = "!gh pr-retry-failed"
+        ps = push-signed
         push-allowed = "!f() { \
             branch=$(git symbolic-ref --short HEAD); \
             [[ -n \"$(git upstream-branch 2>/dev/null)\" ]] && [[ \"$(git config --get branch.\"$branch\".pushRemote)\" != no_push ]];  \
@@ -137,6 +138,7 @@
             remote=$(git remote show); \
             git push --set-upstream \"$remote\" \"$local_branch\"; \
         }; f"
+        push-signed = signed-push
         pushfwl = push --force-with-lease --force-if-includes
         rbb = rebase-base
         rbc = rebase --continue
@@ -167,6 +169,7 @@
         shallow-clone = clone --depth=1
         squash-all = "!f() { base=\"${1?Must pass base branch as first argument}\"; shift; git reset \"$(git merge-base \"$base\" HEAD)\"; git add -A; git commit \"$@\"; }; f"
         sb = status -sb
+	signed-push = "!f() { set -e; git update-index -q --refresh; git diff-index --quiet HEAD -- || { echo \"Refusing to signed-push with uncommitted changes.\" >&2; return 1; }; base=${SIGNED_PUSH_BASE:-}; if [ -z \"$base\" ]; then upstream=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || true); if [ -n \"$upstream\" ]; then base=$(git merge-base HEAD \"$upstream\"); elif git show-ref --verify --quiet refs/remotes/origin/master; then base=$(git merge-base HEAD origin/master); elif git show-ref --verify --quiet refs/remotes/origin/main; then base=$(git merge-base HEAD origin/main); else echo \"Unable to infer signing base; set SIGNED_PUSH_BASE=<base>.\" >&2; return 1; fi; fi; git rebase --rebase-merges --gpg-sign \"$base\"; git push --force-with-lease --force-if-includes \"$@\"; }; f"
         st = status
         staged = "!f() { set -eo pipefail; git diff --cached --name-only \"$@\" | ~/.config/git/git-rdf \"$@\"; }; f"
         sw = switch
