@@ -23,6 +23,30 @@
             done; \
         }; f"
         branch-upstream = rev-parse --abbrev-ref --symbolic-full-name @{u}
+        track-upstream-branch = "!f() { \
+            set -e; \
+            if [ $# -lt 1 ] || [ $# -gt 2 ]; then \
+                echo Usage: git track-upstream-branch REMOTE_BRANCH [LOCAL_BRANCH] 1>&2; \
+                return 1; \
+            fi; \
+            upstream=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null) || { \
+                echo \"Current branch has no upstream; unable to infer remote\" 1>&2; \
+                return 1; \
+            }; \
+            remote=${upstream%%/*}; \
+            remote_branch=${1#refs/heads/}; \
+            case \"$remote_branch\" in refs/remotes/\"$remote\"/*) remote_branch=${remote_branch#refs/remotes/$remote/} ;; esac; \
+            case \"$remote_branch\" in \"$remote\"/*) remote_branch=${remote_branch#\"$remote\"/} ;; esac; \
+            local_branch=${2:-$remote_branch}; \
+            fetch_refspec=\"+refs/heads/$remote_branch:refs/remotes/$remote/$remote_branch\"; \
+            git fetch \"$remote\" \"refs/heads/$remote_branch:refs/remotes/$remote/$remote_branch\"; \
+            if ! git config --get-all \"remote.$remote.fetch\" | grep -Fxq \"$fetch_refspec\"; then \
+                git config --add \"remote.$remote.fetch\" \"$fetch_refspec\"; \
+            fi; \
+            git switch --create \"$local_branch\" \"refs/remotes/$remote/$remote_branch\"; \
+            git config \"branch.$local_branch.remote\" \"$remote\"; \
+            git config \"branch.$local_branch.merge\" \"refs/heads/$remote_branch\"; \
+        }; f"
         brt = "!git for-each-ref refs/heads --color=always --sort -committerdate --format='%(HEAD)%(color:reset);%(color:yellow)%(refname:short)%(color:reset);%(contents:subject);%(color:green)(%(committerdate:relative))%(color:blue);<%(authorname)>' | column -t -s ';'"
         # git-cd (cd relative to Git repo/workspace root) defined in ~/.bash_aliases
         check-uncommitted-changes = "!f() { \
