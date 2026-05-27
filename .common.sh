@@ -7,28 +7,14 @@
 # Exit successfully if CMD is an executable (or a shell builtin) or
 # unsuccessfully otheriwse.
 command_on_path () {
-    {
-        cmd=$1
-        # Fast path - use hash
-        hash "$cmd" || (
-            # Slow path, if hash fails or is unsupported.
-            set -e
-            unalias -a
-            x=$(command -v "$cmd")
-            # If command starts with `/`, it's not a builtin command.
-            test "${x#/}" != "${x}"
-        )
-    } >/dev/null 2>&1
+    command -v "$1" >/dev/null 2>&1
 }
 
 # Quote a string for use by eval.
 shell_quote() {
   # $1 = the raw string
   # prints the safely-quoted version to stdout
-  # Use `\x27` in awk to print single quotes around string.
-  printf '%s' "$1" \
-    | sed "s/'/'\\\\''/g" \
-    | awk '{ printf("\x27%s\x27", $0); }'
+  printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"
 }
 
 # pathvarmunge VAR DIR [AFTER]
@@ -37,26 +23,66 @@ shell_quote() {
 # Based on pathmunge function present in Fedora/RHEL (among other systems), but
 # generalized to set any type of variable.
 pathvarmunge () {
-    eval "var=$(shell_quote "$1")"
-    eval "dir=$(shell_quote "$2")"
-    eval "after=$(shell_quote "$3")"
-    # If VAR is currently empty, just set it to DIR and return.
-    # shellcheck disable=SC2154
-    if [ -z "$(eval "echo \${${var}+x}")" ]; then
-        eval "$var=$(shell_quote "$dir")"
-        return 0
+    var=$1
+    dir=$2
+    after=$3
+    eval "varval=\${$var-}"
+    case ":$varval:" in
+        *":$dir:"*) return 0 ;;
+    esac
+    if [ -z "$varval" ] ; then
+        newval=$dir
+    elif [ "$after" = "after" ] ; then
+        newval=$varval:$dir
+    else
+        newval=$dir:$varval
     fi
-    # Quoting is correct to set `varval` to the value of the variable whose
-    # name is stored in `var`.
-    eval varval="$( eval shell_quote "\"\$${var}\"" )"
-    # shellcheck disable=SC2154
-    if ! echo "$varval" | grep -Eq "(^|:)$dir($|:)" ; then
-       if [ "$after" = "after" ] ; then
-           eval "$var=$(shell_quote "$varval:$dir")"
-       else
-           eval "$var=$(shell_quote "$dir:$varval")"
-       fi
-    fi
+    eval "$var=$(shell_quote "$newval")"
+}
+
+# pathvarremove VAR DIR
+# Remove DIR from pathlike-variable VAR.
+pathvarremove () {
+    var=$1
+    remove=$2
+    eval "varval=\${$var-}"
+    newval=$(printf '%s' "$varval" | awk -v RS=: -v target="$remove" '
+        length($0) && $0 != target {
+            if (out) {
+                out = out ":" $0
+            } else {
+                out = $0
+            }
+        }
+        END { printf "%s", out }
+    ')
+    eval "$var=$(shell_quote "$newval")"
+}
+
+# pathvardedupe VAR
+# Remove duplicate and empty entries from pathlike-variable VAR, keeping the
+# first instance of each entry.
+pathvardedupe () {
+    var=$1
+    eval "varval=\${$var-}"
+    newval=$(printf '%s' "$varval" | awk -v RS=: '
+        length($0) && !seen[$0]++ {
+            if (out) {
+                out = out ":" $0
+            } else {
+                out = $0
+            }
+        }
+        END { printf "%s", out }
+    ')
+    eval "$var=$(shell_quote "$newval")"
+}
+
+# pathvarensure_front VAR DIR
+# Ensure DIR exists in pathlike-variable VAR and is placed at the front.
+pathvarensure_front () {
+    pathvarremove "$1" "$2"
+    pathvarmunge "$1" "$2"
 }
 
 # source_if_exists FILE [ARGS...]
