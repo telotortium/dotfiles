@@ -39,17 +39,24 @@
                     },
                     {
                         "description": "Change Left Cmd+Right Cmd+Esc to caps lock",
-                        "enabled": false,
                         "manipulators": [
                             {
                                 "from": {
+                                    "key_code": "escape",
                                     "simultaneous": [
-                                        { "key_code": "escape" },
-                                        { "key_code": "left_command" },
-                                        { "key_code": "right_command" }
+                                        {
+                                            "key_code": "left_command"
+                                        },
+                                        {
+                                            "key_code": "right_command"
+                                        }
                                     ]
                                 },
-                                "to": [{ "key_code": "caps_lock" }],
+                                "to": [
+                                    {
+                                        "key_code": "escape"
+                                    }
+                                ],
                                 "type": "basic"
                             }
                         ]
@@ -371,6 +378,10 @@
                         {
                             "from": { "key_code": "right_option" },
                             "to": [{ "key_code": "right_command" }]
+                        },
+                        {
+                            "from": { "key_code": "pause" },
+                            "to": [{ "apple_vendor_top_case_key_code": "keyboard_fn" }]
                         }
                     ]
                 },
