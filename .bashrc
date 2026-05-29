@@ -70,7 +70,7 @@ if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
     debian_chroot=$(cat /etc/debian_chroot)
 fi
 
-if which loginctl > /dev/null && loginctl >& /dev/null; then
+if command -v loginctl >/dev/null 2>&1 && loginctl >& /dev/null; then
     if loginctl show-user | grep KillUserProcesses | grep -q yes; then
         echo "systemd is set to kill user processes on logoff"
         echo "This will break screen, tmux, emacs --daemon, nohup, etc"
