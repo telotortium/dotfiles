@@ -422,15 +422,12 @@ if [ -f /opt/local/etc/profile.d/bash_completion.sh ]; then
     source /opt/local/etc/profile.d/bash_completion.sh
 fi
 # Homebrew bash-completion
-shell_path=$(command -v "$SHELL")
-brew_path="${shell_path%/bin/*}/bin/brew"
-
-if [[ -x "$brew_path" ]]; then
-    brew_prefix=$("$brew_path" --prefix)
-    if [[ -d "$brew_prefix/etc/bash_completion.d" ]]; then
-        # shellcheck disable=SC1090,SC1091
-        source "$brew_prefix/etc/profile.d/bash_completion.sh"
-    fi
+if [[ -f /opt/homebrew/etc/profile.d/bash_completion.sh ]]; then
+    # shellcheck disable=SC1090,SC1091
+    source /opt/homebrew/etc/profile.d/bash_completion.sh
+elif [[ -f /usr/local/etc/profile.d/bash_completion.sh ]]; then
+    # shellcheck disable=SC1090,SC1091
+    source /usr/local/etc/profile.d/bash_completion.sh
 fi
 
 command_on_path sshrc && complete -F _ssh sshrc
