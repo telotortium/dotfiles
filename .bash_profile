@@ -18,7 +18,9 @@ if [[ -f ~/.bashrc ]]; then
     source ~/.bashrc
 fi
 
-test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
+if [[ "${TERM_PROGRAM:-}" = "iTerm.app" ]] && [[ -e "${HOME}/.iterm2_shell_integration.bash" ]]; then
+    source "${HOME}/.iterm2_shell_integration.bash"
+fi
 
 if [[ $- = *i* ]] && [[ "${__CFBundleIdentifier:-}" = com.openai.codex* ]] && [[ -z "${CODE_SHELL:-}" ]]; then
     code-shell
