@@ -15,46 +15,6 @@ cleanup () {
     exit $rv
 }
 
-trap cleanup EXIT ERR
-
-( getopt --version | grep -e 'getopt (enhanced)' -e 'util-linux' ) &>/dev/null || {
-  echo "GNU getopt not on path" 1>&2
-  exit 1
-}
-options=$(getopt -o gnvPR -- "$@")
-eval set -- "$options"
-no_prompt=0
-no_push=0
-no_dropbox_mode=0
-no_revert=0
-noninteractive_push=0
-verbose_mode=0
-while true; do
-    case "$1" in
-    -n)
-        no_prompt=1
-        ;;
-    -P)
-        no_push=1
-        ;;
-    -P)
-        no_revert=1
-        ;;
-    -g)
-        no_dropbox_mode=1
-        ;;
-    -v)
-        verbose_mode=1
-        ;;
-    --)
-        shift
-        break
-        ;;
-    esac
-    shift
-done
-
-
 # Does tty exist? Needed for stty.
 tty_exists () {
     /usr/bin/tty &>/dev/null
@@ -135,55 +95,114 @@ revert_all_org_buffers () {
     done
 }
 
-read -r -a org_repos_local <<<"$ORG_REPOS"
-org_repos_orig_commits=()
-for repo in "${org_repos_local[@]}"; do
-    cd "$HOME/Documents/org/$repo"
-    org_repos_orig_commits+=("$(git rev-parse HEAD)")
-done
+find_getopt () {
+    if command -v getopt >/dev/null 2>&1 && \
+        getopt --version 2>/dev/null | grep -e 'getopt (enhanced)' -e 'util-linux' >/dev/null; then
+        command -v getopt
+        return 0
+    fi
 
+    # macOS often has GNU getopt installed via Homebrew but not linked into PATH.
+    if [[ -x /opt/homebrew/opt/gnu-getopt/bin/getopt ]] && \
+        /opt/homebrew/opt/gnu-getopt/bin/getopt --version 2>/dev/null | \
+            grep -e 'getopt (enhanced)' -e 'util-linux' >/dev/null; then
+        echo /opt/homebrew/opt/gnu-getopt/bin/getopt
+        return 0
+    fi
 
-# Save all Org mode buffers. This will minimize the chance of conflicts between
-# the local version and remote version of the files.
-EMACSCLIENT=${EMACSCLIENT:-emacsclient}
-unset ALTERNATE_EDITOR  # Don't fall back to non-Emacs editor
-if [[ "$no_prompt" -eq 1 ]]; then
-    letvars='(noninteractive t)'
-else
-    letvars=''
-fi
-if ! "$EMACSCLIENT" --eval "(let (${letvars} (minibuffer-auto-raise nil)) (org-save-all-org-buffers))"; then
-    echo "Failed to connect to Emacs daemon. If Emacs isn't open, run" \
-        "\`emacs --daemon\` and try again. Otherwise, run M-x" \
-        "server-force-delete followed by M-x server-start and try again."
-    exit 1
-fi
-
-org-git-sync
-org-bad-branch || {
-    for repo in "${org_repos_local[@]}"; do
-        cd "$HOME/Documents/org/$repo"
-        git md-tmp-branches || exit $?
-    done
+    return 1
 }
 
-if [[ "$no_push" -ne 1 ]]; then
-    args=()
-    [[ "$no_prompt" -eq 1 ]] && args+=("--noninteractive")
-    [[ "$verbose_mode" -eq 1 ]] && args+=("--verbose")
-    org-git-push "${args[@]}"
-fi
+main () {
+    trap cleanup EXIT ERR
 
-if [[ "$no_dropbox_mode" -ne 1 ]]; then
-    [[ "$no_prompt" -ne 1 ]] && sync_orgzly_prompt
+    GETOPT_BIN=$(find_getopt) || {
+        echo "GNU getopt not on PATH or at /opt/homebrew/opt/gnu-getopt/bin/getopt" 1>&2
+        exit 1
+    }
+    options=$("$GETOPT_BIN" -o gnvPR -- "$@")
+    eval set -- "$options"
+    no_prompt=0
+    no_push=0
+    no_dropbox_mode=0
+    no_revert=0
+    noninteractive_push=0
+    verbose_mode=0
+    while true; do
+        case "$1" in
+        -n)
+            no_prompt=1
+            ;;
+        -P)
+            no_push=1
+            ;;
+        -R)
+            no_revert=1
+            ;;
+        -g)
+            no_dropbox_mode=1
+            ;;
+        -v)
+            verbose_mode=1
+            ;;
+        --)
+            shift
+            break
+            ;;
+        esac
+        shift
+    done
 
-    home-org-sync-dropbox -n
-    cd ~/Documents/org/home-org
-    git push
+    read -r -a org_repos_local <<<"$ORG_REPOS"
+    org_repos_orig_commits=()
+    for repo in "${org_repos_local[@]}"; do
+        cd "$HOME/Documents/org/$repo"
+        org_repos_orig_commits+=("$(git rev-parse HEAD)")
+    done
 
-    tiktok-org-sync-dropbox -n
-    cd ~/Documents/org/tiktok-org
-    git push
+    # Save all Org mode buffers before syncing to reduce local-vs-remote conflicts.
+    EMACSCLIENT=${EMACSCLIENT:-emacsclient}
+    unset ALTERNATE_EDITOR  # Don't fall back to non-Emacs editor
+    if [[ "$no_prompt" -eq 1 ]]; then
+        letvars='(noninteractive t)'
+    else
+        letvars=''
+    fi
+    if ! "$EMACSCLIENT" --eval "(let (${letvars} (minibuffer-auto-raise nil)) (org-save-all-org-buffers))"; then
+        echo "Failed to connect to Emacs daemon. If Emacs isn't open, run" \
+            "\`emacs --daemon\` and try again. Otherwise, run M-x" \
+            "server-force-delete followed by M-x server-start and try again."
+        exit 1
+    fi
 
-    [[ "$no_prompt" -ne 1 ]] && sync_orgzly_prompt
-fi
+    org-git-sync
+    org-bad-branch || {
+        for repo in "${org_repos_local[@]}"; do
+            cd "$HOME/Documents/org/$repo"
+            git md-tmp-branches || exit $?
+        done
+    }
+
+    if [[ "$no_push" -ne 1 ]]; then
+        args=()
+        [[ "$no_prompt" -eq 1 ]] && args+=("--noninteractive")
+        [[ "$verbose_mode" -eq 1 ]] && args+=("--verbose")
+        org-git-push "${args[@]}"
+    fi
+
+    if [[ "$no_dropbox_mode" -ne 1 ]]; then
+        [[ "$no_prompt" -ne 1 ]] && sync_orgzly_prompt
+
+        home-org-sync-dropbox -n
+        cd ~/Documents/org/home-org
+        git push
+
+        tiktok-org-sync-dropbox -n
+        cd ~/Documents/org/tiktok-org
+        git push
+
+        [[ "$no_prompt" -ne 1 ]] && sync_orgzly_prompt
+    fi
+}
+
+main "$@"
