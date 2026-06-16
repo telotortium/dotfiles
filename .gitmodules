@@ -21,7 +21,7 @@
 	url = https://github.com/doomemacs/doomemacs
 [submodule ".bash-history-sqlite"]
 	path = .bash-history-sqlite
-	url = https://github.com/thenewwazoo/bash-history-sqlite.git
+	url = git@github.com:telotortium/bash-history-sqlite.git
 [submodule ".fzf"]
 	path = .fzf
 	url = https://github.com/junegunn/fzf
