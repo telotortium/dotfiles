@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+__grd_log() {
+  echo "[git-rebase-donate] $*"
+}
+
+__grd_die() {
+  echo "git-rebase-donate: $*" >&2
+  exit 1
+}
+
+__grd_require_clean_worktree() {
+  local repo_path=${1:-.}
+  if ! git -C "$repo_path" diff --quiet --no-ext-diff || ! git -C "$repo_path" diff --cached --quiet --no-ext-diff; then
+    __grd_die "working tree must be clean: ${repo_path}"
+  fi
+}
+
+__grd_require_branch() {
+  local branch
+  branch=$(git branch --show-current)
+  [[ -n "$branch" ]] || __grd_die "must be on a branch"
+  printf '%s\n' "$branch"
+}
+
+__grd_branch_worktree_path() {
+  local target_branch="refs/heads/$1"
+  local current_worktree=""
+  local branch=""
+  local line=""
+  while IFS= read -r line; do
+    case "$line" in
+      worktree\ *)
+        current_worktree=${line#worktree }
+        branch=""
+        ;;
+      branch\ *)
+        branch=${line#branch }
+        if [[ "$branch" == "$target_branch" ]]; then
+          printf '%s\n' "$current_worktree"
+          return 0
+        fi
+        ;;
+    esac
+  done < <(git worktree list --porcelain)
+  return 1
+}
+
+main() {
+  local prefix=${GIT_REBASE_DONATE_PREFIX:-}
+  local upstream=${GIT_REBASE_DONATE_UPSTREAM:-}
+  [[ -n "$prefix" ]] || __grd_die "GIT_REBASE_DONATE_PREFIX must be set"
+  [[ -n "$upstream" ]] || __grd_die "GIT_REBASE_DONATE_UPSTREAM must be set"
+
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || __grd_die "not inside a git repository"
+  __grd_require_clean_worktree
+
+  local original_branch
+  original_branch=$(__grd_require_branch)
+  [[ "$original_branch" != "$upstream" ]] || __grd_die "current branch must not be ${upstream}"
+
+  local current_worktree
+  current_worktree=$(git rev-parse --show-toplevel)
+  git rev-parse --verify "$upstream" >/dev/null 2>&1 || __grd_die "upstream branch ${upstream} does not exist locally"
+
+  local -a donated_commits=()
+  local commit subject
+  while IFS= read -r commit; do
+    [[ -n "$commit" ]] || continue
+    subject=$(git log -1 --format=%s "$commit")
+    if [[ "$subject" != "$prefix"* ]]; then
+      donated_commits+=("$commit")
+    fi
+  done < <(git rev-list --reverse "${upstream}..${original_branch}")
+
+  __grd_log "Original branch: ${original_branch}"
+  __grd_log "Upstream branch: ${upstream}"
+  __grd_log "Found ${#donated_commits[@]} commit(s) to donate"
+
+  local upstream_worktree
+  upstream_worktree=$(__grd_branch_worktree_path "$upstream" || true)
+  if [[ -z "$upstream_worktree" ]]; then
+    upstream_worktree=$current_worktree
+    git switch "$upstream"
+  else
+    __grd_require_clean_worktree "$upstream_worktree"
+    __grd_log "Using upstream worktree: ${upstream_worktree}"
+  fi
+
+  if ((${#donated_commits[@]} > 0)); then
+    # Cherry-pick in original order so the donated series lands on upstream unchanged.
+    git -C "$upstream_worktree" cherry-pick "${donated_commits[@]}"
+  fi
+
+  git -C "$upstream_worktree" pull --rebase
+  git -C "$upstream_worktree" push
+
+  if [[ "$upstream_worktree" == "$current_worktree" ]]; then
+    git switch "$original_branch"
+  fi
+  # Rebasing after the donate/push step lets Git drop duplicate patches from the topic branch.
+  git rebase "$upstream"
+}
+
+main "$@"
