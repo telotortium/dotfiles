@@ -5,6 +5,8 @@ set -euo pipefail
 readonly GRAPHQL_BATCH_SIZE=50
 
 venv_path_file=''
+status_path_file=''
+background_delete_paths=()
 
 die() {
   echo "git-clean-merged-branches: $*" >&2
@@ -76,6 +78,73 @@ worktree_for_branch() {
   return 1
 }
 
+git_supports_missing_worktree_remove() {
+  local version
+  version=$(git --version)
+  if [[ $version =~ ^git\ version\ ([0-9]+)\.([0-9]+) ]]; then
+    ((BASH_REMATCH[1] > 2 || (BASH_REMATCH[1] == 2 && BASH_REMATCH[2] >= 54)))
+    return
+  fi
+  return 1
+}
+
+worktree_is_registered() {
+  local expected=$1 field
+  if ! git worktree list --porcelain -z >"$status_path_file"; then
+    echo "Unable to verify worktree registration; keeping $expected." >&2
+    return 0
+  fi
+  while IFS= read -r -d '' field; do
+    if [[ $field == "worktree $expected" ]]; then
+      return 0
+    fi
+  done <"$status_path_file"
+  return 1
+}
+
+unregister_missing_worktree() {
+  local worktree=$1
+  if git_supports_missing_worktree_remove; then
+    git worktree remove "$worktree" && return
+  else
+    # Older Git versions document prune as the way to unlink a worktree whose
+    # directory is missing. Verify our entry disappeared because prune is global.
+    git worktree prune --expire now || true
+  fi
+  ! worktree_is_registered "$worktree"
+}
+
+quarantine_worktree() {
+  local worktree=$1 parent base
+  parent=${worktree%/*}
+  base=${worktree##*/}
+  quarantined_worktree="$parent/.$base.git-clean-merged-branches.$$.$RANDOM"
+  [[ ! -e "$quarantined_worktree" ]] || die "quarantine path already exists: $quarantined_worktree"
+
+  # A rename beside the worktree is atomic and avoids waiting for hundreds of
+  # thousands of filesystem entries to be unlinked before Git can unregister it.
+  mv -- "$worktree" "$quarantined_worktree"
+  if unregister_missing_worktree "$worktree"; then
+    return
+  fi
+
+  echo "Fast worktree unregister failed; falling back to synchronous removal." >&2
+  mv -- "$quarantined_worktree" "$worktree" ||
+    die "failed to restore worktree from $quarantined_worktree"
+  quarantined_worktree=''
+  return 1
+}
+
+cleanup() {
+  local exit_status=$?
+  rm -f "$venv_path_file" "$status_path_file"
+  if ((${#background_delete_paths[@]} > 0)); then
+    echo "Deleting ${#background_delete_paths[@]} quarantined path(s) in the background..."
+    nohup rm -rf -- "${background_delete_paths[@]}" </dev/null >/dev/null 2>&1 3>&- &
+  fi
+  return "$exit_status"
+}
+
 delete_branch() {
   local branch=$1 worktree venv_delete=''
   echo "Deleting local branch $branch..."
@@ -91,15 +160,26 @@ delete_branch() {
     if [[ ${VIRTUAL_ENV:-} == openai-* ]]; then
       printf '%s\n' "$VIRTUAL_ENV" >"$venv_path_file"
     fi
-    git -c core.hooksPath=/dev/null checkout --detach HEAD
   )
-  if git worktree remove "$worktree"; then
-    if [[ -s "$venv_path_file" ]]; then
-      venv_delete=$(<"$venv_path_file")
-      rm -rf "$venv_delete"
-    fi
-    git branch -D "$branch"
+
+  if ! git -C "$worktree" status --porcelain --ignore-submodules=none >"$status_path_file"; then
+    die "failed to check worktree status: $worktree"
   fi
+  if [[ -s "$status_path_file" ]]; then
+    die "'$worktree' contains modified or untracked files"
+  fi
+
+  quarantined_worktree=''
+  if quarantine_worktree "$worktree"; then
+    background_delete_paths+=("$quarantined_worktree")
+  else
+    git worktree remove "$worktree"
+  fi
+  if [[ -s "$venv_path_file" ]]; then
+    venv_delete=$(<"$venv_path_file")
+    background_delete_paths+=("$venv_delete")
+  fi
+  git branch -D "$branch"
 }
 
 main() {
@@ -140,10 +220,12 @@ main() {
     esac
   done < <(git worktree list --porcelain -z)
 
-  venv_path_file=$(mktemp "${TMPDIR:-/tmp}/git-clean-merged-branches.XXXXXX")
-  trap 'rm -f "$venv_path_file"' EXIT
+  venv_path_file=$(mktemp "${TMPDIR:-/tmp}/git-clean-merged-branches-venv.XXXXXX")
+  status_path_file=$(mktemp "${TMPDIR:-/tmp}/git-clean-merged-branches-status.XXXXXX")
+  trap cleanup EXIT
   for branch in "${terminal_branches[@]}"; do
     : >"$venv_path_file"
+    : >"$status_path_file"
     delete_branch "$branch"
   done
 }

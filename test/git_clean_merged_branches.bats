@@ -5,8 +5,11 @@ setup() {
   mock_bin="$BATS_TEST_TMPDIR/bin"
   export MOCK_GH_LOG="$BATS_TEST_TMPDIR/gh.log"
   export MOCK_GIT_LOG="$BATS_TEST_TMPDIR/git.log"
+  export MOCK_GIT_PRUNED="$BATS_TEST_TMPDIR/git-pruned"
   export MOCK_WORKTREE="$BATS_TEST_TMPDIR/merged-worktree"
   export MOCK_GH_INDICES='0,2'
+  export MOCK_GIT_VERSION='2.54.0'
+  export MOCK_GIT_PRUNE_EFFECTIVE='true'
   mkdir -p "$mock_bin" "$MOCK_WORKTREE"
   : >"$MOCK_GH_LOG"
   : >"$MOCK_GIT_LOG"
@@ -15,7 +18,7 @@ setup() {
 #!/usr/bin/env bash
 set -euo pipefail
 printf '%s\n' "$*" >>"$MOCK_GH_LOG"
-case "$1 $2" in
+case "$1 ${2:-}" in
   'repo view') printf '%s\n' 'acme/repo' ;;
   'api graphql') printf '%s' "$MOCK_GH_INDICES" | tr ',' '\n' ;;
   *) exit 1 ;;
@@ -26,16 +29,26 @@ EOF
 #!/usr/bin/env bash
 set -euo pipefail
 printf '%s\n' "$*" >>"$MOCK_GIT_LOG"
-case "$1 $2" in
+if [[ $1 == '-C' && ${3:-} == 'status' ]]; then
+  exit 0
+fi
+case "$1 ${2:-}" in
+  '--version ') printf 'git version %s\n' "$MOCK_GIT_VERSION" ;;
   'rev-parse --is-inside-work-tree') exit 0 ;;
   'for-each-ref --format=%(refname:short)')
     printf '%s\n' branch-merged branch-open branch-closed
     ;;
   'worktree list')
-    printf 'worktree %s\0HEAD deadbeef\0branch refs/heads/branch-merged\0\0' "$MOCK_WORKTREE"
+    if [[ ! -e "$MOCK_GIT_PRUNED" ]]; then
+      printf 'worktree %s\0HEAD deadbeef\0branch refs/heads/branch-merged\0\0' "$MOCK_WORKTREE"
+    fi
+    ;;
+  'worktree prune')
+    if [[ $MOCK_GIT_PRUNE_EFFECTIVE == 'true' ]]; then
+      : >"$MOCK_GIT_PRUNED"
+    fi
     ;;
   'worktree remove'|'branch -D') exit 0 ;;
-  '-c core.hooksPath=/dev/null') exit 0 ;;
   *) exit 1 ;;
 esac
 EOF
@@ -63,7 +76,7 @@ EOF
   grep -q 'head2=branch-closed' "$MOCK_GH_LOG"
 }
 
-@test "worktree inventory is read once before sequential deletion" {
+@test "new Git unregisters the quarantined worktree directly" {
   run "$command_path"
 
   [ "$status" -eq 0 ]
@@ -71,4 +84,28 @@ EOF
   grep -q "^worktree remove $MOCK_WORKTREE$" "$MOCK_GIT_LOG"
   grep -q '^branch -D branch-merged$' "$MOCK_GIT_LOG"
   grep -q '^branch -D branch-closed$' "$MOCK_GIT_LOG"
+}
+
+@test "older Git prunes and verifies the quarantined worktree" {
+  MOCK_GIT_VERSION='2.53.0'
+  run "$command_path"
+
+  [ "$status" -eq 0 ]
+  grep -q '^worktree prune --expire now$' "$MOCK_GIT_LOG"
+  [ "$(grep -c '^worktree list ' "$MOCK_GIT_LOG")" -eq 2 ]
+  run grep -q "^worktree remove $MOCK_WORKTREE$" "$MOCK_GIT_LOG"
+  [ "$status" -eq 1 ]
+  grep -q '^branch -D branch-merged$' "$MOCK_GIT_LOG"
+}
+
+@test "failed legacy unregister restores and removes the worktree synchronously" {
+  MOCK_GIT_VERSION='2.53.0'
+  MOCK_GIT_PRUNE_EFFECTIVE='false'
+  run "$command_path"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'falling back to synchronous removal'* ]]
+  grep -q '^worktree prune --expire now$' "$MOCK_GIT_LOG"
+  grep -q "^worktree remove $MOCK_WORKTREE$" "$MOCK_GIT_LOG"
+  [ -d "$MOCK_WORKTREE" ]
 }
