@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly GRAPHQL_BATCH_SIZE=50
+
+venv_path_file=''
+
+die() {
+  echo "git-clean-merged-branches: $*" >&2
+  exit 1
+}
+
+usage() {
+  cat >&2 <<'EOF'
+Usage: git clean-merged-branches [--dry-run]
+EOF
+  exit 2
+}
+
+terminal_branches=()
+
+find_terminal_branches() {
+  local repo owner name
+  repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
+  owner=${repo%%/*}
+  name=${repo#*/}
+  [[ "$repo" == */* && -n "$owner" && -n "$name" ]] || die "unable to determine repository"
+
+  local batch_start batch_end i query fields indices
+  local -a args
+  for ((batch_start = 0; batch_start < ${#local_branches[@]}; batch_start += GRAPHQL_BATCH_SIZE)); do
+    batch_end=$((batch_start + GRAPHQL_BATCH_SIZE))
+    if ((batch_end > ${#local_branches[@]})); then
+      batch_end=${#local_branches[@]}
+    fi
+
+    query='query($owner: String!, $name: String!'
+    fields=''
+    args=(-f "owner=$owner" -f "name=$name")
+    for ((i = batch_start; i < batch_end; i++)); do
+      query+=", \$head$i: String!"
+      fields+="b$i: pullRequests(first: 100, headRefName: \$head$i) { nodes { state author { login } } } "
+      args+=(-f "head$i=${local_branches[$i]}")
+    done
+    query+=") { viewer { login } repository(owner: \$owner, name: \$name) { $fields } }"
+
+    # One aliased connection per local branch avoids downloading and scanning the
+    # author's 1,000 most recent PRs. headRefName is exact in this API.
+    indices=$(gh api graphql "${args[@]}" -f "query=$query" --jq '
+      .data.viewer.login as $me
+      | .data.repository
+      | to_entries[]
+      | select(.key | startswith("b"))
+      | [.value.nodes[] | select(.author.login == $me)] as $prs
+      | select(($prs | length) > 0)
+      | select($prs | all(.state == "MERGED" or .state == "CLOSED"))
+      | .key[1:]
+    ')
+
+    while IFS= read -r i; do
+      [[ -n "$i" ]] || continue
+      terminal_branches+=("${local_branches[$i]}")
+    done <<<"$indices"
+  done
+}
+
+worktree_for_branch() {
+  local branch=$1 i
+  for i in "${!worktree_branches[@]}"; do
+    if [[ "${worktree_branches[$i]}" == "$branch" ]]; then
+      printf '%s\n' "${worktree_paths[$i]}"
+      return
+    fi
+  done
+  return 1
+}
+
+delete_branch() {
+  local branch=$1 worktree venv_delete=''
+  echo "Deleting local branch $branch..."
+  worktree=$(worktree_for_branch "$branch" || true)
+  if [[ -z "$worktree" ]]; then
+    git branch -D "$branch"
+    return
+  fi
+
+  (
+    cd "$worktree"
+    direnv reload >/dev/null 2>&1 || true
+    if [[ ${VIRTUAL_ENV:-} == openai-* ]]; then
+      printf '%s\n' "$VIRTUAL_ENV" >"$venv_path_file"
+    fi
+    git -c core.hooksPath=/dev/null checkout --detach HEAD
+  )
+  if git worktree remove "$worktree"; then
+    if [[ -s "$venv_path_file" ]]; then
+      venv_delete=$(<"$venv_path_file")
+      rm -rf "$venv_delete"
+    fi
+    git branch -D "$branch"
+  fi
+}
+
+main() {
+  local dry_run=false
+  case ${1:-} in
+    '') ;;
+    --dry-run) dry_run=true ;;
+    *) usage ;;
+  esac
+  (($# <= 1)) || usage
+
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "not inside a git repository"
+
+  local_branches=()
+  while IFS= read -r branch; do
+    local_branches+=("$branch")
+  done < <(git for-each-ref --format='%(refname:short)' refs/heads)
+  ((${#local_branches[@]} > 0)) || return
+
+  find_terminal_branches
+  ((${#terminal_branches[@]} > 0)) || return
+
+  if [[ "$dry_run" == true ]]; then
+    printf 'Would delete local branch %s\n' "${terminal_branches[@]}"
+    return
+  fi
+
+  worktree_branches=()
+  worktree_paths=()
+  local field worktree=''
+  while IFS= read -r -d '' field; do
+    case "$field" in
+      worktree\ *) worktree=${field#worktree } ;;
+      branch\ refs/heads/*)
+        worktree_branches+=("${field#branch refs/heads/}")
+        worktree_paths+=("$worktree")
+        ;;
+    esac
+  done < <(git worktree list --porcelain -z)
+
+  venv_path_file=$(mktemp "${TMPDIR:-/tmp}/git-clean-merged-branches.XXXXXX")
+  trap 'rm -f "$venv_path_file"' EXIT
+  for branch in "${terminal_branches[@]}"; do
+    : >"$venv_path_file"
+    delete_branch "$branch"
+  done
+}
+
+main "$@"
