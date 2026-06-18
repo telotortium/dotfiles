@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cache_file="${HOME}/.profile.static_env.sh"
+tmp_file="${cache_file}.tmp"
+launchctl_script="${HOME}/bin/macos-login-setenv"
+launchctl_tmp="${launchctl_script}.tmp"
+bash_path="${BASH:-$(command -v bash)}"
+
+env -i \
+  HOME="${HOME}" \
+  USER="${USER:-}" \
+  LOGNAME="${LOGNAME:-${USER:-}}" \
+  SHELL="${SHELL:-${bash_path}}" \
+  TERM="${TERM:-xterm-256color}" \
+  PATH="/usr/bin:/bin:/usr/sbin:/sbin" \
+  "${bash_path}" --noprofile --norc -lc '
+    source "$HOME/.common.sh"
+    source "$HOME/.profile.static_env.lib.sh"
+    _my_profile_write_static_env_cache
+  ' >"${tmp_file}"
+
+chmod 600 "${tmp_file}"
+mv "${tmp_file}" "${cache_file}"
+
+env -i \
+  HOME="${HOME}" \
+  USER="${USER:-}" \
+  LOGNAME="${LOGNAME:-${USER:-}}" \
+  SHELL="${SHELL:-${bash_path}}" \
+  TERM="${TERM:-xterm-256color}" \
+  PATH="/usr/bin:/bin:/usr/sbin:/sbin" \
+  "${bash_path}" --noprofile --norc -lc '
+    source "$HOME/.common.sh"
+    source "$HOME/.bash_profile"
+    cat <<'"'"'EOF'"'"'
+#!/bin/sh
+set -eu
+EOF
+    for var in PATH MANPATH SSH_AUTH_SOCK OPENAI_USER; do
+      eval "is_set=\${${var}+x}"
+      [ -n "$is_set" ] || continue
+      eval "val=\${$var}"
+      printf "launchctl setenv %s %s\n" "$var" "$(shell_quote "$val")"
+    done
+  ' >"${launchctl_tmp}"
+
+chmod 755 "${launchctl_tmp}"
+mv "${launchctl_tmp}" "${launchctl_script}"
+if command -v launchctl >/dev/null 2>&1; then
+  "${launchctl_script}" >/dev/null 2>&1 || true
+fi
+
+printf 'Wrote %s\n' "${cache_file}"
+printf 'Wrote %s\n' "${launchctl_script}"
