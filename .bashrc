@@ -623,6 +623,49 @@ nvm() {
     esac
 }
 
+# Run a command at a GNU date-compatible time while retaining this shell's state.
+schedule() {
+    if [[ "$#" -lt 2 ]]; then
+        echo "usage: schedule TIMESPEC COMMAND [ARGS...]" >&2
+        return 2
+    fi
+
+    local timespec="$1"
+    shift
+
+    local date_command
+    if command -v gdate >/dev/null 2>&1; then
+        date_command=gdate
+    elif date --version >/dev/null 2>&1; then
+        date_command=date
+    else
+        echo "schedule: GNU date is required; install it with: brew install coreutils" >&2
+        return 127
+    fi
+
+    local target_epoch
+    if ! target_epoch=$("$date_command" --date="$timespec" +%s); then
+        echo "schedule: invalid time specification: $timespec" >&2
+        return 2
+    fi
+
+    local delay=$((target_epoch - $(date +%s)))
+    if ((delay > 0)); then
+        sleep "$delay" || return
+    fi
+
+    local command_name="$1"
+    shift
+    if alias "$command_name" >/dev/null 2>&1; then
+        # Alias expansion happens during parsing, so quote args and reparse this one call.
+        local quoted_args
+        printf -v quoted_args ' %q' "$@"
+        eval "$command_name$quoted_args"
+    else
+        "$command_name" "$@"
+    fi
+}
+
 # shellcheck disable=SC1090,SC1091
 {
     # Load .bash-preexec.sh if Iterm2 Shell Integration doesn't load.
