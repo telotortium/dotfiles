@@ -430,6 +430,12 @@ elif [[ -f /usr/local/etc/profile.d/bash_completion.sh ]]; then
     source /usr/local/etc/profile.d/bash_completion.sh
 fi
 
+# fzf's SSH completer only activates for its ** trigger, and its registration
+# prevents bash-completion from lazily loading ordinary SSH host completion.
+if [[ "$(complete -p ssh 2>/dev/null)" == *"_fzf_complete_ssh"* ]]; then
+    complete -r ssh
+fi
+
 command_on_path sshrc && complete -F _ssh sshrc
 
 # shellcheck disable=SC1090,SC1091
