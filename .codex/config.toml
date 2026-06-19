@@ -73,3 +73,28 @@ command = "npx"
 
 [projects."/Users/robert"]
 trust_level = "trusted"
+
+# Attempt to define agent personas to speed up implementation.
+[agents.default]
+description = "Default agent."
+model = "gpt-5.5"
+spawn_mode = "fork"
+config_file = "./agents/default.toml"
+
+[agents.explorer]
+description = "Use `explorer` for specific, well-scoped codebase questions.\nPrefer this role when you want fast authoritative repository answers rather than implementation work.\n"
+model = "gpt-5.5"
+spawn_mode = "spawn"
+config_file = "./agents/explorer.toml"
+
+[agents.fast-worker]
+description = "Use `fast-worker` for tightly constrained execution tasks.\nPrefer this role for small localized fixes or short command sequences from a self-contained prompt.\n"
+model = "gpt-5.4-mini"
+spawn_mode = "spawn"
+config_file = "./agents/fast-worker.toml"
+
+[agents.awaiter]
+description = "Use `awaiter` for commands or tasks that may take a while to finish.\nPrefer this role for waiting, polling, or long-running monitoring work.\n"
+model = "gpt-5.4-mini"
+spawn_mode = "spawn"
+config_file = "./agents/awaiter.toml"
