@@ -17,7 +17,7 @@ vim_mode_default = true
 "gpt-5.6-sol" = 1
 
 [sandbox_workspace_write]
-writable_roots = ["/tmp", "/Users/robert/.pyenv/shims"]
+writable_roots = ["/tmp"]
 
 [model_providers.openrouter]
 name = "OpenRouter"
