@@ -79,6 +79,31 @@ command = "npx"
 [projects."/Users/robert"]
 trust_level = "trusted"
 
+[desktop]
+appearanceTheme = "system"
+appearanceLightCodeThemeId = "absolutely"
+appearanceDarkCodeThemeId = "absolutely"
+sansFontSize = 11
+codeFontSize = 11
+usePointerCursors = true
+composerEnterBehavior = "cmdIfMultiline"
+preventSleepWhileRunning = true
+keepRemoteControlAwakeWhilePluggedIn = true
+git-always-force-push = true
+git-create-pull-request-as-draft = true
+git-show-sidebar-pr-icons = true
+git-pr-instructions = """
+- Read the history of the session to provide a detailed PR description. Particularly focus on justification of the PR, context about the reason for the PR rather than just the implemention details, such that a human reviewer can make an intelligent decision about whether the PR as a whole is a good idea. But don't make up such justification - if it's just a simple config update or other simple change, then just say that.
+- Add the text `*Created using Codex*` on a separate line at the end of the generated PR description.
+- DO NOT put the text `[codex]` in the PR title unless we're actually modifying the Codex project. In general, the convention is that the project name that we're modifying is put inside the square brackets."""
+notifications-turn-mode = "always"
+selected-avatar-id = "bsod"
+conversationDetailMode = "STEPS_COMMANDS"
+followUpQueueMode = "queue"
+ambient-suggestions-enabled = true
+dock-icon-preference = "codex-light"
+avatar-overlay-mascot-width-px = 113
+
 # Attempt to define agent personas to speed up implementation.
 [agents.default]
 description = "Default agent."
