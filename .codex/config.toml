@@ -1,4 +1,4 @@
-model = "gpt-5.5"
+model = "gpt-5.6-sol"
 model_supports_reasoning_summaries = true
 model_provider = "openai"
 model_reasoning_effort = "medium"
@@ -98,3 +98,16 @@ description = "Use `awaiter` for commands or tasks that may take a while to fini
 model = "gpt-5.4-mini"
 spawn_mode = "spawn"
 config_file = "./agents/awaiter.toml"
+
+[desktop]
+composerEnterBehavior = "cmdIfMultiline"
+preventSleepWhileRunning = true
+keepRemoteControlAwakeWhilePluggedIn = true
+git-always-force-push = true
+git-pull-request-merge-method = "squash"
+notifications-turn-mode = "always"
+followUpQueueMode = "queue"
+dock-icon-preference = "codex-system"
+
+[desktop.open-in-target-preferences]
+global = "vscode"
