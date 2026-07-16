@@ -13,6 +13,10 @@ if [[ "$1" = "$(git hash-object -t tree --stdin </dev/null | sed s/./0/g)" ]]; t
         git config user.name "Robert Irelan"
         git config user.email "robert.irelan@bytedance.com"
     fi
+
+    if ! git maintenance register >/dev/null; then
+        echo "warning: could not register repository for Git maintenance" >&2
+    fi
 fi
 
 # start templated
