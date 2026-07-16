@@ -522,29 +522,32 @@ dbcmd ()
     sqlite3 "${HISTDB}" "select command from command where command_id=\"${1}\";"
 }
 
-if [ -n "$TMUX" ]; then
-    function refresh_tmux_env {
-        # Test again - in case we accidentally installed this function with
-        # a broken `$TMUX`, we can run `unset TMUX` and then errors from this
-        # function won't show anymore, without having to spawn a new shell.
-        if [ -n "$TMUX" ]; then
-            while IFS= read -r line; do
-                if [ "$line" != "${line#-*}" ]; then
-                    # Line starts with -, which means it's removed from the Tmux
-                    # environment, so skip it.
-                    continue
-                fi
-                var="${line%%=*}"
-                val="${line#*=}"
-                if [ "$(eval echo "\$$var")" != "$val" ]; then
-                    echo "Setting $var to $val" 1>&2
-                    export "$var=$val"
-                fi
-            done < <(tmux show-environment)
+function refresh_tmux_env {
+    # Test again in case the tmux server exited while this shell stayed alive.
+    # Clear stale state silently so later prompt hooks do not keep trying to
+    # contact the dead server.
+    if [ -n "$TMUX" ]; then
+        local tmux_environment
+        if ! tmux_environment="$(tmux show-environment 2>/dev/null)"; then
+            unset TMUX TMUX_PANE
+            return
         fi
-    }
-    preexec_functions+=(refresh_tmux_env)
-fi
+        while IFS= read -r line; do
+            if [ "$line" != "${line#-*}" ]; then
+                # Line starts with -, which means it's removed from the Tmux
+                # environment, so skip it.
+                continue
+            fi
+            var="${line%%=*}"
+            val="${line#*=}"
+            if [ "$(eval echo "\$$var")" != "$val" ]; then
+                echo "Setting $var to $val" 1>&2
+                export "$var=$val"
+            fi
+        done <<< "$tmux_environment"
+    fi
+}
+preexec_functions+=(refresh_tmux_env)
 
 if [[ "$(uname -s)" = "Darwin" ]]; then
     function colorfgbg_from_system_appearance {
@@ -558,8 +561,13 @@ if [[ "$(uname -s)" = "Darwin" ]]; then
             export BAT_THEME="Monokai Extended Light"
         fi
         if [[ -n "$TMUX" ]]; then
-            tmux set-environment COLORFGBG "$COLORFGBG"
-            tmux set-environment BAT_THEME "$BAT_THEME"
+            if ! tmux set-environment COLORFGBG "$COLORFGBG" 2>/dev/null; then
+                unset TMUX TMUX_PANE
+                return
+            fi
+            if ! tmux set-environment BAT_THEME "$BAT_THEME" 2>/dev/null; then
+                unset TMUX TMUX_PANE
+            fi
         fi
     }
     preexec_functions+=(colorfgbg_from_system_appearance)
