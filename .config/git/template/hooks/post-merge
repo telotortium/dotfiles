@@ -11,12 +11,12 @@ ARGS=(hook-impl --config=.pre-commit-config.yaml --hook-type=post-merge --skip-o
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ARGS+=(--hook-dir "$HERE" -- "$@")
-if [[ -t 1 && -w /dev/tty ]]; then OUT=/dev/tty; else OUT=/dev/stdout; fi
+if [[ -t 1 && -w /dev/tty ]]; then exec 3>/dev/tty; else exec 3>&1; fi
 
 filter_out_passed_skipped () {
     (
         set +e
-        grep -E -v '(Passed|Skipped)('$'\E''\[m)?$' >"$OUT"
+        grep -E -v '(Passed|Skipped)('$'\E''\[m)?$' >&3
         rv=$?
         if [ $rv -le 1 ]; then return 0; else return $rv; fi
     )
