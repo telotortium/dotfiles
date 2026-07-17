@@ -48,6 +48,56 @@ __grd_branch_worktree_path() {
   return 1
 }
 
+__grd_rebase_in_progress() {
+  local repo_path=$1
+  local rebase_path
+  rebase_path=$(git -C "$repo_path" rev-parse --git-path rebase-merge)
+  [[ -d "$rebase_path" ]] && return 0
+  rebase_path=$(git -C "$repo_path" rev-parse --git-path rebase-apply)
+  [[ -d "$rebase_path" ]]
+}
+
+__grd_operation_is_empty() {
+  local repo_path=$1
+  local operation=$2
+
+  # An otherwise-empty stop has no unmerged paths and nothing staged. Keep any
+  # real conflict (or other failure) paused for the user to resolve.
+  [[ -z "$(git -C "$repo_path" ls-files --unmerged)" ]] || return 1
+  git -C "$repo_path" diff --cached --quiet --no-ext-diff || return 1
+
+  case "$operation" in
+    cherry-pick)
+      git -C "$repo_path" rev-parse --verify -q CHERRY_PICK_HEAD >/dev/null
+      ;;
+    rebase)
+      __grd_rebase_in_progress "$repo_path"
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+__grd_run_skipping_empty() {
+  local repo_path=$1
+  local operation=$2
+  shift 2
+
+  if git -C "$repo_path" "$@"; then
+    return 0
+  fi
+
+  while __grd_operation_is_empty "$repo_path" "$operation"; do
+    __grd_log "Skipping otherwise-empty ${operation} commit"
+    if git -C "$repo_path" "$operation" --skip; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
 main() {
   local prefix=${GIT_REBASE_DONATE_PREFIX:-}
   local upstream=${GIT_REBASE_DONATE_UPSTREAM:-}
@@ -91,17 +141,17 @@ main() {
 
   if ((${#donated_commits[@]} > 0)); then
     # Cherry-pick in original order so the donated series lands on upstream unchanged.
-    git -C "$upstream_worktree" cherry-pick "${donated_commits[@]}"
+    __grd_run_skipping_empty "$upstream_worktree" cherry-pick cherry-pick "${donated_commits[@]}"
   fi
 
-  git -C "$upstream_worktree" pull --rebase
+  __grd_run_skipping_empty "$upstream_worktree" rebase pull --rebase
   git -C "$upstream_worktree" push
 
   if [[ "$upstream_worktree" == "$current_worktree" ]]; then
     git switch "$original_branch"
   fi
   # Rebasing after the donate/push step lets Git drop duplicate patches from the topic branch.
-  git rebase "$upstream"
+  __grd_run_skipping_empty "$current_worktree" rebase rebase "$upstream"
 }
 
 main "$@"
