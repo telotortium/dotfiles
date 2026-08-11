@@ -25,7 +25,7 @@ shell_quote() {
 pathvarmunge () {
     var=$1
     dir=$2
-    after=$3
+    after=${3-}
     eval "varval=\${$var-}"
     case ":$varval:" in
         *":$dir:"*) return 0 ;;
