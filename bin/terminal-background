@@ -1,0 +1,72 @@
+#!/usr/bin/osascript
+
+-- Read TTY lists in one request; querying every session separately slows prompts.
+on run argv
+    if (count of argv) < 1 then error "Expected a TTY path"
+    set targetTTY to item 1 of argv
+    set appHint to ""
+    if (count of argv) > 1 then set appHint to item 2 of argv
+
+    if appHint is "Apple_Terminal" then
+        set rgb to my terminalBackground(targetTTY)
+        if rgb is missing value then set rgb to my itermBackground(targetTTY)
+    else
+        set rgb to my itermBackground(targetTTY)
+        if rgb is missing value then set rgb to my terminalBackground(targetTTY)
+    end if
+    if rgb is missing value then error "No terminal tab has that TTY"
+    return my classifyBackground(rgb)
+end run
+
+on itermBackground(targetTTY)
+    try
+        with timeout of 1 seconds
+            if application id "com.googlecode.iterm2" is not running then return missing value
+            tell application id "com.googlecode.iterm2"
+                set ttyWindows to tty of every session of every tab of every window
+                repeat with windowIndex from 1 to count of ttyWindows
+                    set ttyTabs to item windowIndex of ttyWindows
+                    repeat with tabIndex from 1 to count of ttyTabs
+                        set ttySessions to item tabIndex of ttyTabs
+                        repeat with sessionIndex from 1 to count of ttySessions
+                            if item sessionIndex of ttySessions is targetTTY then
+                                set sessionData to {tty, background color} of session sessionIndex of tab tabIndex of window windowIndex
+                                if item 1 of sessionData is targetTTY then return item 2 of sessionData
+                            end if
+                        end repeat
+                    end repeat
+                end repeat
+            end tell
+        end timeout
+    end try
+    return missing value
+end itermBackground
+
+on terminalBackground(targetTTY)
+    try
+        with timeout of 1 seconds
+            if application id "com.apple.Terminal" is not running then return missing value
+            tell application id "com.apple.Terminal"
+                set ttyWindows to tty of every tab of every window
+                repeat with windowIndex from 1 to count of ttyWindows
+                    set ttyTabs to item windowIndex of ttyWindows
+                    repeat with tabIndex from 1 to count of ttyTabs
+                        if item tabIndex of ttyTabs is targetTTY then
+                            set tabData to {tty, background color} of tab tabIndex of window windowIndex
+                            if item 1 of tabData is targetTTY then return item 2 of tabData
+                        end if
+                    end repeat
+                end repeat
+            end tell
+        end timeout
+    end try
+    return missing value
+end terminalBackground
+
+on classifyBackground(rgb)
+    if (count of rgb) is not 3 then error "Invalid background color"
+    -- Weighted RGB brightness; the components range from 0 to 65535.
+    set brightness to 299 * (item 1 of rgb) + 587 * (item 2 of rgb) + 114 * (item 3 of rgb)
+    if brightness is greater than or equal to 32767500 then return "light"
+    return "dark"
+end classifyBackground

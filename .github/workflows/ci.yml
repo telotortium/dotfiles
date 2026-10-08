@@ -24,8 +24,12 @@ jobs:
         run: |
           shellcheck \
             .bashrc \
-            .common.sh \
-            .zshrc || true # don't fail on existing warnings yet
+            .terminal-background.bash \
+            .common.sh
+
+      - name: Zsh syntax
+        # ShellCheck does not support Zsh; check it with its own parser.
+        run: zsh -n .zshrc
 
       - name: Run Bats tests
         run: |

@@ -27,6 +27,20 @@ repos:
             )
 -   repo: local
     hooks:
+        # Keep these commands and file lists in sync with .github/workflows/ci.yml.
+        - id: shellcheck
+          name: ShellCheck
+          language: system
+          entry: shellcheck
+          files: '^(\.bashrc|\.terminal-background\.bash|\.common\.sh)$'
+          stages: [pre-commit, pre-merge-commit, pre-push, manual]
+        # ShellCheck does not support Zsh; check it with its own parser.
+        - id: zsh-syntax
+          name: Zsh syntax
+          language: system
+          entry: zsh -n
+          files: '^\.zshrc$'
+          stages: [pre-commit, pre-merge-commit, pre-push, manual]
         - id: doom-commit-consistency-check
           name: Checks consistency of Doom version between .doom.d and doom.emacs.d.
           language: script

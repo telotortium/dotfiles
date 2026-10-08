@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # ~/.bashrc: executed by bash(1) for non-login shells.
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
@@ -352,6 +353,7 @@ HISTSIZE=-1; unset HISTFILESIZE
 # Unset HISTIGNORE, since we're using BASH_HISTORY_SQLITE_IGNORE instead.
 # HISTIGNORE stops commands from having preexec commands run for them if
 # they match the patterns in HISTIGNORE.
+# shellcheck disable=SC2034
 BASH_HISTORY_SQLITE_IGNORE="${HISTIGNORE:-"&:ls:ls:mutt:[bf]g:exit:exec:exec *"}"
 unset HISTIGNORE
 # Set HISTTIMEFORMAT
@@ -540,6 +542,10 @@ function refresh_tmux_env {
             fi
             var="${line%%=*}"
             val="${line#*=}"
+            # refresh_terminal_background updates these variables together.
+            case "$var" in
+                TERM_BACKGROUND|TERM_BACKGROUND_OVERRIDE|COLORFGBG|BAT_THEME) continue ;;
+            esac
             if [ "$(eval echo "\$$var")" != "$val" ]; then
                 echo "Setting $var to $val" 1>&2
                 export "$var=$val"
@@ -549,28 +555,9 @@ function refresh_tmux_env {
 }
 preexec_functions+=(refresh_tmux_env)
 
-if [[ "$(uname -s)" = "Darwin" ]]; then
-    function colorfgbg_from_system_appearance {
-        if [[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" = "Dark" ]]; then
-            # Dark mode
-            export COLORFGBG="15;0"
-            export BAT_THEME="Monokai Extended"
-        else
-            # Light Mode
-            export COLORFGBG="0;15"
-            export BAT_THEME="Monokai Extended Light"
-        fi
-        if [[ -n "$TMUX" ]]; then
-            if ! tmux set-environment COLORFGBG "$COLORFGBG" 2>/dev/null; then
-                unset TMUX TMUX_PANE
-                return
-            fi
-            if ! tmux set-environment BAT_THEME "$BAT_THEME" 2>/dev/null; then
-                unset TMUX TMUX_PANE
-            fi
-        fi
-    }
-    preexec_functions+=(colorfgbg_from_system_appearance)
+# shellcheck source=.terminal-background.bash disable=SC1091
+if [[ -r "$HOME/.terminal-background.bash" ]]; then
+    source "$HOME/.terminal-background.bash"
 fi
 
 # Function to save current shell options and disable failglob
@@ -651,7 +638,7 @@ schedule() {
     if command -v gdate >/dev/null 2>&1; then
         date_command=gdate
     elif date --version >/dev/null 2>&1; then
-        date_command=date
+        date_command="date"
     else
         echo "schedule: GNU date is required; install it with: brew install coreutils" >&2
         return 127
