@@ -15,10 +15,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies (ShellCheck, Bats)
+      - name: Install dependencies (ShellCheck, Bats, Zsh)
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y shellcheck bats
+          sudo apt-get install -y shellcheck bats zsh
 
       - name: ShellCheck
         run: |
